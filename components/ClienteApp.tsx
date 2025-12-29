@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { User, Barbeiro, Service, UserPlan } from '../types';
-import { MOCK_BARBERS, SERVICES } from '../constants';
+import { MOCK_BARBERS, SERVICES, MOCK_APPOINTMENTS } from '../constants';
 import {
   ChevronRight,
   Check,
@@ -21,6 +21,9 @@ interface ClienteAppProps {
 // Key format: "barberId-YYYY-MM-DD-HH:mm"
 const GLOBAL_BOOKED_SLOTS = new Set<string>();
 
+// Track new appointments made in this session to enforce logic without backend
+const SESSION_APPOINTMENTS: { clientId: string; date: string }[] = [];
+
 const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   const [step, setStep] = useState(1);
   const [selectedBarber, setSelectedBarber] = useState<Barbeiro | null>(null);
@@ -33,6 +36,10 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
     null,
   );
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showPremiumRestriction, setShowPremiumRestriction] = useState(false);
+  const [nextAvailableDate, setNextAvailableDate] = useState<string | null>(
+    null,
+  );
 
   // Generate the next 14 days starting from today
   const availableDates = useMemo(() => {
@@ -84,9 +91,74 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   };
 
   const confirmBooking = () => {
+    // Premium Restriction: Once every 7 days
+    if (user.plan === UserPlan.PREMIUM) {
+      const selectedDate = new Date(selectedDateStr);
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+      // Check both historical mock data AND new session data
+      const allAppointments = [
+        ...MOCK_APPOINTMENTS.map((a) => ({
+          clientId: a.clientId,
+          date: a.date,
+          status: a.status,
+        })),
+        ...SESSION_APPOINTMENTS.map((a) => ({
+          clientId: a.clientId,
+          date: a.date,
+          status: 'CONFIRMED',
+        })),
+      ];
+
+      const conflictingApp = allAppointments.find((app) => {
+        if (app.clientId !== user.id) return false;
+        if (app.status === 'CANCELLED') return false;
+
+        const appDate = new Date(app.date);
+        const diffTime = Math.abs(selectedDate.getTime() - appDate.getTime());
+        return diffTime < sevenDaysMs;
+      });
+
+      if (conflictingApp) {
+        // Calculate next available date (7 days after the last appointment)
+        const lastAppDate = new Date(conflictingApp.date);
+        const nextDate = new Date(lastAppDate);
+        nextDate.setDate(lastAppDate.getDate() + 7);
+
+        // Premium Restriction: If next date falls on Fri(5), Sat(6), or Sun(0), move to next Monday
+        const dayOfWeek = nextDate.getDay();
+        if (dayOfWeek === 5) {
+          // Friday -> +3 days = Monday
+          nextDate.setDate(nextDate.getDate() + 3);
+        } else if (dayOfWeek === 6) {
+          // Saturday -> +2 days = Monday
+          nextDate.setDate(nextDate.getDate() + 2);
+        } else if (dayOfWeek === 0) {
+          // Sunday -> +1 day = Monday
+          nextDate.setDate(nextDate.getDate() + 1);
+        }
+
+        const formattedDate = nextDate.toLocaleDateString('pt-BR', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        });
+
+        setNextAvailableDate(formattedDate);
+        setShowPremiumRestriction(true);
+        return;
+      }
+    }
+
     if (selectedBarber && selectedTime) {
       const key = `${selectedBarber.id}-${selectedDateStr}-${selectedTime}`;
       GLOBAL_BOOKED_SLOTS.add(key);
+
+      // Record the booking for this session
+      SESSION_APPOINTMENTS.push({
+        clientId: user.id,
+        date: selectedDateStr, // Using ISO string or similar date format
+      });
     }
     setIsSuccess(true);
   };
@@ -99,7 +171,50 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
     setSelectedDateStr(new Date().toISOString().split('T')[0]);
     setPaymentMethod(null);
     setIsSuccess(false);
+    setShowPremiumRestriction(false);
   };
+
+  if (showPremiumRestriction) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] max-w-sm w-full text-center space-y-6 shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 to-amber-400"></div>
+
+          <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
+            <Sparkles className="text-amber-500 w-10 h-10" />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-2xl font-display font-bold text-white">
+              Ops, calma aí!
+            </h3>
+            <p className="text-neutral-400 text-sm leading-relaxed">
+              Como cliente{' '}
+              <span className="text-amber-500 font-bold">Premium</span>, você
+              tem direito a cortes ilimitados, mas respeitando o intervalo de{' '}
+              <span className="text-white font-bold">7 dias</span> entre eles.
+            </p>
+          </div>
+
+          <div className="bg-neutral-950 p-4 rounded-2xl border border-white/5">
+            <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">
+              Próximo agendamento disponível
+            </p>
+            <p className="text-amber-500 font-bold capitalize">
+              {nextAvailableDate || 'Na próxima semana'}
+            </p>
+          </div>
+
+          <button
+            onClick={resetFlow}
+            className="w-full bg-white text-black font-bold py-4 rounded-2xl hover:bg-neutral-200 transition-colors shadow-lg active:scale-95"
+          >
+            Voltar para Início
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     const selectedDateObj = availableDates.find(
@@ -364,8 +479,11 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                 </p>
                 <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide snap-x">
                   {availableDates.map((date) => {
+                    // Premium Restriction: Mon-Thu only (Disable Fri(5), Sat(6), Sun(0))
+                    const isPremiumRestrictedDay =
+                      date.dayName === 'sex' || date.isWeekend;
                     const isDisabled =
-                      user.plan === UserPlan.PREMIUM && date.isWeekend;
+                      user.plan === UserPlan.PREMIUM && isPremiumRestrictedDay;
                     const isSelected = selectedDateStr === date.fullDate;
                     return (
                       <button
@@ -396,7 +514,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                 </div>
                 {user.plan === UserPlan.PREMIUM && (
                   <p className="text-[9px] text-amber-500/50 text-center font-medium italic">
-                    Clientes Premium podem agendar apenas de Seg. a Sex.
+                    Clientes Premium podem agendar apenas de Seg. a Qui.
                   </p>
                 )}
               </div>
