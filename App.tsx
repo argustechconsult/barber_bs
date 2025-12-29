@@ -1,4 +1,4 @@
-
+'use client';
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from './types';
 import { MOCK_USERS } from './constants';
@@ -11,7 +11,14 @@ import FinancialView from './components/FinancialView';
 import BarberFinancialView from './components/BarberFinancialView';
 import BarberAgendaView from './components/BarberAgendaView';
 import MarketplaceView from './components/MarketplaceView';
-import { LogOut, Calendar, Settings, DollarSign, ShoppingBag, LayoutDashboard } from 'lucide-react';
+import {
+  LogOut,
+  Calendar,
+  Settings,
+  DollarSign,
+  ShoppingBag,
+  LayoutDashboard,
+} from 'lucide-react';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -27,16 +34,24 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogin = (email: string, pass: string) => {
-    const found = MOCK_USERS.find(u => u.email === email && (pass === email || pass === 'admin' || pass === 'cliente' || pass === 'start' || pass === 'premium'));
+    const found = MOCK_USERS.find(
+      (u) =>
+        u.email === email &&
+        (pass === email ||
+          pass === 'admin' ||
+          pass === 'cliente' ||
+          pass === 'start' ||
+          pass === 'premium'),
+    );
     if (found) {
       if (found.role !== UserRole.CLIENTE && !found.isActive) {
-        alert("Acesso negado. Sua conta de barbeiro está inativa.");
+        alert('Acesso negado. Sua conta de barbeiro está inativa.');
         return;
       }
       setUser(found);
       localStorage.setItem('stayler_user', JSON.stringify(found));
     } else {
-      alert("Credenciais inválidas ou acesso restrito.");
+      alert('Credenciais inválidas ou acesso restrito.');
     }
   };
 
@@ -51,11 +66,12 @@ const App: React.FC = () => {
     localStorage.setItem('stayler_user', JSON.stringify(updatedUser));
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-amber-500"></div>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-amber-500"></div>
+      </div>
+    );
 
   if (!user) {
     return <Login onLogin={handleLogin} />;
@@ -70,13 +86,21 @@ const App: React.FC = () => {
       <nav className="fixed bottom-0 left-0 right-0 bg-neutral-900/95 backdrop-blur-xl border-t border-neutral-800/50 md:relative md:w-64 md:border-t-0 md:border-r z-50">
         <div className="flex md:flex-col items-center justify-center md:justify-start h-20 md:h-full py-2 md:py-8 gap-1 md:gap-4 px-2 md:px-0">
           <div className="hidden md:block mb-8 text-center px-4">
-            <h1 className="text-2xl font-display font-bold tracking-tighter text-amber-500">STAYLER</h1>
-            <p className="text-[10px] uppercase tracking-widest text-neutral-500">Barbearia Premium</p>
+            <h1 className="text-2xl font-display font-bold tracking-tighter text-amber-500">
+              STAYLER
+            </h1>
+            <p className="text-[10px] uppercase tracking-widest text-neutral-500">
+              Barbearia Premium
+            </p>
           </div>
 
           <div className="flex flex-row md:flex-col items-center justify-center md:justify-start gap-1 w-full max-w-sm md:max-w-none md:px-3">
-            <button 
-              className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${currentView === 'main' ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10' : 'text-neutral-500 hover:text-white'}`}
+            <button
+              className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${
+                currentView === 'main'
+                  ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
+                  : 'text-neutral-500 hover:text-white'
+              }`}
               onClick={() => setCurrentView('main')}
             >
               {isStaff ? <LayoutDashboard size={22} /> : <Calendar size={22} />}
@@ -86,44 +110,68 @@ const App: React.FC = () => {
             </button>
 
             {isStaff && (
-              <button 
-                className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${currentView === 'agenda' ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10' : 'text-neutral-500 hover:text-white'}`}
+              <button
+                className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${
+                  currentView === 'agenda'
+                    ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
+                    : 'text-neutral-500 hover:text-white'
+                }`}
                 onClick={() => setCurrentView('agenda')}
               >
                 <Calendar size={22} />
-                <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">Agenda</span>
+                <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">
+                  Agenda
+                </span>
               </button>
             )}
 
             {(user.role === UserRole.CLIENTE || isAdmin) && (
-              <button 
-                className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${currentView === 'marketplace' ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10' : 'text-neutral-500 hover:text-white'}`}
+              <button
+                className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${
+                  currentView === 'marketplace'
+                    ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
+                    : 'text-neutral-500 hover:text-white'
+                }`}
                 onClick={() => setCurrentView('marketplace')}
               >
                 <ShoppingBag size={22} />
-                <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">Market</span>
+                <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">
+                  Market
+                </span>
               </button>
             )}
 
-            <button 
-              className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${currentView === 'financial' ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10' : 'text-neutral-500 hover:text-white'}`}
+            <button
+              className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${
+                currentView === 'financial'
+                  ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
+                  : 'text-neutral-500 hover:text-white'
+              }`}
               onClick={() => setCurrentView('financial')}
             >
               <DollarSign size={22} />
-              <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">Finance</span>
+              <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">
+                Finance
+              </span>
             </button>
 
-            <button 
-              className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${currentView === 'settings' ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10' : 'text-neutral-500 hover:text-white'}`}
+            <button
+              className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 p-2 rounded-xl flex-1 md:w-full md:px-4 transition-all ${
+                currentView === 'settings'
+                  ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
+                  : 'text-neutral-500 hover:text-white'
+              }`}
               onClick={() => setCurrentView('settings')}
             >
               <Settings size={22} />
-              <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">Config</span>
+              <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">
+                Config
+              </span>
             </button>
           </div>
 
           <div className="hidden md:flex md:mt-auto flex-col items-center w-full px-4 gap-4">
-            <button 
+            <button
               onClick={handleLogout}
               className="flex flex-col md:flex-row items-center justify-start gap-1 md:gap-3 p-2 text-red-500 hover:text-red-400 rounded-lg w-full md:px-4 transition-colors"
             >
@@ -136,20 +184,36 @@ const App: React.FC = () => {
 
       <main className="flex-1 overflow-y-auto pb-24 md:pb-0">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
-          {currentView === 'settings' && <SettingsView user={user} onUpdateUser={handleUpdateUser} onLogout={handleLogout} />}
-          
-          {currentView === 'financial' && (
-            user.role === UserRole.CLIENTE ? <FinancialView user={user} /> : <BarberFinancialView user={user} />
+          {currentView === 'settings' && (
+            <SettingsView
+              user={user}
+              onUpdateUser={handleUpdateUser}
+              onLogout={handleLogout}
+            />
           )}
 
-          {currentView === 'agenda' && isStaff && <BarberAgendaView user={user} />}
-          
-          {currentView === 'marketplace' && (user.role === UserRole.CLIENTE || isAdmin) && <MarketplaceView user={user} />}
-          
+          {currentView === 'financial' &&
+            (user.role === UserRole.CLIENTE ? (
+              <FinancialView user={user} />
+            ) : (
+              <BarberFinancialView user={user} />
+            ))}
+
+          {currentView === 'agenda' && isStaff && (
+            <BarberAgendaView user={user} />
+          )}
+
+          {currentView === 'marketplace' &&
+            (user.role === UserRole.CLIENTE || isAdmin) && (
+              <MarketplaceView user={user} />
+            )}
+
           {currentView === 'main' && (
             <>
               {user.role === UserRole.CLIENTE && <ClienteApp user={user} />}
-              {user.role === UserRole.BARBEIRO && <BarberDashboard user={user} />}
+              {user.role === UserRole.BARBEIRO && (
+                <BarberDashboard user={user} />
+              )}
               {user.role === UserRole.ADMIN && <AdminDashboard user={user} />}
             </>
           )}
