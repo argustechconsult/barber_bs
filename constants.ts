@@ -27,8 +27,8 @@ export const MOCK_PRODUCTS: Product[] = [
 export const MOCK_BARBERS: Barbeiro[] = [
   {
     id: 'b1',
-    nome: 'João Silva',
-    foto: 'https://picsum.photos/200/200?random=1',
+    nome: 'Guilherme Souza',
+    foto: '/guilhermesouza.png',
     bio: 'Especialista em visagismo e degradês modernos.',
     intervaloAtendimento: 30,
     horariosTrabalho: { inicio: '09:00', fim: '19:00' },
@@ -36,8 +36,8 @@ export const MOCK_BARBERS: Barbeiro[] = [
   },
   {
     id: 'b2',
-    nome: 'Pedro Oliveira',
-    foto: 'https://picsum.photos/200/200?random=2',
+    nome: 'Josimar',
+    foto: '/josimar.png',
     bio: 'Mais de 10 anos de experiência em cortes clássicos.',
     intervaloAtendimento: 45,
     horariosTrabalho: { inicio: '10:00', fim: '20:00' },
@@ -45,8 +45,8 @@ export const MOCK_BARBERS: Barbeiro[] = [
   },
   {
     id: 'b3',
-    nome: 'Lucas Santos',
-    foto: 'https://picsum.photos/200/200?random=3',
+    nome: 'Vinícius',
+    foto: '/vinicius.png',
     bio: 'Mestre na navalha e barbas terapêuticas.',
     intervaloAtendimento: 30,
     horariosTrabalho: { inicio: '08:00', fim: '18:00' },
@@ -57,19 +57,27 @@ export const MOCK_BARBERS: Barbeiro[] = [
 export const MOCK_USERS: User[] = [
   {
     id: 'u1',
-    name: 'João Silva (Admin)',
-    email: 'admin',
+    name: 'Guilherme Souza',
+    email: 'guilherme',
     role: UserRole.ADMIN,
     isActive: true,
     barbeiroId: 'b1'
   },
   {
-    id: 'u4',
-    name: 'Barbeiro Comum',
-    email: 'barbeiro',
+    id: 'u2',
+    name: 'Josimar',
+    email: 'josimar',
     role: UserRole.BARBEIRO,
     isActive: true,
     barbeiroId: 'b2'
+  },
+  {
+    id: 'u3',
+    name: 'Vinícius',
+    email: 'vinicius',
+    role: UserRole.BARBEIRO,
+    isActive: true,
+    barbeiroId: 'b3'
   },
   {
     id: 'u2',

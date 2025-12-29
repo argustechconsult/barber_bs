@@ -1,21 +1,22 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+Dadas as novas credenciais, atualizei o sistema:
 
-# Run and deploy your AI Studio app
+Guilherme Souza (Admin)
+Login: guilherme
+Senha: 123
 
-This contains everything you need to run your app locally.
+Josimar
+Login: josimar
+Senha: 123
 
-View your app in AI Studio: https://ai.studio/apps/drive/1SjMq6AAmKk2e8s_Udk7K-u56tC4PkS4S
+Vinícius
+Login: vinicius
+Senha: 123
 
-## Run Locally
+Cliente
+Login: start
+Senha: start
 
-**Prerequisites:**  Node.js
+Premium
+Login: premium
+Senha: premium
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
-# barber_bs

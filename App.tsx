@@ -41,7 +41,8 @@ const App: React.FC = () => {
           pass === 'admin' ||
           pass === 'cliente' ||
           pass === 'start' ||
-          pass === 'premium'),
+          pass === 'premium' ||
+          pass === '123'),
     );
     if (found) {
       if (found.role !== UserRole.CLIENTE && !found.isActive) {

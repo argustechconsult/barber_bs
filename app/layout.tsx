@@ -1,9 +1,22 @@
 import React from 'react';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+
+export const viewport: Viewport = {
+  themeColor: '#0a0a0a',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 export const metadata: Metadata = {
   title: 'Barbearia Stayler',
   description: 'Barbearia Premium Management System',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Stayler',
+  },
 };
 
 export default function RootLayout({
