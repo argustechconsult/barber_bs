@@ -1,0 +1,7 @@
+{
+  "name": "Barbearia Stayler - Management System",
+  "description": "A professional barber shop management PWA with role-based access for clients, barbers, and admins, featuring scheduling, financial dashboards, and AI assistance.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
