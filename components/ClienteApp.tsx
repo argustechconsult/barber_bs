@@ -289,7 +289,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
 
   return (
     <div className="max-w-md mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="flex flex-col items-center space-y-4 pt-16">
+      <header className="flex flex-col items-center space-y-4 pt-4">
         <div className="w-24 h-24 rounded-full border-4 border-amber-500/30 p-1">
           <div className="w-full h-full rounded-full overflow-hidden bg-neutral-800 flex items-center justify-center border-2 border-amber-500">
             {user.whatsapp && user.whatsapp.startsWith('data:image') ? (

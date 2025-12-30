@@ -135,8 +135,8 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       {/* Barber Profile Header */}
-      {!isAdmin && user.barbeiroId && (
-        <div className="flex flex-col items-center justify-center pt-8 pb-4 space-y-3">
+      {user.barbeiroId && (
+        <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
           {(() => {
             const barber = MOCK_BARBERS.find((b) => b.id === user.barbeiroId);
             if (!barber) return null;
@@ -157,7 +157,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
           })()}
         </div>
       )}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-16 md:pt-0">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 md:pt-0">
         <div>
           <h2 className="text-3xl font-display font-bold">Indicadores</h2>
           <p className="text-neutral-500">

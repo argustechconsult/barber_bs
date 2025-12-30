@@ -80,7 +80,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-500 pb-20">
-      <header className="text-center pt-16">
+      <header className="text-center pt-4">
         <h2 className="text-4xl font-display font-bold">Configurações</h2>
         <p className="text-neutral-500 mt-2">
           Personalize seu perfil profissional
@@ -108,14 +108,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     <UserIcon size={48} className="text-neutral-600" />
                   )}
                 </div>
-                {isStaff && (
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 bg-amber-500 p-3 rounded-full text-black shadow-xl hover:scale-110 transition-transform"
-                  >
-                    <Camera size={20} />
-                  </button>
-                )}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 bg-amber-500 p-3 rounded-full text-black shadow-xl hover:scale-110 transition-transform"
+                >
+                  <Camera size={20} />
+                </button>
+
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -125,24 +124,20 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
               <div className="text-center w-full">
-                {isStaff ? (
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">
-                      Seu Nome Profissional
-                    </label>
-                    <input
-                      type="text"
-                      value={user.name}
-                      onChange={(e) =>
-                        onUpdateUser({ ...user, name: e.target.value })
-                      }
-                      className="font-bold text-lg bg-neutral-800 border border-neutral-700 text-center rounded-xl p-3 focus:border-amber-500 outline-none w-full transition-all"
-                      placeholder="Nome Exibido para Clientes"
-                    />
-                  </div>
-                ) : (
-                  <p className="font-bold text-lg">{user.name}</p>
-                )}
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">
+                    Nome de Exibição
+                  </label>
+                  <input
+                    type="text"
+                    value={user.name}
+                    onChange={(e) =>
+                      onUpdateUser({ ...user, name: e.target.value })
+                    }
+                    className="font-bold text-lg bg-neutral-800 border border-neutral-700 text-center rounded-xl p-3 focus:border-amber-500 outline-none w-full transition-all"
+                    placeholder="Seu Nome"
+                  />
+                </div>
                 <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 mt-4 inline-block">
                   {user.role}
                 </span>

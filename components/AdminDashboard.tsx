@@ -1,32 +1,29 @@
-
 import React, { useState } from 'react';
 import { User, UserPlan, UserRole } from '../types';
-import { MOCK_USERS, MOCK_PRODUCTS } from '../constants';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import { MOCK_USERS, MOCK_PRODUCTS, MOCK_BARBERS } from '../constants';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from 'recharts';
-import { 
-  DollarSign, 
-  Users2, 
-  ShoppingBag, 
-  AlertCircle, 
-  UserX, 
-  CheckCircle2, 
+import {
+  Users2,
+  ShoppingBag,
+  AlertCircle,
+  UserX,
+  CheckCircle2,
   Phone,
   Search,
-  Filter,
   Package,
   // Added User as UserIcon to fix the compilation error on line 268
-  User as UserIcon
+  User as UserIcon,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -34,11 +31,13 @@ interface AdminDashboardProps {
 }
 
 // Simulated status for demo purposes
-const CUSTOMER_LIST = MOCK_USERS.filter(u => u.role === UserRole.CLIENTE).map(u => ({
-  ...u,
-  status: u.id === 'u2' ? 'DEBT' : (u.id === 'start' ? 'CHURN' : 'PAID'),
-  lastRenewal: u.id === 'start' ? '60 dias atrás' : 'Hoje'
-}));
+const CUSTOMER_LIST = MOCK_USERS.filter((u) => u.role === UserRole.CLIENTE).map(
+  (u) => ({
+    ...u,
+    status: u.id === 'u2' ? 'DEBT' : u.id === 'start' ? 'CHURN' : 'PAID',
+    lastRenewal: u.id === 'start' ? '60 dias atrás' : 'Hoje',
+  }),
+);
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [listFilter, setListFilter] = useState<'ALL' | 'DEBT' | 'CHURN'>('ALL');
@@ -53,33 +52,63 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     { name: 'Jun', value: 28000 },
   ];
 
-  const totalMarketSales = 4250.00;
+  const totalMarketSales = 4250.0;
   const bestSeller = MOCK_PRODUCTS[0]; // Pomada Matte
 
   const clients = CUSTOMER_LIST;
-  const startCount = clients.filter(u => u.plan === UserPlan.START).length;
-  const premiumCount = clients.filter(u => u.plan === UserPlan.PREMIUM).length;
-  const debtCount = clients.filter(u => u.status === 'DEBT').length;
-  const churnCount = clients.filter(u => u.status === 'CHURN').length;
+  const startCount = clients.filter((u) => u.plan === UserPlan.START).length;
+  const premiumCount = clients.filter(
+    (u) => u.plan === UserPlan.PREMIUM,
+  ).length;
+  const debtCount = clients.filter((u) => u.status === 'DEBT').length;
+  const churnCount = clients.filter((u) => u.status === 'CHURN').length;
 
   const subscriberData = [
     { name: 'Start', value: startCount, color: '#404040' },
     { name: 'Premium', value: premiumCount, color: '#f59e0b' },
   ];
 
-  const filteredList = clients.filter(u => {
+  const filteredList = clients.filter((u) => {
     const matchesFilter = listFilter === 'ALL' || u.status === listFilter;
-    const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (u.whatsapp || '').includes(searchTerm);
+    const matchesSearch =
+      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.whatsapp || '').includes(searchTerm);
     return matchesFilter && matchesSearch;
   });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-16">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-16 md:pt-0">
+      {/* Barber Profile Header */}
+      {user.barbeiroId && (
+        <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
+          {(() => {
+            const barber = MOCK_BARBERS.find((b) => b.id === user.barbeiroId);
+            if (!barber) return null;
+            return (
+              <>
+                <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
+                  <img
+                    src={barber.foto}
+                    alt={barber.nome}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </div>
+                <h2 className="text-2xl font-display font-bold text-white">
+                  {barber.nome}
+                </h2>
+              </>
+            );
+          })()}
+        </div>
+      )}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 md:pt-0">
         <div>
-          <h2 className="text-3xl font-display font-bold">Painel Administrativo</h2>
-          <p className="text-neutral-500">Comando central da Barbearia Stayler</p>
+          <h2 className="text-3xl font-display font-bold">
+            Painel Administrativo
+          </h2>
+          <p className="text-neutral-500">
+            Comando central da Barbearia Stayler
+          </p>
         </div>
       </header>
 
@@ -89,8 +118,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <ShoppingBag size={48} className="text-blue-500" />
           </div>
-          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">Vendas Marketplace</p>
-          <p className="text-2xl font-display font-bold mt-2">R$ {totalMarketSales.toFixed(2)}</p>
+          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+            Vendas Marketplace
+          </p>
+          <p className="text-2xl font-display font-bold mt-2">
+            R$ {totalMarketSales.toFixed(2)}
+          </p>
           <div className="mt-4 flex items-center gap-2 text-[10px] text-blue-400 font-bold">
             <Package size={12} />
             <span>Top: {bestSeller.name}</span>
@@ -101,10 +134,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <Users2 size={48} className="text-amber-500" />
           </div>
-          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">Assinantes Ativos</p>
-          <p className="text-2xl font-display font-bold mt-2">{clients.length}</p>
+          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+            Assinantes Ativos
+          </p>
+          <p className="text-2xl font-display font-bold mt-2">
+            {clients.length}
+          </p>
           <div className="mt-4 flex items-center gap-2 text-[10px] text-amber-500 font-bold">
-            <span>{premiumCount} Premium • {startCount} Start</span>
+            <span>
+              {premiumCount} Premium • {startCount} Start
+            </span>
           </div>
         </div>
 
@@ -112,7 +151,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <AlertCircle size={48} className="text-red-500" />
           </div>
-          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">Inadimplentes</p>
+          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+            Inadimplentes
+          </p>
           <p className="text-2xl font-display font-bold mt-2">{debtCount}</p>
           <div className="mt-4 text-[10px] text-red-500 font-bold">
             <span>Ação necessária urgente</span>
@@ -123,7 +164,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <UserX size={48} className="text-neutral-500" />
           </div>
-          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">Churn (60 dias)</p>
+          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+            Churn (60 dias)
+          </p>
           <p className="text-2xl font-display font-bold mt-2">{churnCount}</p>
           <div className="mt-4 text-[10px] text-neutral-400 font-bold">
             <span>Sem renovação há 2 meses</span>
@@ -137,8 +180,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-xl font-bold">Evolução de Faturamento</h3>
             <div className="flex bg-neutral-800 p-1 rounded-xl">
-              <button className="px-3 py-1 text-[9px] font-bold uppercase bg-amber-500 text-black rounded-lg">Mês</button>
-              <button className="px-3 py-1 text-[9px] font-bold uppercase text-neutral-500">Ano</button>
+              <button className="px-3 py-1 text-[9px] font-bold uppercase bg-amber-500 text-black rounded-lg">
+                Mês
+              </button>
+              <button className="px-3 py-1 text-[9px] font-bold uppercase text-neutral-500">
+                Ano
+              </button>
             </div>
           </div>
           <div className="h-[300px]">
@@ -146,18 +193,45 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               <AreaChart data={revenueData}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
-                <XAxis dataKey="name" stroke="#525252" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#525252" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `R$${val/1000}k`} />
-                <Tooltip 
-                  contentStyle={{backgroundColor: '#171717', border: '1px solid #404040', borderRadius: '12px'}}
-                  itemStyle={{color: '#f59e0b'}}
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#262626"
+                  vertical={false}
                 />
-                <Area type="monotone" dataKey="value" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#525252"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#525252"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(val) => `R$${val / 1000}k`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#171717',
+                    border: '1px solid #404040',
+                    borderRadius: '12px',
+                  }}
+                  itemStyle={{ color: '#f59e0b' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#f59e0b"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorValue)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -185,8 +259,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-display font-bold">{clients.length}</span>
-              <span className="text-[10px] text-neutral-500 uppercase font-bold">Total</span>
+              <span className="text-3xl font-display font-bold">
+                {clients.length}
+              </span>
+              <span className="text-[10px] text-neutral-500 uppercase font-bold">
+                Total
+              </span>
             </div>
           </div>
           <div className="w-full mt-6 space-y-2">
@@ -216,21 +294,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               <Users2 className="text-amber-500" /> Gestão de Clientes
             </h3>
             <div className="flex flex-wrap gap-2">
-              <button 
+              <button
                 onClick={() => setListFilter('ALL')}
-                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${listFilter === 'ALL' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-neutral-800 text-neutral-400 hover:text-white'}`}
+                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  listFilter === 'ALL'
+                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+                    : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                }`}
               >
                 Todos
               </button>
-              <button 
+              <button
                 onClick={() => setListFilter('DEBT')}
-                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${listFilter === 'DEBT' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-neutral-800 text-neutral-400 hover:text-white'}`}
+                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  listFilter === 'DEBT'
+                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
+                    : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                }`}
               >
                 Inadimplentes
               </button>
-              <button 
+              <button
                 onClick={() => setListFilter('CHURN')}
-                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${listFilter === 'CHURN' ? 'bg-neutral-700 text-white' : 'bg-neutral-800 text-neutral-400 hover:text-white'}`}
+                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  listFilter === 'CHURN'
+                    ? 'bg-neutral-700 text-white'
+                    : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                }`}
               >
                 Churn (2 meses)
               </button>
@@ -238,8 +328,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           </div>
 
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
-            <input 
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500"
+              size={18}
+            />
+            <input
               type="text"
               placeholder="Buscar cliente por nome ou whatsapp..."
               value={searchTerm}
@@ -253,17 +346,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-neutral-950/50">
-                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Cliente</th>
-                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Contato</th>
-                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Plano</th>
-                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Status</th>
-                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Última Renovação</th>
-                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest text-right">Ação</th>
+                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                  Cliente
+                </th>
+                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                  Contato
+                </th>
+                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                  Plano
+                </th>
+                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                  Status
+                </th>
+                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                  Última Renovação
+                </th>
+                <th className="p-6 text-[10px] font-bold text-neutral-500 uppercase tracking-widest text-right">
+                  Ação
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredList.map((client) => (
-                <tr key={client.id} className="border-b border-neutral-800 hover:bg-white/5 transition-colors group">
+                <tr
+                  key={client.id}
+                  className="border-b border-neutral-800 hover:bg-white/5 transition-colors group"
+                >
                   <td className="p-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center border border-white/5">
@@ -273,39 +381,79 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                     </div>
                   </td>
                   <td className="p-6">
-                    <a href={`https://wa.me/${client.whatsapp}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-neutral-400 hover:text-amber-500 transition-colors">
+                    <a
+                      href={`https://wa.me/${client.whatsapp}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 text-neutral-400 hover:text-amber-500 transition-colors"
+                    >
                       <Phone size={14} />
-                      <span className="text-sm font-medium">{client.whatsapp || 'N/A'}</span>
+                      <span className="text-sm font-medium">
+                        {client.whatsapp || 'N/A'}
+                      </span>
                     </a>
                   </td>
                   <td className="p-6">
-                    <span className={`text-[9px] font-bold px-2 py-1 rounded-lg uppercase tracking-widest border ${client.plan === UserPlan.PREMIUM ? 'border-amber-500/30 text-amber-500 bg-amber-500/5' : 'border-neutral-700 text-neutral-500 bg-neutral-800'}`}>
+                    <span
+                      className={`text-[9px] font-bold px-2 py-1 rounded-lg uppercase tracking-widest border ${
+                        client.plan === UserPlan.PREMIUM
+                          ? 'border-amber-500/30 text-amber-500 bg-amber-500/5'
+                          : 'border-neutral-700 text-neutral-500 bg-neutral-800'
+                      }`}
+                    >
                       {client.plan}
                     </span>
                   </td>
                   <td className="p-6">
                     <div className="flex items-center gap-2">
-                      {client.status === 'PAID' && <CheckCircle2 size={16} className="text-green-500" />}
-                      {client.status === 'DEBT' && <AlertCircle size={16} className="text-red-500" />}
-                      {client.status === 'CHURN' && <UserX size={16} className="text-neutral-500" />}
-                      <span className={`text-xs font-bold ${client.status === 'PAID' ? 'text-green-500' : client.status === 'DEBT' ? 'text-red-500' : 'text-neutral-500'}`}>
-                        {client.status === 'PAID' ? 'Em dia' : client.status === 'DEBT' ? 'Em atraso' : 'Cancelado'}
+                      {client.status === 'PAID' && (
+                        <CheckCircle2 size={16} className="text-green-500" />
+                      )}
+                      {client.status === 'DEBT' && (
+                        <AlertCircle size={16} className="text-red-500" />
+                      )}
+                      {client.status === 'CHURN' && (
+                        <UserX size={16} className="text-neutral-500" />
+                      )}
+                      <span
+                        className={`text-xs font-bold ${
+                          client.status === 'PAID'
+                            ? 'text-green-500'
+                            : client.status === 'DEBT'
+                            ? 'text-red-500'
+                            : 'text-neutral-500'
+                        }`}
+                      >
+                        {client.status === 'PAID'
+                          ? 'Em dia'
+                          : client.status === 'DEBT'
+                          ? 'Em atraso'
+                          : 'Cancelado'}
                       </span>
                     </div>
                   </td>
                   <td className="p-6">
-                    <span className="text-xs text-neutral-400 font-medium">{client.lastRenewal}</span>
+                    <span className="text-xs text-neutral-400 font-medium">
+                      {client.lastRenewal}
+                    </span>
                   </td>
                   <td className="p-6 text-right">
-                    <button className="text-[10px] font-bold uppercase tracking-widest text-amber-500 hover:underline">Detalhes</button>
+                    <button className="text-[10px] font-bold uppercase tracking-widest text-amber-500 hover:underline">
+                      Detalhes
+                    </button>
                   </td>
                 </tr>
               ))}
               {filteredList.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-20 text-center">
-                    <Users2 className="mx-auto text-neutral-800 mb-4" size={48} />
-                    <p className="text-neutral-500 font-medium">Nenhum cliente encontrado com estes critérios.</p>
+                    <Users2
+                      className="mx-auto text-neutral-800 mb-4"
+                      size={48}
+                    />
+                    <p className="text-neutral-500 font-medium">
+                      Nenhum cliente encontrado com estes critérios.
+                    </p>
                   </td>
                 </tr>
               )}
