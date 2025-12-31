@@ -3,6 +3,7 @@
 import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma';
 import { UserRole, UserPlan, User } from '../types';
+import { createSession, deleteSession, verifySession } from '../lib/session';
 
 export interface AuthState {
   success: boolean;
@@ -11,7 +12,6 @@ export interface AuthState {
 }
 
 export async function login(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
-  //const email = formData.get('email') as string;
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
@@ -20,8 +20,13 @@ export async function login(prevState: AuthState | null, formData: FormData): Pr
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: email },
+          { whatsapp: email } // Allow login with whatsapp using the 'email' field input
+        ]
+      },
     });
 
     if (user && user.password) {
@@ -31,6 +36,8 @@ export async function login(prevState: AuthState | null, formData: FormData): Pr
           return { success: false, message: 'Acesso negado. Sua conta de barbeiro está inativa.' };
         }
         
+        await createSession(user.id);
+
         const mappedUser: User = {
             id: user.id,
             name: user.name,
@@ -39,7 +46,8 @@ export async function login(prevState: AuthState | null, formData: FormData): Pr
             plan: user.plan as UserPlan,
             isActive: user.isActive,
             whatsapp: user.whatsapp || undefined,
-            barbeiroId: user.barbeiroId || undefined
+            barbeiroId: user.barbeiroId || undefined,
+            birthDate: user.birthDate || undefined
         };
 
         return { success: true, user: mappedUser };
@@ -63,39 +71,45 @@ export async function signup(prevState: AuthState | null, formData: FormData): P
   }
 
   try {
+    // Check if user exists by whatsapp
     const existingUser = await prisma.user.findUnique({
-      where: { email: `${name.toLowerCase().replace(/\s/g, '')}@example.com` }, // Using this logic for email gen from original code
+      where: { whatsapp },
     });
 
     if (existingUser) {
-        return { success: false, message: 'Usuário já existe.' };
+        return { success: false, message: 'Usuário (telefone) já cadastrado.' };
     }
 
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const email = `${name.toLowerCase().replace(/\s/g, '')}@example.com`;
-
+    
+    // Explicitly enforce CLIENT role and START plan
     const newUser = await prisma.user.create({
-      data: {
+      data: { 
         name,
-        email,
+        // email is optional now
         password: hashedPassword,
         whatsapp,
+        birthDate,
         role: UserRole.CLIENTE,
         plan: UserPlan.START,
         isActive: true,
       },
     });
 
+    await createSession(newUser.id);
+
+    // Return User object strict for Client view
     const mappedUser: User = {
         id: newUser.id,
         name: newUser.name,
-        email: newUser.email,
-        role: newUser.role as UserRole,
-        plan: newUser.plan as UserPlan,
-        isActive: newUser.isActive,
+        email: newUser.email || '', // Handle null email
+        role: UserRole.CLIENTE,
+        plan: UserPlan.START,
+        isActive: true,
         whatsapp: newUser.whatsapp || undefined,
-        barbeiroId: newUser.barbeiroId || undefined
+        birthDate: newUser.birthDate || undefined
+        // barbeiroId omitted
     };
 
     return { success: true, user: mappedUser };
@@ -104,4 +118,33 @@ export async function signup(prevState: AuthState | null, formData: FormData): P
     console.error('Signup error:', error);
     return { success: false, message: 'Erro ao criar conta.' };
   }
+}
+
+export async function logout() {
+  await deleteSession();
+}
+
+export async function checkSession() {
+  const session = await verifySession();
+  if (session.isAuth && session.userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+    });
+    
+    if (user) {
+         const mappedUser: User = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role as UserRole,
+            plan: user.plan as UserPlan,
+            isActive: user.isActive,
+            whatsapp: user.whatsapp || undefined,
+            barbeiroId: user.barbeiroId || undefined,
+            birthDate: user.birthDate || undefined
+        };
+        return { isAuth: true, user: mappedUser };
+    }
+  }
+  return { isAuth: false, user: null };
 }

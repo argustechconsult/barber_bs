@@ -29,6 +29,7 @@ export type UserMinAggregateOutputType = {
   name: string | null
   email: string | null
   whatsapp: string | null
+  birthDate: string | null
   password: string | null
   role: $Enums.UserRole | null
   plan: $Enums.UserPlan | null
@@ -43,6 +44,7 @@ export type UserMaxAggregateOutputType = {
   name: string | null
   email: string | null
   whatsapp: string | null
+  birthDate: string | null
   password: string | null
   role: $Enums.UserRole | null
   plan: $Enums.UserPlan | null
@@ -57,6 +59,7 @@ export type UserCountAggregateOutputType = {
   name: number
   email: number
   whatsapp: number
+  birthDate: number
   password: number
   role: number
   plan: number
@@ -73,6 +76,7 @@ export type UserMinAggregateInputType = {
   name?: true
   email?: true
   whatsapp?: true
+  birthDate?: true
   password?: true
   role?: true
   plan?: true
@@ -87,6 +91,7 @@ export type UserMaxAggregateInputType = {
   name?: true
   email?: true
   whatsapp?: true
+  birthDate?: true
   password?: true
   role?: true
   plan?: true
@@ -101,6 +106,7 @@ export type UserCountAggregateInputType = {
   name?: true
   email?: true
   whatsapp?: true
+  birthDate?: true
   password?: true
   role?: true
   plan?: true
@@ -186,8 +192,9 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type UserGroupByOutputType = {
   id: string
   name: string
-  email: string
+  email: string | null
   whatsapp: string | null
+  birthDate: string | null
   password: string | null
   role: $Enums.UserRole
   plan: $Enums.UserPlan | null
@@ -221,8 +228,9 @@ export type UserWhereInput = {
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringFilter<"User"> | string
-  email?: Prisma.StringFilter<"User"> | string
+  email?: Prisma.StringNullableFilter<"User"> | string | null
   whatsapp?: Prisma.StringNullableFilter<"User"> | string | null
+  birthDate?: Prisma.StringNullableFilter<"User"> | string | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   plan?: Prisma.EnumUserPlanNullableFilter<"User"> | $Enums.UserPlan | null
@@ -235,8 +243,9 @@ export type UserWhereInput = {
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  email?: Prisma.SortOrder
+  email?: Prisma.SortOrderInput | Prisma.SortOrder
   whatsapp?: Prisma.SortOrderInput | Prisma.SortOrder
+  birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   plan?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -249,11 +258,12 @@ export type UserOrderByWithRelationInput = {
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
+  whatsapp?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   name?: Prisma.StringFilter<"User"> | string
-  whatsapp?: Prisma.StringNullableFilter<"User"> | string | null
+  birthDate?: Prisma.StringNullableFilter<"User"> | string | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   plan?: Prisma.EnumUserPlanNullableFilter<"User"> | $Enums.UserPlan | null
@@ -261,13 +271,14 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   isActive?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-}, "id" | "email">
+}, "id" | "email" | "whatsapp">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  email?: Prisma.SortOrder
+  email?: Prisma.SortOrderInput | Prisma.SortOrder
   whatsapp?: Prisma.SortOrderInput | Prisma.SortOrder
+  birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   plan?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -286,8 +297,9 @@ export type UserScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
-  email?: Prisma.StringWithAggregatesFilter<"User"> | string
+  email?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   whatsapp?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  birthDate?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   password?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   plan?: Prisma.EnumUserPlanNullableWithAggregatesFilter<"User"> | $Enums.UserPlan | null
@@ -300,8 +312,9 @@ export type UserScalarWhereWithAggregatesInput = {
 export type UserCreateInput = {
   id?: string
   name: string
-  email: string
+  email?: string | null
   whatsapp?: string | null
+  birthDate?: string | null
   password?: string | null
   role?: $Enums.UserRole
   plan?: $Enums.UserPlan | null
@@ -314,8 +327,9 @@ export type UserCreateInput = {
 export type UserUncheckedCreateInput = {
   id?: string
   name: string
-  email: string
+  email?: string | null
   whatsapp?: string | null
+  birthDate?: string | null
   password?: string | null
   role?: $Enums.UserRole
   plan?: $Enums.UserPlan | null
@@ -328,8 +342,9 @@ export type UserUncheckedCreateInput = {
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  birthDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   plan?: Prisma.NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
@@ -342,8 +357,9 @@ export type UserUpdateInput = {
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  birthDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   plan?: Prisma.NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
@@ -356,8 +372,9 @@ export type UserUncheckedUpdateInput = {
 export type UserCreateManyInput = {
   id?: string
   name: string
-  email: string
+  email?: string | null
   whatsapp?: string | null
+  birthDate?: string | null
   password?: string | null
   role?: $Enums.UserRole
   plan?: $Enums.UserPlan | null
@@ -370,8 +387,9 @@ export type UserCreateManyInput = {
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  birthDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   plan?: Prisma.NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
@@ -384,8 +402,9 @@ export type UserUpdateManyMutationInput = {
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  birthDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   plan?: Prisma.NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
@@ -400,6 +419,7 @@ export type UserCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   whatsapp?: Prisma.SortOrder
+  birthDate?: Prisma.SortOrder
   password?: Prisma.SortOrder
   role?: Prisma.SortOrder
   plan?: Prisma.SortOrder
@@ -414,6 +434,7 @@ export type UserMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   whatsapp?: Prisma.SortOrder
+  birthDate?: Prisma.SortOrder
   password?: Prisma.SortOrder
   role?: Prisma.SortOrder
   plan?: Prisma.SortOrder
@@ -428,6 +449,7 @@ export type UserMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   whatsapp?: Prisma.SortOrder
+  birthDate?: Prisma.SortOrder
   password?: Prisma.SortOrder
   role?: Prisma.SortOrder
   plan?: Prisma.SortOrder
@@ -468,6 +490,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   name?: boolean
   email?: boolean
   whatsapp?: boolean
+  birthDate?: boolean
   password?: boolean
   role?: boolean
   plan?: boolean
@@ -482,6 +505,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   email?: boolean
   whatsapp?: boolean
+  birthDate?: boolean
   password?: boolean
   role?: boolean
   plan?: boolean
@@ -496,6 +520,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   email?: boolean
   whatsapp?: boolean
+  birthDate?: boolean
   password?: boolean
   role?: boolean
   plan?: boolean
@@ -510,6 +535,7 @@ export type UserSelectScalar = {
   name?: boolean
   email?: boolean
   whatsapp?: boolean
+  birthDate?: boolean
   password?: boolean
   role?: boolean
   plan?: boolean
@@ -519,7 +545,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "whatsapp" | "password" | "role" | "plan" | "barbeiroId" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "whatsapp" | "birthDate" | "password" | "role" | "plan" | "barbeiroId" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
@@ -527,8 +553,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
-    email: string
+    email: string | null
     whatsapp: string | null
+    birthDate: string | null
     password: string | null
     role: $Enums.UserRole
     plan: $Enums.UserPlan | null
@@ -963,6 +990,7 @@ export interface UserFieldRefs {
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly whatsapp: Prisma.FieldRef<"User", 'String'>
+  readonly birthDate: Prisma.FieldRef<"User", 'String'>
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly plan: Prisma.FieldRef<"User", 'UserPlan'>

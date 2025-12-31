@@ -4,13 +4,9 @@ import { MOCK_PRODUCTS, PRODUCT_CATEGORIES } from '../constants';
 import {
   ShoppingCart,
   Plus,
-  Tag,
-  Package,
   Trash2,
   Search,
-  ShoppingBag,
   Sparkles,
-  ArrowRight,
   Filter,
   ChevronDown,
   Check,
@@ -240,48 +236,37 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredProducts.map((product) => (
           <div
             key={product.id}
-            className="group relative bg-neutral-900/30 border border-neutral-800/40 rounded-[2.5rem] overflow-hidden hover:border-amber-500/30 transition-all duration-500 flex flex-col h-full hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            className="group relative bg-neutral-900/30 border border-neutral-800/40 rounded-2xl md:rounded-[2.5rem] overflow-hidden hover:border-amber-500/30 transition-all duration-500 flex flex-col h-full hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
           >
-            <div className="aspect-[4/5] relative overflow-hidden bg-neutral-800/50">
+            <div className="aspect-square md:aspect-[4/5] relative overflow-hidden bg-neutral-800/50">
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out opacity-90 group-hover:opacity-100"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
               />
-
-              {isAdmin && (
-                <div className="absolute top-5 right-5 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
-                  <button
-                    onClick={() => handleDeleteProduct(product.id)}
-                    className="bg-red-500/80 backdrop-blur-lg p-3 rounded-2xl text-white hover:bg-red-600 transition-colors shadow-xl"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              )}
             </div>
 
-            <div className="p-8 flex flex-col flex-1">
-              <div className="mb-6">
-                <h4 className="font-bold text-xl leading-snug text-white/90 group-hover:text-amber-500 transition-colors duration-300">
+            <div className="p-4 md:p-6 flex flex-col flex-1">
+              <div className="mb-2">
+                <h4 className="font-bold text-base md:text-lg text-white/90 group-hover:text-amber-500 transition-colors">
                   {product.name}
                 </h4>
-                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mt-1">
+                <p className="text-[9px] text-neutral-500 uppercase tracking-widest font-bold mt-1">
                   {categories.find((c) => c.id === product.category)?.name}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between mt-auto pt-6 border-t border-neutral-800/40">
-                <p className="text-2xl font-display font-bold text-white">
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-800/40">
+                <p className="text-lg md:text-2xl font-display font-bold text-white">
                   <span className="text-xs text-amber-500/70 mr-0.5">R$</span>
                   {product.price}
                 </p>
-                <button className="bg-white text-black p-4 rounded-2xl hover:bg-amber-500 transition-all duration-300 shadow-xl active:scale-90">
-                  <ShoppingCart size={20} strokeWidth={2.5} />
+                <button className="bg-white text-black p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-amber-500 transition-all shadow-xl active:scale-90">
+                  <ShoppingCart size={18} />
                 </button>
               </div>
             </div>

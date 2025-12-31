@@ -24,8 +24,9 @@ enum UserPlan {
 model User {
   id         String    @id @default(uuid())
   name       String
-  email      String    @unique
-  whatsapp   String?
+  email      String?   @unique
+  whatsapp   String?   @unique
+  birthDate  String?
   password   String?
   role       UserRole  @default(CLIENTE)
   plan       UserPlan? @default(START)

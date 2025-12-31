@@ -15,6 +15,7 @@ export interface User {
   name: string;
   email: string;
   whatsapp?: string;
+  birthDate?: string;
   role: UserRole;
   plan?: UserPlan;
   barbeiroId?: string;

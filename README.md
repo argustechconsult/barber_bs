@@ -10,9 +10,16 @@
 
 # Telas criadas
 
-- Login
-- Cadastro
-- Dashboard - Header
+- Login ok
+- Cadastro ok
+- Integração com neon ok
+- Implementação de autenticação ok
+- Implementação de JWT - SERÁ FEITO NO FINAL
+- Agenda ok
+    - Agenda de barbeiros
+- Marketplace ok
+    - Criar cada card dos produtos
+    - criar seed de produtos
 
 # DADOS DE ACESSO
 

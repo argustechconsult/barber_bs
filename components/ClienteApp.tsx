@@ -11,6 +11,7 @@ import {
   QrCode,
   Banknote,
   Sparkles,
+  X,
 } from 'lucide-react';
 
 interface ClienteAppProps {
@@ -40,6 +41,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   const [nextAvailableDate, setNextAvailableDate] = useState<string | null>(
     null,
   );
+  const [showPremiumBanner, setShowPremiumBanner] = useState(true);
 
   // Generate the next 14 days starting from today
   const availableDates = useMemo(() => {
@@ -331,14 +333,31 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     setSelectedBarber(b);
                     setStep(2);
                   }}
-                  className="bg-neutral-900 py-20 px-6 rounded-[2.5rem] border border-neutral-800 hover:border-amber-500 hover:scale-[1.02] transition-all group relative overflow-hidden flex flex-col items-center text-center space-y-4 shadow-xl"
+                  className="bg-neutral-900
+    py-2 px-2
+    md:py-2 md:px-2
+    rounded-2xl md:rounded-[2.5rem]
+    border border-neutral-800
+    hover:border-amber-500 hover:scale-[1.02]
+    transition-all
+    group relative overflow-hidden
+    flex flex-col items-center text-center
+    space-y-2 md:space-y-4
+    shadow-xl"
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150"></div>
                   <div className="relative">
                     <img
                       src={b.foto}
                       alt={b.nome}
-                      className="w-60 h-[17.5rem] rounded-[2.5rem] object-cover shadow-2xl relative z-10 border-2 border-neutral-800 group-hover:border-amber-500/50 transition-colors"
+                      className="w-36 h-48
+  md:w-60 md:h-[17.5rem]
+  rounded-2xl md:rounded-[2.5rem]
+  object-cover
+  shadow-2xl
+  border-2 border-neutral-800
+  group-hover:border-amber-500/50
+  transition-colors"
                     />
                     <div className="absolute -bottom-2 -right-2 bg-amber-500 text-black p-2 rounded-xl z-20 shadow-lg group-hover:rotate-12 transition-transform">
                       <ChevronRight size={18} strokeWidth={3} />
@@ -357,7 +376,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             </div>
 
             {/* Premium Upgrade Banner for Start Plan */}
-            {user.plan === UserPlan.START && (
+            {user.plan === UserPlan.START && showPremiumBanner && (
               <div className="fixed bottom-20 left-0 right-0 md:left-64 mx-auto w-fit max-w-[90%] md:max-w-md bg-gradient-to-r from-amber-600 to-amber-400 p-4 rounded-[2rem] shadow-2xl shadow-amber-500/20 flex items-center justify-between gap-4 group cursor-pointer hover:scale-[1.02] transition-transform z-40">
                 <div className="flex items-center gap-3">
                   <div className="bg-black/20 p-2 rounded-xl">
@@ -372,7 +391,18 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="text-black" />
+                <div className="flex items-center gap-2">
+                  <ChevronRight className="text-black" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPremiumBanner(false);
+                    }}
+                    className="bg-black/10 p-1 rounded-full hover:bg-black/20 transition-colors"
+                  >
+                    <X size={16} className="text-black" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
