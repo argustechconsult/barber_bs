@@ -35,27 +35,9 @@ const App: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const handleLogin = (email: string, pass: string) => {
-    const found = MOCK_USERS.find(
-      (u) =>
-        u.email === email &&
-        (pass === email ||
-          pass === 'admin' ||
-          pass === 'cliente' ||
-          pass === 'start' ||
-          pass === 'premium' ||
-          pass === '123'),
-    );
-    if (found) {
-      if (found.role !== UserRole.CLIENTE && !found.isActive) {
-        alert('Acesso negado. Sua conta de barbeiro está inativa.');
-        return;
-      }
-      setUser(found);
-      localStorage.setItem('stayler_user', JSON.stringify(found));
-    } else {
-      alert('Credenciais inválidas ou acesso restrito.');
-    }
+  const handleLogin = (loggedInUser: User) => {
+    setUser(loggedInUser);
+    localStorage.setItem('stayler_user', JSON.stringify(loggedInUser));
   };
 
   const handleLogout = () => {
