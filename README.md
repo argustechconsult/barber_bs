@@ -28,3 +28,7 @@ Premium
 Login: premium
 Senha: premium
 
+# Telas criadas
+- Login
+- Cadastro
+- Dashboard

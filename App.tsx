@@ -1,8 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { User, UserRole } from './types';
+import { User, UserRole, UserPlan } from './types';
 import { MOCK_USERS } from './constants';
 import Login from './components/Login';
+import SignUp from './components/SignUp';
 import ClienteApp from './components/ClienteApp';
 import BarberDashboard from './components/BarberDashboard';
 import AdminDashboard from './components/AdminDashboard';
@@ -24,6 +25,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<string>('main');
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('stayler_user');
@@ -67,6 +69,33 @@ const App: React.FC = () => {
     localStorage.setItem('stayler_user', JSON.stringify(updatedUser));
   };
 
+  const handleRegister = (data: {
+    name: string;
+    pass: string;
+    whatsapp: string;
+    birthDate: string;
+  }) => {
+    // In a real app, we would send this data to the backend
+    // For now, we simulate a successful registration as a client with 'start' plan
+    const newUser: User = {
+      id: Math.random().toString(), // Mock ID
+      name: data.name,
+      email: `${data.name.toLowerCase().replace(/\s/g, '')}@example.com`, // Mock email
+      role: UserRole.CLIENTE,
+      plan: UserPlan.START,
+      avatar:
+        'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', // Mock avatar
+      isActive: true,
+      // Add other necessary mocking fields if User type requires them
+      appointments: [],
+      history: [],
+    } as User;
+
+    setUser(newUser);
+    localStorage.setItem('stayler_user', JSON.stringify(newUser));
+    setIsSigningUp(false);
+  };
+
   if (loading)
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -75,7 +104,17 @@ const App: React.FC = () => {
     );
 
   if (!user) {
-    return <Login onLogin={handleLogin} />;
+    if (isSigningUp) {
+      return (
+        <SignUp
+          onRegister={handleRegister}
+          onBackToLogin={() => setIsSigningUp(false)}
+        />
+      );
+    }
+    return (
+      <Login onLogin={handleLogin} onSignUpClick={() => setIsSigningUp(true)} />
+    );
   }
 
   const isAdmin = user.role === UserRole.ADMIN;
