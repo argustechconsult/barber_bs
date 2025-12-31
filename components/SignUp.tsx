@@ -67,17 +67,17 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-black flex items-start md:items-center justify-center p-2 pt-12 md:p-4 relative overflow-hidden">
       {/* Background patterns */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-amber-500/10 rounded-full blur-[120px]"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-amber-500/5 rounded-full blur-[120px]"></div>
 
-      <div className="w-full max-w-md space-y-8 z-10">
+      <div className="w-full max-w-md space-y-6 md:space-y-8 z-10">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-amber-500 rounded-3xl mb-4 rotate-3 shadow-2xl shadow-amber-500/20">
-            <Scissors className="text-black w-10 h-10" />
+          <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-amber-500 rounded-3xl mb-3 md:mb-4 rotate-3 shadow-2xl shadow-amber-500/20">
+            <Scissors className="text-black w-8 h-8 md:w-10 md:h-10" />
           </div>
-          <h1 className="text-4xl font-display font-bold text-white tracking-tighter">
+          <h1 className="text-3xl md:text-4xl font-display font-bold text-white tracking-tighter">
             STAYLER
           </h1>
           <p className="text-neutral-500 mt-2 text-sm tracking-widest uppercase">
@@ -85,8 +85,8 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
           </p>
         </div>
 
-        <div className="bg-neutral-900/50 backdrop-blur-xl p-8 rounded-3xl border border-neutral-800 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="bg-neutral-900/50 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-neutral-800 shadow-2xl">
+          <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
             <div>
               <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
                 Nome completo
@@ -96,7 +96,7 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Seu nome completo"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
+                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 md:py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
                 required
               />
             </div>
@@ -118,7 +118,7 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
                   setWhatsapp(v);
                 }}
                 placeholder="(00) 00000-0000"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
+                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 md:py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
                 required
               />
             </div>
@@ -141,7 +141,7 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
                 }}
                 placeholder="DD/MM/AAAA"
                 maxLength={10}
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all placeholder:text-neutral-600"
+                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 md:py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all placeholder:text-neutral-600"
                 required
               />
             </div>
@@ -155,7 +155,7 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Crie uma senha segura"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
+                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 md:py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
                 required
               />
             </div>
@@ -183,7 +183,7 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
           </div>
         </div>
 
-        <div className="pt-1 mt-12 text-center">
+        <div className="pt-1 mt-6 md:mt-12 text-center">
           <p className="text-white text-[10px] uppercase tracking-widest">
             © {new Date().getFullYear()} Barbearia Stayler. Todos os direitos
             reservados.
