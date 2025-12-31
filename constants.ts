@@ -103,6 +103,14 @@ export const MOCK_USERS: User[] = [
     role: UserRole.CLIENTE,
     plan: UserPlan.PREMIUM,
     isActive: true
+  },
+  {
+    id: 'admin',
+    name: 'Barbeiro Administrador',
+    email: 'admin',
+    role: UserRole.ADMIN,
+    isActive: true,
+    barbeiroId: 'b1'
   }
 ];
 
