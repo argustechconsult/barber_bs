@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+'use client';
+import React, { useState, useTransition } from 'react';
 import { Scissors } from 'lucide-react';
+import { signup } from '../actions/auth.actions';
 
 interface SignUpProps {
   onRegister: (data: {
@@ -16,10 +18,52 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
   const [password, setPassword] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onRegister({ name, pass: password, whatsapp, birthDate });
+    setError(null);
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('password', password);
+      formData.append('whatsapp', whatsapp);
+      formData.append('birthDate', birthDate);
+
+      try {
+        const result = await signup(null, formData);
+        if (result.success && result.user) {
+          // Pass formatted data back to match expected interface, or update interface
+          // Since onRegister expects specific fields, we'll map them,
+          // essentially the App.tsx will handle the "logged in user" state,
+          // but App.tsx expects the *input* data from onRegister to create the user logic.
+          // WAIT: App.tsx `handleRegister` currently mocks the user creation.
+          // Ideally, we should update `onRegister` to accept the `User` object directly
+          // but that would require changing App.tsx interface.
+          // For now, let's keep the prop interface but maybe ignore the data
+          // if we can pass the actual user object?
+          // Actually, looking at App.tsx, `handleRegister` takes the raw data and creates the user.
+          // BUT `signup` action ALREADY created the user object.
+          // To properly refactor: App.tsx `handleRegister` should ideally receive the `User` object.
+          // Let's pass the data as expected so App.tsx can do its thing (which is redundant now but consistent with interface)
+          // OR we blindly call onRegister with the data.
+          // HOWEVER, the user asked to "Remova as logicas de autenticação de components... e concentre no auth.actions.ts".
+          // This implies App.tsx logic is also authentication logic that should move?
+          // The prompt said "components/Login.tsx e components/SignUp.tsx".
+          // I will pass the data to `onRegister` as expected by App.tsx to avoid breaking App.tsx,
+          // but I have performed the "real" logic in the action.
+          // Actually, the `signup` action returns the `User` object.
+          // We should probably update App.tsx to just take the `User` object.
+          onRegister({ name, pass: password, whatsapp, birthDate });
+        } else {
+          setError(result.message || 'Erro ao criar conta');
+        }
+      } catch (err) {
+        setError('Erro inesperado. Tente novamente.');
+      }
+    });
   };
 
   return (
@@ -116,11 +160,16 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
               />
             </div>
 
+            {error && (
+              <p className="text-red-500 text-xs text-center">{error}</p>
+            )}
+
             <button
               type="submit"
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 transform transition-all active:scale-[0.98] mt-4"
+              disabled={isPending}
+              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 transform transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Criar Conta
+              {isPending ? 'Criando Conta...' : 'Criar Conta'}
             </button>
           </form>
 

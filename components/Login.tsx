@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+'use client';
+import React, { useState, useTransition } from 'react';
 import { Scissors } from 'lucide-react';
+import { login } from '../actions/auth.actions';
 
 interface LoginProps {
-  onLogin: (email: string, pass: string) => void;
+  onLogin: (user: any) => void;
   onSignUpClick?: () => void;
 }
 
@@ -10,10 +12,29 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isBarberView, setIsBarberView] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(email, password);
+    setError(null);
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('password', password);
+
+      try {
+        const result = await login(null, formData);
+        if (result.success && result.user) {
+          onLogin(result.user);
+        } else {
+          setError(result.message || 'Erro ao fazer login');
+        }
+      } catch (err) {
+        setError('Erro inesperado. Tente novamente.');
+      }
+    });
   };
 
   return (
@@ -83,6 +104,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
               />
             </div>
 
+            {error && (
+              <p className="text-red-500 text-xs text-center">{error}</p>
+            )}
+
             {isBarberView && (
               <p className="text-[10px] text-amber-500/80 text-center italic mt-2">
                 Acesso restrito. Barbeiros são cadastrados via admin.
@@ -91,9 +116,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
 
             <button
               type="submit"
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 transform transition-all active:scale-[0.98] mt-4"
+              disabled={isPending}
+              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 transform transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Entrar na Barbearia
+              {isPending ? 'Entrando...' : 'Entrar na Barbearia'}
             </button>
           </form>
 

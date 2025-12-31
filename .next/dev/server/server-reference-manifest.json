@@ -1,5 +1,32 @@
 {
-  "node": {},
+  "node": {
+    "60061a5a95d8e0915fa9f526433a73694131e3d2b3": {
+      "workers": {
+        "app/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fjhon%2FDesktop%2FARGUS%2Fprojetos_landinpages%2FBarber_BS%2Factions%2Fauth.actions.ts%22%2C%5B%7B%22id%22%3A%2260061a5a95d8e0915fa9f526433a73694131e3d2b3%22%2C%22exportedName%22%3A%22signup%22%2C%22filename%22%3A%22actions%2Fauth.actions.ts%22%7D%2C%7B%22id%22%3A%22607e60284417189549093e788b079db329143b334b%22%2C%22exportedName%22%3A%22login%22%2C%22filename%22%3A%22actions%2Fauth.actions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/page": "action-browser"
+      },
+      "filename": "actions/auth.actions.ts",
+      "exportedName": "signup"
+    },
+    "607e60284417189549093e788b079db329143b334b": {
+      "workers": {
+        "app/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fjhon%2FDesktop%2FARGUS%2Fprojetos_landinpages%2FBarber_BS%2Factions%2Fauth.actions.ts%22%2C%5B%7B%22id%22%3A%2260061a5a95d8e0915fa9f526433a73694131e3d2b3%22%2C%22exportedName%22%3A%22signup%22%2C%22filename%22%3A%22actions%2Fauth.actions.ts%22%7D%2C%7B%22id%22%3A%22607e60284417189549093e788b079db329143b334b%22%2C%22exportedName%22%3A%22login%22%2C%22filename%22%3A%22actions%2Fauth.actions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/page": "action-browser"
+      },
+      "filename": "actions/auth.actions.ts",
+      "exportedName": "login"
+    }
+  },
   "edge": {},
   "encryptionKey": "7mO7lpwYOJwdwYolIYVP4YXNPu9jW4OLCRT0eH7nipY="
 }
