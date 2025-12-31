@@ -1,5 +1,0 @@
-1:"$Sreact.fragment"
-2:I[7121,[],""]
-3:I[4581,[],""]
-:HL["https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap","style"]
-0:{"buildId":"wjVZ9zG0lusDANrHCK4LU","rsc":["$","$1","c",{"children":[null,["$","html",null,{"lang":"pt-BR","children":[["$","head",null,{"children":[["$","script",null,{"src":"https://cdn.tailwindcss.com"}],["$","link",null,{"href":"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap","rel":"stylesheet"}]]}],["$","body",null,{"className":"font-sans bg-neutral-950 text-white","children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"\n          body {\n            font-family: 'Inter', sans-serif;\n            background-color: #0a0a0a;\n            color: #ffffff;\n          }\n          .font-display {\n            font-family: 'Playfair Display', serif;\n          }\n        "}}],["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}]]}]]}],"loading":null,"isPartial":false}
