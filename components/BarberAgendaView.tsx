@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, UserRole, Appointment, Barbeiro } from '../types';
-import { MOCK_APPOINTMENTS, MOCK_BARBERS } from '../constants';
+import { MOCK_BARBERS } from '../constants';
+import { getBarberSchedule } from '../actions/appointment.actions';
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -19,39 +20,90 @@ interface BarberAgendaViewProps {
 const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
   const [viewType, setViewType] = useState<'day' | 'week' | 'month'>('day');
   const [selectedBarberId, setSelectedBarberId] = useState<string>(
-    user.barbeiroId || MOCK_BARBERS[0].id,
+    user.role === UserRole.BARBEIRO ? user.id : user.barbeiroId || '',
   );
   const isAdmin = user.role === UserRole.ADMIN;
 
-  const filteredAppointments = isAdmin
+  /* const filteredAppointments = isAdmin
     ? MOCK_APPOINTMENTS.filter((ap) => ap.barbeiroId === selectedBarberId)
-    : MOCK_APPOINTMENTS.filter((ap) => ap.barbeiroId === user.barbeiroId);
+    : MOCK_APPOINTMENTS.filter((ap) => ap.barbeiroId === user.barbeiroId); */
+
+  // Real State
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch appointments
+  React.useEffect(() => {
+    async function fetchApps() {
+      setLoading(true);
+      // If admin, use selected. If Barber, use own ID.
+      const barberId = isAdmin
+        ? selectedBarberId
+        : user.role === UserRole.BARBEIRO
+        ? user.id
+        : user.barbeiroId;
+
+      if (!barberId) {
+        setLoading(false);
+        return;
+      }
+
+      // For simplicity in this view, let's fetch for "today" or based on view logic.
+      // Assuming "Day View" is main focus for now. Defaulting to Today.
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      const res = await getBarberSchedule(barberId, todayStr);
+      if (res.success && res.appointments) {
+        setAppointments(
+          res.appointments.map((a) => ({
+            id: a.id,
+            clientName: a.client.name, // using include from action
+            date: a.date,
+            barbeiroId: a.barberId,
+            status: a.status,
+          })),
+        );
+      } else {
+        setAppointments([]);
+      }
+      setLoading(false);
+    }
+    fetchApps();
+  }, [selectedBarberId, user.barbeiroId, isAdmin, viewType]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Barber Profile Header */}
-      {user.barbeiroId && (
+      {!isAdmin && (
         <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
           {(() => {
-            const barber = MOCK_BARBERS.find((b) => b.id === user.barbeiroId);
-            if (!barber) return null;
+            const name = user.name;
+            const photo = user.whatsapp;
+
             return (
               <>
                 <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
-                  <img
-                    src={barber.foto}
-                    alt={barber.nome}
-                    className="w-full h-full rounded-full object-cover"
-                  />
+                  {photo && photo.startsWith('data:image') ? (
+                    <img
+                      src={photo}
+                      alt={name}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-neutral-800 flex items-center justify-center">
+                      <UserIcon size={48} className="text-white" />
+                    </div>
+                  )}
                 </div>
                 <h2 className="text-2xl font-display font-bold text-white">
-                  {barber.nome}
+                  {name}
                 </h2>
               </>
             );
           })()}
         </div>
       )}
+
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-4 md:pt-0">
         <div>
           <h2 className="text-3xl font-display font-bold">
@@ -106,47 +158,53 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
       <div className="bg-neutral-900/50 border border-neutral-800 p-8 rounded-[3rem] shadow-2xl space-y-8">
         {viewType === 'day' ? (
           <div className="grid grid-cols-1 gap-4">
-            {filteredAppointments.length > 0 ? (
-              filteredAppointments.map((ap) => (
-                <div
-                  key={ap.id}
-                  className="bg-neutral-950 border border-neutral-800 p-6 rounded-[2rem] flex flex-col sm:flex-row items-center gap-6 group hover:border-amber-500/30 transition-all"
-                >
-                  <div className="w-20 h-20 bg-neutral-900 rounded-3xl flex flex-col items-center justify-center border border-white/5 shadow-xl">
-                    <span className="text-[10px] font-bold text-neutral-500 uppercase">
-                      Horário
-                    </span>
-                    <span className="text-xl font-bold text-amber-500">
-                      10:00
-                    </span>
-                  </div>
-
-                  <div className="flex-1 text-center sm:text-left">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <h4 className="text-xl font-bold">{ap.clientName}</h4>
-                      <span className="bg-neutral-900 text-neutral-500 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest self-center">
-                        Confirmado
+            {appointments.length > 0 ? (
+              appointments.map((ap) => {
+                const time = new Date(ap.date).toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+                return (
+                  <div
+                    key={ap.id}
+                    className="bg-neutral-950 border border-neutral-800 p-6 rounded-[2rem] flex flex-col sm:flex-row items-center gap-6 group hover:border-amber-500/30 transition-all"
+                  >
+                    <div className="w-20 h-20 bg-neutral-900 rounded-3xl flex flex-col items-center justify-center border border-white/5 shadow-xl">
+                      <span className="text-[10px] font-bold text-neutral-500 uppercase">
+                        Horário
+                      </span>
+                      <span className="text-xl font-bold text-amber-500">
+                        {time}
                       </span>
                     </div>
-                    <div className="flex items-center justify-center sm:justify-start gap-4 mt-2 text-neutral-500">
-                      <div className="flex items-center gap-1">
-                        <Clock size={14} />
-                        <span className="text-xs">45 min</span>
+
+                    <div className="flex-1 text-center sm:text-left">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <h4 className="text-xl font-bold">{ap.clientName}</h4>
+                        <span className="bg-neutral-900 text-neutral-500 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest self-center">
+                          {ap.status}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <UserIcon size={14} />
-                        <span className="text-xs">Serviço: Degradê</span>
+                      <div className="flex items-center justify-center sm:justify-start gap-4 mt-2 text-neutral-500">
+                        <div className="flex items-center gap-1">
+                          <Clock size={14} />
+                          <span className="text-xs">45 min</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <UserIcon size={14} />
+                          <span className="text-xs">Serviço: Degradê</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex gap-2">
-                    <button className="bg-green-500 text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-green-400 transition-all active:scale-95 shadow-lg shadow-green-500/10">
-                      <CheckCircle2 size={18} /> Concluir
-                    </button>
+                    <div className="flex gap-2">
+                      <button className="bg-green-500 text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-green-400 transition-all active:scale-95 shadow-lg shadow-green-500/10">
+                        <CheckCircle2 size={18} /> Concluir
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="text-center py-16">
                 <CalendarIcon

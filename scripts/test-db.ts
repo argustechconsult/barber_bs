@@ -2,13 +2,14 @@ import 'dotenv/config';
 import { prisma } from '../lib/prisma';
 
 async function main() {
-  console.log('Testing DB connection...');
+  console.log('Listing Barbers...');
   try {
-    const users = await prisma.user.findMany();
-    console.log('Connection successful!');
-    console.log('Users found:', users.length);
-    users.forEach(u => {
-      console.log(`User: ${u.name} | Email: ${u.email} | Whatsapp: ${u.whatsapp} | Role: ${u.role} | Plan: ${u.plan}`);
+    const barbers = await prisma.user.findMany({
+        where: { role: 'BARBEIRO' }
+    });
+    console.log('Barbers found:', barbers.length);
+    barbers.forEach(u => {
+      console.log(`Barber: ${u.name} | ID: ${u.id} | Email: ${u.email}`);
     });
   } catch (error) {
     console.error('Connection failed:', error);

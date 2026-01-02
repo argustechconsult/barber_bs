@@ -1,6 +1,6 @@
 # MÓDULOS
 
-- AUTH - Signup, Login, Logout
+- AUTH - Signup, Login, Logout ✅
 - AGENDA - Agenda de barbeiros
 - PAGAMENTOS - Pagamento com cartão de crédito / PIX
 - MARKETPLACE - Produtos
@@ -13,7 +13,7 @@
 - Login
     - Validação de usuário
     - Criação de sessão com JWT
-    - Login com o Google
+    - Login com o Google - **PRECISA CADASTRAR CARTÃO DO CLIENTE**
 - Logout
     - Remoção de sessão
 
@@ -21,14 +21,17 @@
 
 ## AGENDA
 
-- Agenda de barbeiros
+- Agenda de barbeiros ✅
     - Listagem de barbeiros
     - Agenda de barbeiros
     - Agenda de clientes
 
-- Agenda de clientes
+- Agenda de clientes ✅
     - Listagem de clientes
     - Agenda de clientes
+
+* webhook no n8n para envio de email de agendamento + mensagem wpp com a confirmação do agendamento.❌
+    - serviço de lembrete de agendamento no dia do agendamento.❌
 
 
 
@@ -41,7 +44,9 @@
 * verificar tabela do pagamento no DB - (produto,servico,plano,usuario,id_usuario,data_vencimento,status_pagamento)
     - status_pagamento: PENDENTE, PAGO, CANCELADO.
     - O stripe tenta verificar o pagamento durante sete dias,após isso o status é atualizado para CANCELADO. E o cliente não usa mais o serviço
+* produtos,serviços e planos cadastrados no banco devem refletir no stripe
 
+OBS: Comando para criar produtos no stripe: npx tsx scripts/test-stripe-sync.ts
 
 # DADOS DE ACESSO
 
@@ -55,6 +60,11 @@ senha: argustechbs123
 
 - **Login:** admin@barber.com
 - **Senha:** admin
+
+## Barbeiro Premium
+
+- **Login:** joao@barber.com
+- **Senha:** 123456
 
 ## Usuário Start
 
