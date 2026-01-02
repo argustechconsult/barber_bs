@@ -10,6 +10,7 @@ const stripe = stripeKey ? new Stripe(stripeKey) : null;
 interface CreateServiceData {
     name: string;
     price: number;
+    duration?: number;
 }
 
 interface CreateProductData {
@@ -35,7 +36,8 @@ export async function createService(data: CreateServiceData) {
         const service = await prisma.service.create({
             data: {
                 name: data.name,
-                price: data.price
+                price: data.price,
+                duration: data.duration || 30
             }
         });
 

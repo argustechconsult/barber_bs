@@ -1,9 +1,15 @@
 import React, { useRef, useState } from 'react';
-import { User, UserPlan, UserRole, Barbeiro } from '../types';
+import { User, UserPlan, UserRole, Barbeiro, Service } from '../types';
 import {
   SERVICES as INITIAL_SERVICES,
   MOCK_BARBERS as INITIAL_BARBERS,
 } from '../constants';
+import {
+  getServices,
+  updateService,
+  deleteService,
+} from '../actions/service.actions';
+import { createService } from '../actions/stripe.actions';
 import {
   Camera,
   User as UserIcon,
@@ -32,9 +38,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const isStaff =
     user.role === UserRole.BARBEIRO || user.role === UserRole.ADMIN;
 
-  const [services, setServices] = useState(INITIAL_SERVICES);
+  const [services, setServices] = useState<Service[]>([]); // Initialize empty or wait for fetch
   const [barbers, setBarbers] = useState<Barbeiro[]>(INITIAL_BARBERS);
   const [showAddBarber, setShowAddBarber] = useState(false);
+  const [showAddService, setShowAddService] = useState(false);
+
+  // Fetch Services
+  React.useEffect(() => {
+    async function load() {
+      const result = await getServices();
+      if (result.success && result.services) {
+        setServices(result.services);
+      }
+    }
+    load();
+  }, []);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -50,17 +68,71 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
-  const updateServicePrice = (id: string, value: number) => {
+  // Currency Helpers
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  const parseCurrency = (value: string) => {
+    return Number(value.replace(/\D/g, '')) / 100;
+  };
+
+  const handleUpdateService = async (
+    id: string,
+    field: 'price' | 'name',
+    value: string | number,
+  ) => {
+    // Optimistic Update
     setServices((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, price: value } : s)),
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
     );
   };
 
-  const deleteBarber = (id: string) => {
-    if (confirm('Tem certeza que deseja remover este barbeiro da equipe?')) {
-      setBarbers((prev) => prev.filter((b) => b.id !== id));
-    }
+  const handleSaveService = async (
+    id: string,
+    data: { price?: number; name?: string },
+  ) => {
+    await updateService(id, data);
   };
+
+  // Delete Confirmation State
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    type: 'service' | 'barber' | null;
+    id: string | null;
+  }>({ isOpen: false, type: null, id: null });
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmation.id || !deleteConfirmation.type) return;
+
+    if (deleteConfirmation.type === 'service') {
+      const result = await deleteService(deleteConfirmation.id);
+      if (result.success) {
+        setServices((prev) =>
+          prev.filter((s) => s.id !== deleteConfirmation.id),
+        );
+      } else {
+        alert('Erro ao remover serviço');
+      }
+    } else if (deleteConfirmation.type === 'barber') {
+      setBarbers((prev) => prev.filter((b) => b.id !== deleteConfirmation.id));
+    }
+
+    setDeleteConfirmation({ isOpen: false, type: null, id: null });
+  };
+
+  const handleDeleteService = (id: string) => {
+    setDeleteConfirmation({ isOpen: true, type: 'service', id });
+  };
+
+  const deleteBarber = (id: string) => {
+    setDeleteConfirmation({ isOpen: true, type: 'barber', id });
+  };
+
+  // ... (keep handleAddBarber etc) ...
 
   const handleAddBarber = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -78,15 +150,35 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     setShowAddBarber(false);
   };
 
+  // ... (handleAddService) ...
+
+  const handleAddService = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get('name') as string;
+    const rawPrice = formData.get('price') as string;
+    const price = parseCurrency(rawPrice);
+
+    const result = await createService({ name, price });
+    if (result.success && result.service) {
+      setServices([...services, result.service as any]); // Type casting if needed or fix types
+      setShowAddService(false);
+      // Optionally fetch again to be sure
+    } else {
+      alert('Erro ao criar serviço');
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-500 pb-20">
+      {/* ... header ... */}
       <header className="text-center pt-4">
         <h2 className="text-4xl font-display font-bold">Configurações</h2>
         <p className="text-neutral-500 mt-2">
           Personalize seu perfil profissional
         </p>
       </header>
-
+      {/* ... content ... */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Profile Card */}
         <div
@@ -163,7 +255,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Admin and Staff Content Area */}
         <div className="lg:col-span-8 space-y-8">
-          {/* Admin only sections removed from here if requested to be "removed from dashboard" but kept in management */}
           {isAdmin && (
             <>
               <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 animate-in fade-in slide-in-from-top-4">
@@ -211,36 +302,73 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 animate-in fade-in slide-in-from-top-6">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  <Scissors className="text-amber-500" /> Serviços & Preços
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <Scissors className="text-amber-500" /> Serviços & Preços
+                  </h3>
+                  <button
+                    onClick={() => setShowAddService(true)}
+                    className="p-3 bg-amber-500 text-black rounded-2xl hover:scale-110 transition-transform shadow-lg shadow-amber-500/10"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {services.map((service) => (
                     <div
                       key={service.id}
-                      className="p-6 bg-neutral-950 border border-neutral-800 rounded-3xl space-y-4"
+                      className="p-6 bg-neutral-950 border border-neutral-800 rounded-3xl space-y-4 group relative"
                     >
-                      <p className="text-sm font-bold border-b border-neutral-800 pb-2">
-                        {service.name}
-                      </p>
+                      <button
+                        onClick={() => handleDeleteService(service.id)}
+                        className="absolute top-4 right-4 text-neutral-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-2"
+                        title="Remover Serviço"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+
+                      <div className="border-b border-neutral-800 pb-2 mr-6">
+                        <input
+                          type="text"
+                          value={service.name}
+                          onChange={(e) =>
+                            handleUpdateService(
+                              service.id,
+                              'name',
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            handleSaveService(service.id, {
+                              name: e.target.value,
+                            })
+                          }
+                          className="bg-transparent text-sm font-bold w-full outline-none focus:text-amber-500 transition-colors placeholder-neutral-700"
+                          placeholder="Nome do Serviço"
+                        />
+                      </div>
+
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
                           Valor do Corte
                         </span>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600 font-bold text-xs">
-                            R$
-                          </span>
                           <input
-                            type="number"
-                            className="bg-neutral-900 border border-neutral-800 rounded-xl pl-9 pr-4 py-3 text-sm font-bold w-28 focus:border-amber-500/40 outline-none"
-                            value={service.price}
+                            type="text"
+                            className="bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm font-bold w-32 focus:border-amber-500/40 outline-none text-right"
+                            value={formatCurrency(service.price)}
                             onChange={(e) =>
-                              updateServicePrice(
+                              handleUpdateService(
                                 service.id,
-                                Number(e.target.value),
+                                'price',
+                                parseCurrency(e.target.value),
                               )
+                            }
+                            onBlur={() =>
+                              handleSaveService(service.id, {
+                                price: service.price,
+                              })
                             }
                           />
                         </div>
@@ -276,6 +404,59 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Add Service Modal - Admin Only */}
+      {showAddService && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+          <div className="bg-neutral-950 border border-neutral-800 w-full max-w-md rounded-[2.5rem] p-10 space-y-8 animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-display font-bold">Novo Serviço</h3>
+              <button
+                onClick={() => setShowAddService(false)}
+                className="p-2 text-neutral-500 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddService} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                  Nome do Serviço
+                </label>
+                <input
+                  name="name"
+                  required
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40"
+                  placeholder="Ex: Corte Degrade"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                  Preço (R$)
+                </label>
+                <input
+                  name="price"
+                  type="text"
+                  required
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40"
+                  placeholder="R$ 0,00"
+                  onChange={(e) => {
+                    // Auto-masking for new input
+                    const val = parseCurrency(e.target.value);
+                    e.target.value = formatCurrency(val);
+                  }}
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-amber-500 text-black font-bold py-5 rounded-3xl shadow-lg shadow-amber-500/10 transition-all active:scale-95"
+              >
+                Criar Serviço
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Add Barber Modal - Admin Only */}
       {showAddBarber && (
@@ -322,6 +503,40 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 Adicionar à Equipe
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation.isOpen && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[150] flex items-center justify-center p-6">
+          <div className="bg-neutral-950 border border-neutral-800 w-full max-w-sm rounded-[2.5rem] p-8 space-y-6 animate-in zoom-in-95 duration-300 text-center">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto text-red-500">
+              <Trash2 size={32} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold">Confirma a exclusão?</h3>
+              <p className="text-sm text-neutral-500">
+                Esta ação é irreversível e removerá o item permanentemente do
+                sistema.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() =>
+                  setDeleteConfirmation({ isOpen: false, type: null, id: null })
+                }
+                className="bg-neutral-800 text-white font-bold py-4 rounded-2xl hover:bg-neutral-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="bg-red-500 text-white font-bold py-4 rounded-2xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+              >
+                Excluir
+              </button>
+            </div>
           </div>
         </div>
       )}

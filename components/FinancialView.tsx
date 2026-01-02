@@ -1,7 +1,6 @@
 import React from 'react';
 import { User, UserPlan } from '../types';
 import {
-  CreditCard,
   Download,
   CheckCircle,
   Clock,

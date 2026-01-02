@@ -778,6 +778,7 @@ export const ServiceScalarFieldEnum = {
   id: 'id',
   name: 'name',
   price: 'price',
+  duration: 'duration',
   stripeProductId: 'stripeProductId',
   stripePriceId: 'stripePriceId',
   createdAt: 'createdAt',

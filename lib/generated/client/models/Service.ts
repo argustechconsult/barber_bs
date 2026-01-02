@@ -28,16 +28,19 @@ export type AggregateService = {
 
 export type ServiceAvgAggregateOutputType = {
   price: number | null
+  duration: number | null
 }
 
 export type ServiceSumAggregateOutputType = {
   price: number | null
+  duration: number | null
 }
 
 export type ServiceMinAggregateOutputType = {
   id: string | null
   name: string | null
   price: number | null
+  duration: number | null
   stripeProductId: string | null
   stripePriceId: string | null
   createdAt: Date | null
@@ -48,6 +51,7 @@ export type ServiceMaxAggregateOutputType = {
   id: string | null
   name: string | null
   price: number | null
+  duration: number | null
   stripeProductId: string | null
   stripePriceId: string | null
   createdAt: Date | null
@@ -58,6 +62,7 @@ export type ServiceCountAggregateOutputType = {
   id: number
   name: number
   price: number
+  duration: number
   stripeProductId: number
   stripePriceId: number
   createdAt: number
@@ -68,16 +73,19 @@ export type ServiceCountAggregateOutputType = {
 
 export type ServiceAvgAggregateInputType = {
   price?: true
+  duration?: true
 }
 
 export type ServiceSumAggregateInputType = {
   price?: true
+  duration?: true
 }
 
 export type ServiceMinAggregateInputType = {
   id?: true
   name?: true
   price?: true
+  duration?: true
   stripeProductId?: true
   stripePriceId?: true
   createdAt?: true
@@ -88,6 +96,7 @@ export type ServiceMaxAggregateInputType = {
   id?: true
   name?: true
   price?: true
+  duration?: true
   stripeProductId?: true
   stripePriceId?: true
   createdAt?: true
@@ -98,6 +107,7 @@ export type ServiceCountAggregateInputType = {
   id?: true
   name?: true
   price?: true
+  duration?: true
   stripeProductId?: true
   stripePriceId?: true
   createdAt?: true
@@ -195,6 +205,7 @@ export type ServiceGroupByOutputType = {
   id: string
   name: string
   price: number
+  duration: number
   stripeProductId: string | null
   stripePriceId: string | null
   createdAt: Date
@@ -228,6 +239,7 @@ export type ServiceWhereInput = {
   id?: Prisma.StringFilter<"Service"> | string
   name?: Prisma.StringFilter<"Service"> | string
   price?: Prisma.FloatFilter<"Service"> | number
+  duration?: Prisma.IntFilter<"Service"> | number
   stripeProductId?: Prisma.StringNullableFilter<"Service"> | string | null
   stripePriceId?: Prisma.StringNullableFilter<"Service"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Service"> | Date | string
@@ -238,6 +250,7 @@ export type ServiceOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   price?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   stripeProductId?: Prisma.SortOrderInput | Prisma.SortOrder
   stripePriceId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -251,6 +264,7 @@ export type ServiceWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ServiceWhereInput | Prisma.ServiceWhereInput[]
   name?: Prisma.StringFilter<"Service"> | string
   price?: Prisma.FloatFilter<"Service"> | number
+  duration?: Prisma.IntFilter<"Service"> | number
   stripeProductId?: Prisma.StringNullableFilter<"Service"> | string | null
   stripePriceId?: Prisma.StringNullableFilter<"Service"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Service"> | Date | string
@@ -261,6 +275,7 @@ export type ServiceOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   price?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   stripeProductId?: Prisma.SortOrderInput | Prisma.SortOrder
   stripePriceId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -279,6 +294,7 @@ export type ServiceScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Service"> | string
   name?: Prisma.StringWithAggregatesFilter<"Service"> | string
   price?: Prisma.FloatWithAggregatesFilter<"Service"> | number
+  duration?: Prisma.IntWithAggregatesFilter<"Service"> | number
   stripeProductId?: Prisma.StringNullableWithAggregatesFilter<"Service"> | string | null
   stripePriceId?: Prisma.StringNullableWithAggregatesFilter<"Service"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Service"> | Date | string
@@ -289,6 +305,7 @@ export type ServiceCreateInput = {
   id?: string
   name: string
   price: number
+  duration?: number
   stripeProductId?: string | null
   stripePriceId?: string | null
   createdAt?: Date | string
@@ -299,6 +316,7 @@ export type ServiceUncheckedCreateInput = {
   id?: string
   name: string
   price: number
+  duration?: number
   stripeProductId?: string | null
   stripePriceId?: string | null
   createdAt?: Date | string
@@ -309,6 +327,7 @@ export type ServiceUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   stripeProductId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePriceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -319,6 +338,7 @@ export type ServiceUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   stripeProductId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePriceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -329,6 +349,7 @@ export type ServiceCreateManyInput = {
   id?: string
   name: string
   price: number
+  duration?: number
   stripeProductId?: string | null
   stripePriceId?: string | null
   createdAt?: Date | string
@@ -339,6 +360,7 @@ export type ServiceUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   stripeProductId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePriceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -349,6 +371,7 @@ export type ServiceUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   stripeProductId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stripePriceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -359,6 +382,7 @@ export type ServiceCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   price?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   stripeProductId?: Prisma.SortOrder
   stripePriceId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -367,12 +391,14 @@ export type ServiceCountOrderByAggregateInput = {
 
 export type ServiceAvgOrderByAggregateInput = {
   price?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
 }
 
 export type ServiceMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   price?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   stripeProductId?: Prisma.SortOrder
   stripePriceId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -383,6 +409,7 @@ export type ServiceMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   price?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   stripeProductId?: Prisma.SortOrder
   stripePriceId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -391,9 +418,18 @@ export type ServiceMinOrderByAggregateInput = {
 
 export type ServiceSumOrderByAggregateInput = {
   price?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
 }
 
 export type FloatFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
   decrement?: number
@@ -407,6 +443,7 @@ export type ServiceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   id?: boolean
   name?: boolean
   price?: boolean
+  duration?: boolean
   stripeProductId?: boolean
   stripePriceId?: boolean
   createdAt?: boolean
@@ -417,6 +454,7 @@ export type ServiceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   name?: boolean
   price?: boolean
+  duration?: boolean
   stripeProductId?: boolean
   stripePriceId?: boolean
   createdAt?: boolean
@@ -427,6 +465,7 @@ export type ServiceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   name?: boolean
   price?: boolean
+  duration?: boolean
   stripeProductId?: boolean
   stripePriceId?: boolean
   createdAt?: boolean
@@ -437,13 +476,14 @@ export type ServiceSelectScalar = {
   id?: boolean
   name?: boolean
   price?: boolean
+  duration?: boolean
   stripeProductId?: boolean
   stripePriceId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ServiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "price" | "stripeProductId" | "stripePriceId" | "createdAt" | "updatedAt", ExtArgs["result"]["service"]>
+export type ServiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "price" | "duration" | "stripeProductId" | "stripePriceId" | "createdAt" | "updatedAt", ExtArgs["result"]["service"]>
 
 export type $ServicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Service"
@@ -452,6 +492,7 @@ export type $ServicePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     id: string
     name: string
     price: number
+    duration: number
     stripeProductId: string | null
     stripePriceId: string | null
     createdAt: Date
@@ -882,6 +923,7 @@ export interface ServiceFieldRefs {
   readonly id: Prisma.FieldRef<"Service", 'String'>
   readonly name: Prisma.FieldRef<"Service", 'String'>
   readonly price: Prisma.FieldRef<"Service", 'Float'>
+  readonly duration: Prisma.FieldRef<"Service", 'Int'>
   readonly stripeProductId: Prisma.FieldRef<"Service", 'String'>
   readonly stripePriceId: Prisma.FieldRef<"Service", 'String'>
   readonly createdAt: Prisma.FieldRef<"Service", 'DateTime'>
