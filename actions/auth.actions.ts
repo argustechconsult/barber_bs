@@ -12,22 +12,28 @@ export interface AuthState {
 }
 
 export async function login(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
-  const email = formData.get('email') as string;
+  const loginInput = formData.get('email') as string;
   const password = formData.get('password') as string;
 
-  if (!email || !password) {
+  if (!loginInput || !password) {
     return { success: false, message: 'Login e senha são obrigatórios.' };
   }
 
+  const isEmail = loginInput.includes('@');
+  const sanitizedInput = isEmail ? loginInput : loginInput.replace(/\D/g, '');
+
   try {
-    let user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: email },
-          { whatsapp: email } // Allow login with whatsapp using the 'email' field input
-        ]
-      },
-    });
+    let user;
+    
+    if (isEmail) {
+        user = await prisma.user.findUnique({
+            where: { email: sanitizedInput }
+        });
+    } else {
+        user = await prisma.user.findUnique({
+            where: { whatsapp: sanitizedInput }
+        });
+    }
 
     if (user && user.password) {
       const isValidPass = await bcrypt.compare(password, user.password);
@@ -62,22 +68,30 @@ export async function login(prevState: AuthState | null, formData: FormData): Pr
 
 export async function signup(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
   const name = formData.get('name') as string;
+  const email = formData.get('email') as string;
   const password = formData.get('password') as string;
-  const whatsapp = formData.get('whatsapp') as string;
+  const whatsappRaw = formData.get('whatsapp') as string;
   const birthDate = formData.get('birthDate') as string;
 
-  if (!name || !password || !whatsapp || !birthDate) {
+  const whatsapp = whatsappRaw ? whatsappRaw.replace(/\D/g, '') : '';
+
+  if (!name || !email || !password || !whatsapp || !birthDate) {
     return { success: false, message: 'Todos os campos são obrigatórios.' };
   }
 
   try {
-    // Check if user exists by whatsapp
-    const existingUser = await prisma.user.findUnique({
-      where: { whatsapp },
+    // Check if user exists by whatsapp or email
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { whatsapp },
+          { email }
+        ]
+      },
     });
 
     if (existingUser) {
-        return { success: false, message: 'Usuário (telefone) já cadastrado.' };
+        return { success: false, message: 'Usuário (email ou telefone) já cadastrado.' };
     }
 
     const saltRounds = 10;
@@ -87,7 +101,7 @@ export async function signup(prevState: AuthState | null, formData: FormData): P
     const newUser = await prisma.user.create({
       data: { 
         name,
-        // email is optional now
+        email,
         password: hashedPassword,
         whatsapp,
         birthDate,

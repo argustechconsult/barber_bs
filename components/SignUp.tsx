@@ -6,6 +6,7 @@ import { signup } from '../actions/auth.actions';
 interface SignUpProps {
   onRegister: (data: {
     name: string;
+    email: string;
     pass: string;
     whatsapp: string;
     birthDate: string;
@@ -15,6 +16,7 @@ interface SignUpProps {
 
 const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -28,6 +30,7 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
     startTransition(async () => {
       const formData = new FormData();
       formData.append('name', name);
+      formData.append('email', email);
       formData.append('password', password);
       formData.append('whatsapp', whatsapp);
       formData.append('birthDate', birthDate);
@@ -56,7 +59,8 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
           // but I have performed the "real" logic in the action.
           // Actually, the `signup` action returns the `User` object.
           // We should probably update App.tsx to just take the `User` object.
-          onRegister({ name, pass: password, whatsapp, birthDate });
+          // We should ideally pass the full User object, but satisfying the interface for now:
+          onRegister({ name, email, pass: password, whatsapp, birthDate });
         } else {
           setError(result.message || 'Erro ao criar conta');
         }
@@ -96,6 +100,20 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Seu nome completo"
+                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 md:py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
                 className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 md:py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
                 required
               />

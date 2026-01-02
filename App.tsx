@@ -53,6 +53,7 @@ const App: React.FC = () => {
 
   const handleRegister = (data: {
     name: string;
+    email: string;
     pass: string;
     whatsapp: string;
     birthDate: string;
@@ -62,7 +63,7 @@ const App: React.FC = () => {
     const newUser: User = {
       id: Math.random().toString(), // Mock ID
       name: data.name,
-      email: `${data.name.toLowerCase().replace(/\s/g, '')}@example.com`, // Mock email
+      email: data.email, // Use actual email from sign up
       role: UserRole.CLIENTE,
       plan: UserPlan.START,
       avatar:

@@ -1,25 +1,44 @@
-# TODO
+# MÓDULOS
 
-- implementar pagamento com cartão de crédito
-- envio de mensagem whatsapp
-- colocar logo
+- AUTH - Signup, Login, Logout
+- AGENDA - Agenda de barbeiros
+- PAGAMENTOS - Pagamento com cartão de crédito / PIX
+- MARKETPLACE - Produtos
 
-# Regras de negócio
+## AUTH
 
--
+- Signup
+    - Criação de usuário   
+    - Criação de sessão com JWT
+- Login
+    - Validação de usuário
+    - Criação de sessão com JWT
+    - Login com o Google
+- Logout
+    - Remoção de sessão
 
-# Telas criadas
 
-- Login ok
-- Cadastro ok
-- Integração com neon ok
-- Implementação de autenticação ok
-- Implementação de JWT - SERÁ FEITO NO FINAL
-- Agenda ok
+
+## AGENDA
+
+- Agenda de barbeiros
+    - Listagem de barbeiros
     - Agenda de barbeiros
-- Marketplace ok
-    - Criar cada card dos produtos
-    - criar seed de produtos
+    - Agenda de clientes
+
+- Agenda de clientes
+    - Listagem de clientes
+    - Agenda de clientes
+
+
+
+## PAGAMENTOS
+
+- Stripe
+    - Pagamento com cartão de crédito
+    - Pagamento com débito
+    - Pagamento com PIX
+* verificar tabela do pagamento no DB - (produto,servico,plano,usuario,id_usuario,data_vencimento)
 
 # DADOS DE ACESSO
 
@@ -69,3 +88,4 @@ npx prisma db seed
 - PRISMA
 - NEON
 - VERCEL
+- STRIPE
