@@ -38,7 +38,10 @@
     - Pagamento com cartão de crédito
     - Pagamento com débito
     - Pagamento com PIX
-* verificar tabela do pagamento no DB - (produto,servico,plano,usuario,id_usuario,data_vencimento)
+* verificar tabela do pagamento no DB - (produto,servico,plano,usuario,id_usuario,data_vencimento,status_pagamento)
+    - status_pagamento: PENDENTE, PAGO, CANCELADO.
+    - O stripe tenta verificar o pagamento durante sete dias,após isso o status é atualizado para CANCELADO. E o cliente não usa mais o serviço
+
 
 # DADOS DE ACESSO
 
@@ -50,17 +53,17 @@ senha: argustechbs123
 
 ## Barbeiro Administrador
 
-- **Login:** admin
+- **Login:** admin@barber.com
 - **Senha:** admin
 
 ## Usuário Start
 
-- **Login:** start
+- **Login:** start@barber.com
 - **Senha:** start
 
 ## Usuário Premium
 
-- **Login:** premium
+- **Login:** premium@barber.com
 - **Senha:** premium
 
 # TUTORIAL PRISMA & NEON
