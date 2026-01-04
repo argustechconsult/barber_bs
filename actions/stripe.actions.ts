@@ -140,3 +140,78 @@ export async function createProduct(data: CreateProductData) {
         return { success: false, message: 'Failed to create product' };
     }
 }
+
+// --- CHECKOUT ACTIONS ---
+interface CreateCheckoutSessionData {
+    appointmentId: string;
+    services: { name: string; price: number }[];
+    userId: string;
+    paymentMethodTypes?: Stripe.Checkout.SessionCreateParams.PaymentMethodType[];
+}
+
+export async function createCheckoutSession(data: CreateCheckoutSessionData) {
+    try {
+        const stripeInstance = getStripe();
+        
+        // Calculate total
+        const totalAmount = data.services.reduce((acc, curr) => acc + curr.price, 0);
+
+        // 1. Create TRANSACTION record first
+        const transaction = await prisma.transaction.create({
+            data: {
+                amount: totalAmount,
+                type: 'APPOINTMENT',
+                status: 'PENDING',
+                userId: data.userId,
+                appointmentId: data.appointmentId,
+            }
+        });
+
+        const paymentMethodTypes = data.paymentMethodTypes || ['card'];
+        
+        const sessionParams: Stripe.Checkout.SessionCreateParams = {
+            payment_method_types: paymentMethodTypes,
+            line_items: data.services.map(s => ({
+                price_data: {
+                    currency: 'brl',
+                    product_data: {
+                        name: s.name,
+                    },
+                    unit_amount: Math.round(s.price * 100), // cents
+                },
+                quantity: 1,
+            })),
+            mode: 'payment',
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?canceled=true`,
+            metadata: {
+                transactionId: transaction.id,
+                appointmentId: data.appointmentId,
+                userId: data.userId
+            },
+        };
+
+        if (paymentMethodTypes.includes('pix')) {
+            sessionParams.payment_method_options = {
+                pix: {
+                    expires_after_seconds: 3600
+                }
+            };
+        }
+
+        // 2. Create Stripe Checkout Session
+        const session = await stripeInstance.checkout.sessions.create(sessionParams);
+        
+        // Update transaction with session ID
+        await prisma.transaction.update({
+            where: { id: transaction.id },
+            data: { stripeSessionId: session.id }
+        });
+
+        return { success: true, url: session.url };
+
+    } catch (error) {
+        console.error('Create Checkout Session Error:', error);
+        return { success: false, message: `Erro Stripe: ${(error as any).message}` };
+    }
+}

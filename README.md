@@ -41,10 +41,10 @@
     - Pagamento com cartão de crédito
     - Pagamento com débito
     - Pagamento com PIX
-* verificar tabela do pagamento no DB - (produto,servico,plano,usuario,id_usuario,data_vencimento,status_pagamento)
-    - status_pagamento: PENDENTE, PAGO, CANCELADO.
+* verificar tabela do pagamento no DB - (produto,servico,plano,usuario,id_usuario,data_vencimento,status_pagamento)✅
+    - status_pagamento: PENDENTE, PAGO, CANCELADO. ✅
     - O stripe tenta verificar o pagamento durante sete dias,após isso o status é atualizado para CANCELADO. E o cliente não usa mais o serviço
-* produtos,serviços e planos cadastrados no banco devem refletir no stripe
+* produtos,serviços e planos cadastrados no banco devem refletir no stripe ✅
 
 OBS: Comando para criar produtos no stripe: npx tsx scripts/test-stripe-sync.ts
 
@@ -54,47 +54,28 @@ versel:
 login: argustechbs@gmail.com
 senha: argustechbs123
 
+
 # USUÁRIOS PADRÃO (MOCK & SEED)
 
 ## Barbeiro Administrador
 
-- **Login:** admin@barber.com
+- **Login:** admin@email.com
 - **Senha:** admin
 
 ## Barbeiro Premium
 
-- **Login:** joao@barber.com
+- **Login:** joao@email.com
 - **Senha:** 123456
 
 ## Usuário Start
 
-- **Login:** start@barber.com
+- **Login:** start@email.com
 - **Senha:** start
 
 ## Usuário Premium
 
-- **Login:** premium@barber.com
+- **Login:** premium@email.com
 - **Senha:** premium
-
-# TUTORIAL PRISMA & NEON
-
-O projeto foi configurado para integrar com o Neon via Prisma.
-
-## Setup Inicial
-
-1. Instale as dependências: `npm install`
-2. Gere o cliente Prisma: `npx prisma generate`
-
-## Banco de Dados
-
-Para sincronizar o esquema com o banco de dados Neon e rodar os seeds (popular usuários padrão):
-
-```bash
-npx prisma db push
-npx prisma db seed
-```
-
-> **Nota:** A URL do banco de dados já foi configurada no arquivo `.env`.
 
 # FEATURES
 
@@ -102,3 +83,16 @@ npx prisma db seed
 - NEON
 - VERCEL
 - STRIPE
+
+
+Atualizei e executei o script de seed (prisma/seed.ts) com sucesso. Agora o banco contém:
+
+Usuários: Admin (admin), Barbeiro (Jorge), Start (start), Premium (premium).
+Serviços: Corte, Barba, Combo, Acabamento.
+Produtos: Pomada, Óleo, Shampoo.
+
+
+# TODO
+
+- corrigir routes ✅
+- testar webhook

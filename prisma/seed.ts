@@ -2,7 +2,7 @@
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import 'dotenv/config';
-import { PrismaClient, UserRole, UserPlan } from '../lib/generated/client/client';
+import { PrismaClient, UserRole, UserPlan } from '../lib/generated/client';
 import bcrypt from 'bcrypt';
 
 const connectionString = `${process.env.DATABASE_URL}`;
@@ -56,7 +56,42 @@ async function main() {
     },
   });
 
-  console.log('Seed executed: Users created/updated.');
+  // Barbeiro
+  const barber = await prisma.user.upsert({
+    where: { email: 'barbeiro' },
+    update: {},
+    create: {
+      name: 'Jorge o Barbeiro',
+      email: 'barbeiro',
+      password: passwordAdmin,
+      role: UserRole.BARBEIRO,
+      isActive: true,
+      // Barbers link to themselves or can be linked by clients
+    },
+  });
+
+  // Services
+  await prisma.service.createMany({
+    data: [
+      { name: 'Corte de Cabelo', price: 50.0, duration: 45 },
+      { name: 'Barba Completa', price: 35.0, duration: 30 },
+      { name: 'Corte + Barba', price: 75.0, duration: 60 },
+      { name: 'Acabamento/Pezinho', price: 20.0, duration: 15 },
+    ],
+    skipDuplicates: true,
+  });
+
+  // Products
+  await prisma.product.createMany({
+      data: [
+          { name: 'Pomada Efeito Matte', description: 'Alta fixação e efeito seco', category: 'Cabelo', price: 45.0 },
+          { name: 'Óleo para Barba', description: 'Hidratação e maciez', category: 'Barba', price: 30.0 },
+          { name: 'Shampoo Mentolado', description: 'Limpeza refrescante', category: 'Cabelo', price: 35.0 },
+      ],
+      skipDuplicates: true
+  });
+
+  console.log('Seed executed: Users, Barbers, Services, and Products created.');
 }
 
 main()

@@ -12,6 +12,7 @@ import {
   Banknote,
   Sparkles,
   X,
+  CreditCard,
 } from 'lucide-react';
 
 interface ClienteAppProps {
@@ -28,6 +29,7 @@ import {
   getAppointmentsByBarber,
 } from '../actions/appointment.actions';
 import { getBarbers } from '../actions/user.actions';
+import { createCheckoutSession } from '../actions/stripe.actions';
 // const SESSION_APPOINTMENTS: { clientId: string; date: string }[] = [];
 
 const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
@@ -41,9 +43,9 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
     return d.toISOString().split('T')[0];
   });
   const [selectedTime, setSelectedTime] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'DINHEIRO' | null>(
-    null,
-  );
+  const [paymentMethod, setPaymentMethod] = useState<
+    'CREDIT' | 'DEBIT' | 'PIX' | null
+  >(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPremiumRestriction, setShowPremiumRestriction] = useState(false);
   const [nextAvailableDate, setNextAvailableDate] = useState<string | null>(
@@ -62,6 +64,15 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
       }
     }
     fetchBarbers();
+
+    // Check for Stripe Success
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('success') === 'true') {
+        setIsSuccess(true);
+        setPaymentMethod('CREDIT'); // Just to show success state correctly, type doesn't matter for text currently
+      }
+    }
   }, []);
 
   // Fetch occupied slots when barber or date changes
@@ -139,6 +150,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
     if (selectedBarber && selectedTime) {
       const dateTimeStr = `${selectedDateStr}T${selectedTime}:00`;
 
+      // 1. Create Appointment
       const result = await createAppointment({
         clientId: user.id,
         barberId: selectedBarber.id,
@@ -146,8 +158,29 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
         serviceIds: selectedServices.map((s) => s.id),
       });
 
-      if (result.success) {
-        setIsSuccess(true);
+      if (result.success && result.appointment) {
+        // 2. Handle Payment
+        if (
+          paymentMethod === 'CREDIT' ||
+          paymentMethod === 'DEBIT' ||
+          paymentMethod === 'PIX'
+        ) {
+          const checkout = await createCheckoutSession({
+            appointmentId: result.appointment.id,
+            services: selectedServices,
+            userId: user.id,
+            paymentMethodTypes: paymentMethod === 'PIX' ? ['pix'] : ['card'],
+          });
+
+          if (checkout.success && checkout.url) {
+            window.location.href = checkout.url;
+            return;
+          } else {
+            alert(
+              checkout.message || 'Erro ao iniciar pagamento. Tente novamente.',
+            );
+          }
+        }
       } else {
         alert(result.message || 'Erro ao agendar');
       }
@@ -223,23 +256,16 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             {selectedDateObj?.dayNum} de {selectedDateObj?.month} às{' '}
             {selectedTime}.
           </p>
-          {paymentMethod === 'PIX' && (
+          {(paymentMethod === 'CREDIT' ||
+            paymentMethod === 'DEBIT' ||
+            paymentMethod === 'PIX') && (
             <p className="text-amber-500 font-bold text-sm">
-              Aguardando pagamento via PIX para confirmar.
+              Pagamento Online Confirmado.
             </p>
           )}
         </div>
 
-        {paymentMethod === 'PIX' && (
-          <div className="bg-white p-4 rounded-3xl inline-block shadow-xl">
-            <div className="w-40 h-40 bg-neutral-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-neutral-300">
-              <QrCode size={120} className="text-black" />
-            </div>
-            <p className="text-black text-[10px] mt-2 font-bold uppercase tracking-widest">
-              Escaneie para pagar R$ {totalPrice}
-            </p>
-          </div>
-        )}
+        {/* Removed QR Code logic for now as it is handled by Stripe */}
 
         <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl text-left space-y-4">
           <div className="flex justify-between border-b border-neutral-800 pb-2">
@@ -647,6 +673,46 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
 
             <div className="grid grid-cols-1 gap-4">
               <button
+                onClick={() => setPaymentMethod('CREDIT')}
+                className={`flex items-center gap-4 bg-neutral-900 p-6 rounded-[2rem] border transition-all ${
+                  paymentMethod === 'CREDIT'
+                    ? 'border-amber-500 bg-amber-500/5'
+                    : 'border-neutral-800'
+                }`}
+              >
+                <div className="bg-amber-500 p-3 rounded-2xl text-black">
+                  <CreditCard size={24} />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-bold text-lg">Pagar com Crédito</p>
+                  <p className="text-xs text-neutral-500">Cartão de Crédito</p>
+                </div>
+                {paymentMethod === 'CREDIT' && (
+                  <Check className="text-amber-500" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setPaymentMethod('DEBIT')}
+                className={`flex items-center gap-4 bg-neutral-900 p-6 rounded-[2rem] border transition-all ${
+                  paymentMethod === 'DEBIT'
+                    ? 'border-amber-500 bg-amber-500/5'
+                    : 'border-neutral-800'
+                }`}
+              >
+                <div className="bg-amber-500 p-3 rounded-2xl text-black">
+                  <CreditCard size={24} />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-bold text-lg">Pagar com Débito</p>
+                  <p className="text-xs text-neutral-500">Cartão de Débito</p>
+                </div>
+                {paymentMethod === 'DEBIT' && (
+                  <Check className="text-amber-500" />
+                )}
+              </button>
+
+              <button
                 onClick={() => setPaymentMethod('PIX')}
                 className={`flex items-center gap-4 bg-neutral-900 p-6 rounded-[2rem] border transition-all ${
                   paymentMethod === 'PIX'
@@ -654,38 +720,14 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     : 'border-neutral-800'
                 }`}
               >
-                <div className="bg-amber-500 p-3 rounded-2xl text-black">
+                <div className="bg-green-500 p-3 rounded-2xl text-black">
                   <QrCode size={24} />
                 </div>
                 <div className="text-left flex-1">
-                  <p className="font-bold text-lg">PIX</p>
-                  <p className="text-xs text-neutral-500">
-                    Pague agora para confirmar seu lugar
-                  </p>
+                  <p className="font-bold text-lg">Pagar com Pix</p>
+                  <p className="text-xs text-neutral-500">Aprovação Imediata</p>
                 </div>
                 {paymentMethod === 'PIX' && (
-                  <Check className="text-amber-500" />
-                )}
-              </button>
-
-              <button
-                onClick={() => setPaymentMethod('DINHEIRO')}
-                className={`flex items-center gap-4 bg-neutral-900 p-6 rounded-[2rem] border transition-all ${
-                  paymentMethod === 'DINHEIRO'
-                    ? 'border-amber-500 bg-amber-500/5'
-                    : 'border-neutral-800'
-                }`}
-              >
-                <div className="bg-green-500 p-3 rounded-2xl text-black">
-                  <Banknote size={24} />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-bold text-lg">No Local</p>
-                  <p className="text-xs text-neutral-500">
-                    Pague no balcão (Dinheiro ou Cartão)
-                  </p>
-                </div>
-                {paymentMethod === 'DINHEIRO' && (
                   <Check className="text-amber-500" />
                 )}
               </button>
