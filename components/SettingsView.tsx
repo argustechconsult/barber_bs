@@ -10,6 +10,7 @@ import {
   deleteService,
 } from '../actions/service.actions';
 import { createService } from '../actions/stripe.actions';
+import { getPlans, createPlan, deletePlan } from '../actions/plan.actions';
 import {
   Camera,
   User as UserIcon,
@@ -20,6 +21,7 @@ import {
   Trash2,
   Users,
   X,
+  Sparkles,
 } from 'lucide-react';
 
 interface SettingsViewProps {
@@ -40,15 +42,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
   const [services, setServices] = useState<Service[]>([]); // Initialize empty or wait for fetch
   const [barbers, setBarbers] = useState<Barbeiro[]>(INITIAL_BARBERS);
+  const [plans, setPlans] = useState<any[]>([]);
   const [showAddBarber, setShowAddBarber] = useState(false);
   const [showAddService, setShowAddService] = useState(false);
+  const [showAddPlan, setShowAddPlan] = useState(false);
 
-  // Fetch Services
+  // Fetch Services & Plans
   React.useEffect(() => {
     async function load() {
       const result = await getServices();
       if (result.success && result.services) {
         setServices(result.services);
+      }
+      const planResult = await getPlans();
+      if (planResult.success && planResult.plans) {
+        setPlans(planResult.plans);
       }
     }
     load();
@@ -101,7 +109,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   // Delete Confirmation State
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
-    type: 'service' | 'barber' | null;
+    type: 'service' | 'barber' | 'plan' | null;
     id: string | null;
   }>({ isOpen: false, type: null, id: null });
 
@@ -119,6 +127,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       }
     } else if (deleteConfirmation.type === 'barber') {
       setBarbers((prev) => prev.filter((b) => b.id !== deleteConfirmation.id));
+    } else if (deleteConfirmation.type === 'plan') {
+      const result = await deletePlan(deleteConfirmation.id);
+      if (result.success) {
+        setPlans((prev) => prev.filter((p) => p.id !== deleteConfirmation.id));
+      } else {
+        alert('Erro ao remover plano');
+      }
     }
 
     setDeleteConfirmation({ isOpen: false, type: null, id: null });
@@ -130,6 +145,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
   const deleteBarber = (id: string) => {
     setDeleteConfirmation({ isOpen: true, type: 'barber', id });
+  };
+
+  const deletePlanHandler = (id: string) => {
+    setDeleteConfirmation({ isOpen: true, type: 'plan', id });
   };
 
   // ... (keep handleAddBarber etc) ...
@@ -166,6 +185,22 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       // Optionally fetch again to be sure
     } else {
       alert('Erro ao criar serviço');
+    }
+  };
+
+  const handleAddPlan = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get('name') as string;
+    const rawPrice = formData.get('price') as string;
+    const price = parseCurrency(rawPrice);
+
+    const result = await createPlan({ name, price });
+    if (result.success && result.plan) {
+      setPlans([result.plan, ...plans]);
+      setShowAddPlan(false);
+    } else {
+      alert('Erro ao criar plano: ' + (result.message || ''));
     }
   };
 
@@ -377,6 +412,56 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   ))}
                 </div>
               </div>
+
+              {/* Plan Management Section */}
+              <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 animate-in fade-in slide-in-from-top-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <Sparkles className="text-amber-500" /> Planos & Assinaturas
+                  </h3>
+                  <button
+                    onClick={() => setShowAddPlan(true)}
+                    className="p-3 bg-amber-500 text-black rounded-2xl hover:scale-110 transition-transform shadow-lg shadow-amber-500/10"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {plans.length === 0 ? (
+                    <div className="p-8 text-center text-neutral-500 border border-neutral-800 rounded-3xl border-dashed">
+                      Nenhum plano cadastrado.
+                    </div>
+                  ) : (
+                    plans.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className="p-6 bg-neutral-950 border border-neutral-800 rounded-3xl flex justify-between items-center group"
+                      >
+                        <div>
+                          <p className="font-bold text-lg">{plan.name}</p>
+                          <p className="text-xs text-amber-500 font-bold uppercase tracking-widest mt-1">
+                            {formatCurrency(plan.price)} / mês
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          {plan.stripeProductId && (
+                            <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-1 rounded-md border border-green-500/20 font-bold uppercase tracking-widest">
+                              Stripe Ativo
+                            </span>
+                          )}
+                          <button
+                            onClick={() => deletePlanHandler(plan.id)}
+                            className="p-2 text-neutral-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </>
           )}
 
@@ -501,6 +586,58 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 className="w-full bg-amber-500 text-black font-bold py-5 rounded-3xl shadow-lg shadow-amber-500/10 transition-all active:scale-95"
               >
                 Adicionar à Equipe
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Plan Modal */}
+      {showAddPlan && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+          <div className="bg-neutral-950 border border-neutral-800 w-full max-w-md rounded-[2.5rem] p-10 space-y-8 animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-display font-bold">Novo Plano</h3>
+              <button
+                onClick={() => setShowAddPlan(false)}
+                className="p-2 text-neutral-500 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddPlan} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                  Nome do Plano
+                </label>
+                <input
+                  name="name"
+                  required
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40"
+                  placeholder="Ex: Assinatura VIP"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                  Valor Mensal (R$)
+                </label>
+                <input
+                  name="price"
+                  type="text"
+                  required
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40"
+                  placeholder="R$ 0,00"
+                  onChange={(e) => {
+                    const val = parseCurrency(e.target.value);
+                    e.target.value = formatCurrency(val);
+                  }}
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-amber-500 text-black font-bold py-5 rounded-3xl shadow-lg shadow-amber-500/10 transition-all active:scale-95"
+              >
+                Criar Plano
               </button>
             </form>
           </div>

@@ -18,6 +18,16 @@ export async function createAppointment(data: CreateAppointmentData) {
 
     // Simple conflict check: check if barber has an appointment at roughly the same time (assuming 1h slots for simplicity for now)
     // ideally strict range check
+    // Check for PREMIUM plan restrictions
+    const client = await prisma.user.findUnique({
+        where: { id: clientId },
+        select: { plan: true, subscriptionStatus: true }
+    });
+
+    if (client?.plan === 'PREMIUM' && client.subscriptionStatus !== 'ACTIVE') {
+         return { success: false, message: 'Assinatura Premium inativa. Regularize seu pagamento.' };
+    }
+
     const existing = await prisma.appointment.findFirst({
         where: {
             barberId,

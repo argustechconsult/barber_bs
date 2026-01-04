@@ -211,7 +211,69 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData) {
         return { success: true, url: session.url };
 
     } catch (error) {
-        console.error('Create Checkout Session Error:', error);
-        return { success: false, message: `Erro Stripe: ${(error as any).message}` };
+    }
+}
+
+// --- SUBSCRIPTION ACTIONS ---
+
+interface CreateSubscriptionData {
+    userId: string;
+    priceId: string; // Stripe Price ID for the recurring plan
+    customerId?: string; // If user already has a stripe customer ID
+}
+
+export async function createSubscriptionCheckoutSession(data: CreateSubscriptionData) {
+    try {
+        const stripeInstance = getStripe();
+        
+        let customerId = data.customerId;
+
+        // If no customer ID, we might want to creating one or let Stripe create it during checkout
+        // Best practice: Pass customer_email if creating new, or customer ID if existing.
+        
+        const user = await prisma.user.findUnique({
+             where: { id: data.userId },
+             select: { email: true, stripeCustomerId: true }
+        });
+
+        if (user?.stripeCustomerId) {
+            customerId = user.stripeCustomerId;
+        }
+
+        const sessionParams: Stripe.Checkout.SessionCreateParams = {
+            mode: 'subscription',
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price: data.priceId || process.env.STRIPE_PREMIUM_PRICE_ID,
+                    quantity: 1,
+                },
+            ],
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?subscription_success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?canceled=true`,
+            metadata: {
+                userId: data.userId,
+                plan: 'PREMIUM'
+            },
+        };
+
+        if (customerId) {
+            sessionParams.customer = customerId;
+        } else if (user?.email) {
+            sessionParams.customer_email = user.email;
+        }
+
+        const session = await stripeInstance.checkout.sessions.create(sessionParams);
+
+        // We do NOT create a 'Transaction' record here yet, or maybe we should?
+        // Usually, subscription payments are handled via webhooks (invoice.payment_succeeded).
+        // But we can create a pending Transaction record if we want to track the *attempt*.
+        // For simplicity, we rely on webhook to activate subscription.
+
+        return { success: true, url: session.url };
+
+    } catch (error) {
+        console.error('Create Subscription Checkout Error:', error);
+        return { success: false, message: `Erro Subscription: ${(error as any).message}` };
     }
 }

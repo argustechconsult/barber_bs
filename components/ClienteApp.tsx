@@ -29,7 +29,7 @@ import {
   getAppointmentsByBarber,
 } from '../actions/appointment.actions';
 import { getBarbers } from '../actions/user.actions';
-//import { createCheckoutSession } from '../actions/stripe.actions';
+import { createSubscriptionCheckoutSession } from '../actions/stripe.actions';
 import { createAbacateBilling } from '../actions/abacatepay.actions';
 // const SESSION_APPOINTMENTS: { clientId: string; date: string }[] = [];
 
@@ -198,6 +198,26 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
     setPaymentMethod(null);
     setIsSuccess(false);
     setShowPremiumRestriction(false);
+  };
+
+  const handlePremiumSubscribe = async () => {
+    try {
+      // Pass unused priceId because action handles it via env var if missing
+      const result = await createSubscriptionCheckoutSession({
+        userId: user.id,
+        priceId: '',
+        customerId: user.stripeCustomerId || undefined,
+      });
+
+      if (result.success && result.url) {
+        window.location.href = result.url;
+      } else {
+        alert(result.message || 'Erro ao iniciar assinatura.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao processar solicitação.');
+    }
   };
 
   if (showPremiumRestriction) {
@@ -394,7 +414,10 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
 
             {/* Premium Upgrade Banner for Start Plan */}
             {user.plan === UserPlan.START && showPremiumBanner && (
-              <div className="fixed bottom-20 left-0 right-0 md:left-64 mx-auto w-fit max-w-[90%] md:max-w-md bg-gradient-to-r from-amber-600 to-amber-400 p-4 rounded-[2rem] shadow-2xl shadow-amber-500/20 flex items-center justify-between gap-4 group cursor-pointer hover:scale-[1.02] transition-transform z-40">
+              <div
+                onClick={handlePremiumSubscribe}
+                className="fixed bottom-20 left-0 right-0 md:left-64 mx-auto w-fit max-w-[90%] md:max-w-md bg-gradient-to-r from-amber-600 to-amber-400 p-4 rounded-[2rem] shadow-2xl shadow-amber-500/20 flex items-center justify-between gap-4 group cursor-pointer hover:scale-[1.02] transition-transform z-40"
+              >
                 <div className="flex items-center gap-3">
                   <div className="bg-black/20 p-2 rounded-xl">
                     <Sparkles className="text-black w-5 h-5" />

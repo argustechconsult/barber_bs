@@ -20,6 +20,8 @@ export interface User {
   plan?: UserPlan;
   barbeiroId?: string;
   isActive: boolean;
+  stripeCustomerId?: string;
+  subscriptionStatus?: string;
 }
 
 export interface Barbeiro {

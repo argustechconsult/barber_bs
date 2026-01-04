@@ -1351,6 +1351,9 @@ export namespace Prisma {
     plan: $Enums.UserPlan | null
     barbeiroId: string | null
     isActive: boolean | null
+    stripeCustomerId: string | null
+    stripeSubscriptionId: string | null
+    subscriptionStatus: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1366,6 +1369,9 @@ export namespace Prisma {
     plan: $Enums.UserPlan | null
     barbeiroId: string | null
     isActive: boolean | null
+    stripeCustomerId: string | null
+    stripeSubscriptionId: string | null
+    subscriptionStatus: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1381,6 +1387,9 @@ export namespace Prisma {
     plan: number
     barbeiroId: number
     isActive: number
+    stripeCustomerId: number
+    stripeSubscriptionId: number
+    subscriptionStatus: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1398,6 +1407,9 @@ export namespace Prisma {
     plan?: true
     barbeiroId?: true
     isActive?: true
+    stripeCustomerId?: true
+    stripeSubscriptionId?: true
+    subscriptionStatus?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1413,6 +1425,9 @@ export namespace Prisma {
     plan?: true
     barbeiroId?: true
     isActive?: true
+    stripeCustomerId?: true
+    stripeSubscriptionId?: true
+    subscriptionStatus?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1428,6 +1443,9 @@ export namespace Prisma {
     plan?: true
     barbeiroId?: true
     isActive?: true
+    stripeCustomerId?: true
+    stripeSubscriptionId?: true
+    subscriptionStatus?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1516,6 +1534,9 @@ export namespace Prisma {
     plan: $Enums.UserPlan | null
     barbeiroId: string | null
     isActive: boolean
+    stripeCustomerId: string | null
+    stripeSubscriptionId: string | null
+    subscriptionStatus: string | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -1548,6 +1569,9 @@ export namespace Prisma {
     plan?: boolean
     barbeiroId?: boolean
     isActive?: boolean
+    stripeCustomerId?: boolean
+    stripeSubscriptionId?: boolean
+    subscriptionStatus?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     clientAppointments?: boolean | User$clientAppointmentsArgs<ExtArgs>
@@ -1567,6 +1591,9 @@ export namespace Prisma {
     plan?: boolean
     barbeiroId?: boolean
     isActive?: boolean
+    stripeCustomerId?: boolean
+    stripeSubscriptionId?: boolean
+    subscriptionStatus?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1582,6 +1609,9 @@ export namespace Prisma {
     plan?: boolean
     barbeiroId?: boolean
     isActive?: boolean
+    stripeCustomerId?: boolean
+    stripeSubscriptionId?: boolean
+    subscriptionStatus?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1597,11 +1627,14 @@ export namespace Prisma {
     plan?: boolean
     barbeiroId?: boolean
     isActive?: boolean
+    stripeCustomerId?: boolean
+    stripeSubscriptionId?: boolean
+    subscriptionStatus?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "whatsapp" | "birthDate" | "password" | "role" | "plan" | "barbeiroId" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "whatsapp" | "birthDate" | "password" | "role" | "plan" | "barbeiroId" | "isActive" | "stripeCustomerId" | "stripeSubscriptionId" | "subscriptionStatus" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     clientAppointments?: boolean | User$clientAppointmentsArgs<ExtArgs>
     barberAppointments?: boolean | User$barberAppointmentsArgs<ExtArgs>
@@ -1629,6 +1662,9 @@ export namespace Prisma {
       plan: $Enums.UserPlan | null
       barbeiroId: string | null
       isActive: boolean
+      stripeCustomerId: string | null
+      stripeSubscriptionId: string | null
+      subscriptionStatus: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -2067,6 +2103,9 @@ export namespace Prisma {
     readonly plan: FieldRef<"User", 'UserPlan'>
     readonly barbeiroId: FieldRef<"User", 'String'>
     readonly isActive: FieldRef<"User", 'Boolean'>
+    readonly stripeCustomerId: FieldRef<"User", 'String'>
+    readonly stripeSubscriptionId: FieldRef<"User", 'String'>
+    readonly subscriptionStatus: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -7024,6 +7063,9 @@ export namespace Prisma {
     plan: 'plan',
     barbeiroId: 'barbeiroId',
     isActive: 'isActive',
+    stripeCustomerId: 'stripeCustomerId',
+    stripeSubscriptionId: 'stripeSubscriptionId',
+    subscriptionStatus: 'subscriptionStatus',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -7254,6 +7296,9 @@ export namespace Prisma {
     plan?: EnumUserPlanNullableFilter<"User"> | $Enums.UserPlan | null
     barbeiroId?: StringNullableFilter<"User"> | string | null
     isActive?: BoolFilter<"User"> | boolean
+    stripeCustomerId?: StringNullableFilter<"User"> | string | null
+    stripeSubscriptionId?: StringNullableFilter<"User"> | string | null
+    subscriptionStatus?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     clientAppointments?: AppointmentListRelationFilter
@@ -7272,6 +7317,9 @@ export namespace Prisma {
     plan?: SortOrderInput | SortOrder
     barbeiroId?: SortOrderInput | SortOrder
     isActive?: SortOrder
+    stripeCustomerId?: SortOrderInput | SortOrder
+    stripeSubscriptionId?: SortOrderInput | SortOrder
+    subscriptionStatus?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     clientAppointments?: AppointmentOrderByRelationAggregateInput
@@ -7283,6 +7331,8 @@ export namespace Prisma {
     id?: string
     email?: string
     whatsapp?: string
+    stripeCustomerId?: string
+    stripeSubscriptionId?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
@@ -7293,12 +7343,13 @@ export namespace Prisma {
     plan?: EnumUserPlanNullableFilter<"User"> | $Enums.UserPlan | null
     barbeiroId?: StringNullableFilter<"User"> | string | null
     isActive?: BoolFilter<"User"> | boolean
+    subscriptionStatus?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     clientAppointments?: AppointmentListRelationFilter
     barberAppointments?: AppointmentListRelationFilter
     transactions?: TransactionListRelationFilter
-  }, "id" | "email" | "whatsapp">
+  }, "id" | "email" | "whatsapp" | "stripeCustomerId" | "stripeSubscriptionId">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
@@ -7311,6 +7362,9 @@ export namespace Prisma {
     plan?: SortOrderInput | SortOrder
     barbeiroId?: SortOrderInput | SortOrder
     isActive?: SortOrder
+    stripeCustomerId?: SortOrderInput | SortOrder
+    stripeSubscriptionId?: SortOrderInput | SortOrder
+    subscriptionStatus?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -7332,6 +7386,9 @@ export namespace Prisma {
     plan?: EnumUserPlanNullableWithAggregatesFilter<"User"> | $Enums.UserPlan | null
     barbeiroId?: StringNullableWithAggregatesFilter<"User"> | string | null
     isActive?: BoolWithAggregatesFilter<"User"> | boolean
+    stripeCustomerId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    stripeSubscriptionId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    subscriptionStatus?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -7646,6 +7703,9 @@ export namespace Prisma {
     plan?: $Enums.UserPlan | null
     barbeiroId?: string | null
     isActive?: boolean
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+    subscriptionStatus?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     clientAppointments?: AppointmentCreateNestedManyWithoutClientInput
@@ -7664,6 +7724,9 @@ export namespace Prisma {
     plan?: $Enums.UserPlan | null
     barbeiroId?: string | null
     isActive?: boolean
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+    subscriptionStatus?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     clientAppointments?: AppointmentUncheckedCreateNestedManyWithoutClientInput
@@ -7682,6 +7745,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientAppointments?: AppointmentUpdateManyWithoutClientNestedInput
@@ -7700,6 +7766,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientAppointments?: AppointmentUncheckedUpdateManyWithoutClientNestedInput
@@ -7718,6 +7787,9 @@ export namespace Prisma {
     plan?: $Enums.UserPlan | null
     barbeiroId?: string | null
     isActive?: boolean
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+    subscriptionStatus?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -7733,6 +7805,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7748,6 +7823,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -8170,6 +8248,9 @@ export namespace Prisma {
     plan?: SortOrder
     barbeiroId?: SortOrder
     isActive?: SortOrder
+    stripeCustomerId?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    subscriptionStatus?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -8185,6 +8266,9 @@ export namespace Prisma {
     plan?: SortOrder
     barbeiroId?: SortOrder
     isActive?: SortOrder
+    stripeCustomerId?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    subscriptionStatus?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -8200,6 +8284,9 @@ export namespace Prisma {
     plan?: SortOrder
     barbeiroId?: SortOrder
     isActive?: SortOrder
+    stripeCustomerId?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    subscriptionStatus?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -9230,6 +9317,9 @@ export namespace Prisma {
     plan?: $Enums.UserPlan | null
     barbeiroId?: string | null
     isActive?: boolean
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+    subscriptionStatus?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     barberAppointments?: AppointmentCreateNestedManyWithoutBarberInput
@@ -9247,6 +9337,9 @@ export namespace Prisma {
     plan?: $Enums.UserPlan | null
     barbeiroId?: string | null
     isActive?: boolean
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+    subscriptionStatus?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     barberAppointments?: AppointmentUncheckedCreateNestedManyWithoutBarberInput
@@ -9269,6 +9362,9 @@ export namespace Prisma {
     plan?: $Enums.UserPlan | null
     barbeiroId?: string | null
     isActive?: boolean
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+    subscriptionStatus?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     clientAppointments?: AppointmentCreateNestedManyWithoutClientInput
@@ -9286,6 +9382,9 @@ export namespace Prisma {
     plan?: $Enums.UserPlan | null
     barbeiroId?: string | null
     isActive?: boolean
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+    subscriptionStatus?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     clientAppointments?: AppointmentUncheckedCreateNestedManyWithoutClientInput
@@ -9346,6 +9445,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     barberAppointments?: AppointmentUpdateManyWithoutBarberNestedInput
@@ -9363,6 +9465,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     barberAppointments?: AppointmentUncheckedUpdateManyWithoutBarberNestedInput
@@ -9391,6 +9496,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientAppointments?: AppointmentUpdateManyWithoutClientNestedInput
@@ -9408,6 +9516,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientAppointments?: AppointmentUncheckedUpdateManyWithoutClientNestedInput
@@ -9458,6 +9569,9 @@ export namespace Prisma {
     plan?: $Enums.UserPlan | null
     barbeiroId?: string | null
     isActive?: boolean
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+    subscriptionStatus?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     clientAppointments?: AppointmentCreateNestedManyWithoutClientInput
@@ -9475,6 +9589,9 @@ export namespace Prisma {
     plan?: $Enums.UserPlan | null
     barbeiroId?: string | null
     isActive?: boolean
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+    subscriptionStatus?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     clientAppointments?: AppointmentUncheckedCreateNestedManyWithoutClientInput
@@ -9535,6 +9652,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientAppointments?: AppointmentUpdateManyWithoutClientNestedInput
@@ -9552,6 +9672,9 @@ export namespace Prisma {
     plan?: NullableEnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan | null
     barbeiroId?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientAppointments?: AppointmentUncheckedUpdateManyWithoutClientNestedInput

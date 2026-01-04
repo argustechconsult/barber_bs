@@ -22,18 +22,21 @@ enum UserPlan {
 }
 
 model User {
-  id         String    @id @default(uuid())
-  name       String
-  email      String?   @unique
-  whatsapp   String?   @unique
-  birthDate  String?
-  password   String?
-  role       UserRole  @default(CLIENTE)
-  plan       UserPlan? @default(START)
-  barbeiroId String?
-  isActive   Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id                   String    @id @default(uuid())
+  name                 String
+  email                String?   @unique
+  whatsapp             String?   @unique
+  birthDate            String?
+  password             String?
+  role                 UserRole  @default(CLIENTE)
+  plan                 UserPlan? @default(START)
+  barbeiroId           String?
+  isActive             Boolean   @default(true)
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   String? // ACTIVE, INACTIVE, PAST_DUE, CANCELLED
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   clientAppointments Appointment[] @relation("ClientAppointments")
   barberAppointments Appointment[] @relation("BarberAppointments")
