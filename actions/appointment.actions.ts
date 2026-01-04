@@ -27,6 +27,15 @@ export async function createAppointment(data: CreateAppointmentData) {
     });
 
     if (existing) {
+        // Allow retry if it's the same user and status is PENDING (e.g. failed payment retry)
+        if (existing.clientId === clientId && existing.status === 'PENDING') {
+             // Update services just in case they changed selection
+             const updated = await prisma.appointment.update({
+                 where: { id: existing.id },
+                 data: { serviceIds: serviceIds.join(',') }
+             });
+             return { success: true, appointment: updated };
+        }
         return { success: false, message: 'Horário indisponível.' };
     }
 

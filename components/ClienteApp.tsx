@@ -29,7 +29,8 @@ import {
   getAppointmentsByBarber,
 } from '../actions/appointment.actions';
 import { getBarbers } from '../actions/user.actions';
-import { createCheckoutSession } from '../actions/stripe.actions';
+//import { createCheckoutSession } from '../actions/stripe.actions';
+import { createAbacateBilling } from '../actions/abacatepay.actions';
 // const SESSION_APPOINTMENTS: { clientId: string; date: string }[] = [];
 
 const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
@@ -160,25 +161,26 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
 
       if (result.success && result.appointment) {
         // 2. Handle Payment
+        // Unified Payment Handler using AbacatePay
         if (
+          paymentMethod === 'PIX' ||
           paymentMethod === 'CREDIT' ||
-          paymentMethod === 'DEBIT' ||
-          paymentMethod === 'PIX'
+          paymentMethod === 'DEBIT'
         ) {
-          const checkout = await createCheckoutSession({
+          const method = paymentMethod === 'PIX' ? 'PIX' : 'CARD';
+
+          const paymentResult = await createAbacateBilling({
             appointmentId: result.appointment.id,
             services: selectedServices,
             userId: user.id,
-            paymentMethodTypes: paymentMethod === 'PIX' ? ['pix'] : ['card'],
+            method,
           });
 
-          if (checkout.success && checkout.url) {
-            window.location.href = checkout.url;
+          if (paymentResult.success && paymentResult.url) {
+            window.location.href = paymentResult.url;
             return;
           } else {
-            alert(
-              checkout.message || 'Erro ao iniciar pagamento. Tente novamente.',
-            );
+            alert(paymentResult.message || 'Erro ao iniciar pagamento.');
           }
         }
       } else {

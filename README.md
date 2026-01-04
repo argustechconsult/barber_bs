@@ -36,11 +36,20 @@
 
 
 ## PAGAMENTOS
+USUARIO **START** ✅
+- Pagamento com cartão de crédito
+- Pagamento com débito
+- Pagamento com PIX
+    - OBS ABACATEPAY OU STRIPE
 
-- Stripe
-    - Pagamento com cartão de crédito
-    - Pagamento com débito
-    - Pagamento com PIX
+USUARIO **PREMIUM**
+- Pagamento com cartão de crédito
+- Pagamento com débito
+- Pagamento com PIX
+- Pagamento com boleto
+    - OBS ABACATEPAY OU STRIPE (**Pagamento Mensal**)
+
+
 * verificar tabela do pagamento no DB - (produto,servico,plano,usuario,id_usuario,data_vencimento,status_pagamento)✅
     - status_pagamento: PENDENTE, PAGO, CANCELADO. ✅
     - O stripe tenta verificar o pagamento durante sete dias,após isso o status é atualizado para CANCELADO. E o cliente não usa mais o serviço
