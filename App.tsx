@@ -35,6 +35,56 @@ const App: React.FC = () => {
     setLoading(false);
   }, []);
 
+  // Poll for verifying subscription update
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user?.id) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('subscription_success') === 'true') {
+        // Simple polling mechanism
+        const pollInterval = setInterval(async () => {
+          try {
+            const params = new URLSearchParams(window.location.search);
+            const sessionId = params.get('session_id');
+
+            // Active Verification: Force DB update if session is paid
+            if (sessionId) {
+              const { checkCheckoutSession } = await import(
+                './actions/stripe.actions'
+              );
+              await checkCheckoutSession(sessionId);
+            }
+
+            // Poll for result
+            const { getUser } = await import('./actions/user.actions');
+            const updatedUser = await getUser(user.id);
+
+            if (updatedUser && updatedUser.plan === 'PREMIUM') {
+              clearInterval(pollInterval);
+
+              // Create a merged user object compatible with the User type
+              const newUserState = {
+                ...user,
+                ...updatedUser,
+                role: updatedUser.role as UserRole,
+                plan: updatedUser.plan as UserPlan,
+              };
+
+              handleUpdateUser(newUserState);
+              window.history.replaceState({}, '', window.location.pathname);
+            }
+          } catch (err) {
+            console.error('Error polling user plan:', err);
+          }
+        }, 2000);
+
+        // Stop after 60 seconds
+        setTimeout(() => clearInterval(pollInterval), 60000);
+
+        return () => clearInterval(pollInterval);
+      }
+    }
+  }, [user]);
+
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
     localStorage.setItem('stayler_user', JSON.stringify(loggedInUser));
@@ -51,31 +101,9 @@ const App: React.FC = () => {
     localStorage.setItem('stayler_user', JSON.stringify(updatedUser));
   };
 
-  const handleRegister = (data: {
-    name: string;
-    email: string;
-    pass: string;
-    whatsapp: string;
-    birthDate: string;
-  }) => {
-    // In a real app, we would send this data to the backend
-    // For now, we simulate a successful registration as a client with 'start' plan
-    const newUser: User = {
-      id: Math.random().toString(), // Mock ID
-      name: data.name,
-      email: data.email, // Use actual email from sign up
-      role: UserRole.CLIENTE,
-      plan: UserPlan.START,
-      avatar:
-        'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', // Mock avatar
-      isActive: true,
-      // Add other necessary mocking fields if User type requires them
-      appointments: [],
-      history: [],
-    } as User;
-
-    setUser(newUser);
-    localStorage.setItem('stayler_user', JSON.stringify(newUser));
+  const handleRegister = (user: User) => {
+    setUser(user);
+    localStorage.setItem('stayler_user', JSON.stringify(user));
     setIsSigningUp(false);
   };
 

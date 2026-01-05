@@ -11,6 +11,32 @@ interface CreateAbacateBillingData {
   method: 'PIX' | 'CARD';
 }
 
+// Helper to generate valid CPF for testing
+function generateValidCPF(): string {
+  const rnd = (n: number) => Math.round(Math.random() * n);
+  const mod = (dividend: number, divisor: number) => Math.round(dividend - (Math.floor(dividend / divisor) * divisor));
+  
+  const n1 = rnd(9);
+  const n2 = rnd(9);
+  const n3 = rnd(9);
+  const n4 = rnd(9);
+  const n5 = rnd(9);
+  const n6 = rnd(9);
+  const n7 = rnd(9);
+  const n8 = rnd(9);
+  const n9 = rnd(9);
+  
+  let d1 = n9 * 2 + n8 * 3 + n7 * 4 + n6 * 5 + n5 * 6 + n4 * 7 + n3 * 8 + n2 * 9 + n1 * 10;
+  d1 = 11 - (mod(d1, 11));
+  if (d1 >= 10) d1 = 0;
+  
+  let d2 = d1 * 2 + n9 * 3 + n8 * 4 + n7 * 5 + n6 * 6 + n5 * 7 + n4 * 8 + n3 * 9 + n2 * 10 + n1 * 11;
+  d2 = 11 - (mod(d2, 11));
+  if (d2 >= 10) d2 = 0;
+  
+  return `${n1}${n2}${n3}${n4}${n5}${n6}${n7}${n8}${n9}${d1}${d2}`;
+}
+
 export async function createAbacateBilling(data: CreateAbacateBillingData) {
   try {
     const apiKey = process.env.ABACATEPAY_API_KEY;
@@ -18,7 +44,7 @@ export async function createAbacateBilling(data: CreateAbacateBillingData) {
       throw new Error('ABACATEPAY_API_KEY is not configured');
     }
 
-    // 1. Fetch User details for Customer creation
+    // 1. Fetch User details
     const user = await prisma.user.findUnique({
       where: { id: data.userId },
     });
@@ -30,46 +56,34 @@ export async function createAbacateBilling(data: CreateAbacateBillingData) {
     // 2. Calculate Total
     const totalAmount = data.services.reduce((acc, curr) => acc + curr.price, 0);
 
-    // 3. Create Transaction in DB
-    const transaction = await prisma.transaction.create({
-      data: {
-        amount: totalAmount,
-        type: 'APPOINTMENT',
-        status: 'PENDING',
-        userId: data.userId,
-        appointmentId: data.appointmentId,
-      },
+    // 3. Create or Get Transaction in DB
+    let transaction = await prisma.transaction.findUnique({
+        where: { appointmentId: data.appointmentId }
     });
+
+    if (!transaction) {
+         transaction = await prisma.transaction.create({
+            data: {
+                amount: totalAmount,
+                type: 'APPOINTMENT',
+                status: 'PENDING',
+                userId: data.userId,
+                appointmentId: data.appointmentId,
+            },
+        });
+    } else {
+        transaction = await prisma.transaction.update({
+            where: { id: transaction.id },
+            data: { 
+                amount: totalAmount,
+                updatedAt: new Date()
+            }
+        });
+    }
 
     // 4. Create Billing in AbacatePay
     const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?canceled=true`;
     const completionUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?success=true`;
-
-    // Prepare Customer Data logic
-    // Card payments often require customer details.
-    // We will attempt to send it. We need TaxID, so we'll use a placeholder if missing for now
-    // or rely on metadata if validation permits (but previous error said cellphone required -> implies we sent customer obj?).
-    // Actually, we explicitly set customerData = null before.
-    // Let's try to populate it properly.
-    
-    let customerData = null;
-    let sanitizedPhone = '';
-    if (user.whatsapp) {
-        sanitizedPhone = user.whatsapp.replace(/\D/g, '');
-    }
-    
-    // Ensure phone has valid length (e.g. 10 or 11 digits for BR)
-    if (sanitizedPhone.length < 10) sanitizedPhone = '11999999999'; // Fallback dummy
-
-    // Dummy TaxID for dev/test if not in DB
-    const taxId = '00000000000'; 
-
-    customerData = {
-        name: user.name,
-        email: user.email || 'cliente@barber.com',
-        cellphone: sanitizedPhone,
-        taxId: taxId 
-    };
 
     const payload: any = {
       frequency: 'ONE_TIME',
@@ -87,14 +101,15 @@ export async function createAbacateBilling(data: CreateAbacateBillingData) {
         transactionId: transaction.id,
         appointmentId: data.appointmentId,
         customerId: user.id,
-        customerName: user.name,
-        customerEmail: user.email
+        // customerName: user.name, // Omit to avoid partial data issues? actually metadata is fine
+        // customerEmail: user.email
       },
     };
 
-    if (customerData) {
-        payload.customer = customerData;
-    }
+    // Note: We are omitting 'customer' object so AbacatePay checkout collects the data (CPF, etc)
+    // if (customerData) {
+    //    payload.customer = customerData;
+    // }
 
     const response = await fetch(`${ABACATE_API_URL}/billing/create`, {
       method: 'POST',

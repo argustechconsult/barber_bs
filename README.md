@@ -37,17 +37,14 @@
 
 ## PAGAMENTOS
 USUARIO **START** ✅
-- Pagamento com cartão de crédito
-- Pagamento com débito
-- Pagamento com PIX
+- Pagamento com cartão de crédito - STRIPE
+- Pagamento com débito - STRIPE
+- Pagamento com PIX - ABACATEPAY
     - OBS ABACATEPAY OU STRIPE
 
 USUARIO **PREMIUM**
 - Pagamento com cartão de crédito
-- Pagamento com débito
-- Pagamento com PIX
-- Pagamento com boleto
-    - OBS ABACATEPAY OU STRIPE (**Pagamento Mensal**)
+    - OBS STRIPE (**Pagamento Mensal**)
 
 
 * verificar tabela do pagamento no DB - (produto,servico,plano,usuario,id_usuario,data_vencimento,status_pagamento)✅
@@ -62,6 +59,13 @@ OBS: Comando para criar produtos no stripe: npx tsx scripts/test-stripe-sync.ts
 versel:
 login: argustechbs@gmail.com
 senha: argustechbs123
+LOCALWEB:
+login: jon5506
+senha: Hap@2025
+VPS:
+login: root
+senha: Hap@2025
+IP:191.252.102.247
 
 
 # USUÁRIOS PADRÃO (MOCK & SEED)
@@ -104,4 +108,6 @@ Produtos: Pomada, Óleo, Shampoo.
 # TODO
 
 - corrigir routes ✅
-- testar webhook
+- logica pagamento premium mensal - ✅ **terminar testes**
+- criar webhook para mudar status do pagamento NO STRIPE
+- criar área financeiro do PREMIUM

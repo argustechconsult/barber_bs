@@ -31,6 +31,7 @@ import {
 import { getBarbers } from '../actions/user.actions';
 import { createSubscriptionCheckoutSession } from '../actions/stripe.actions';
 import { createAbacateBilling } from '../actions/abacatepay.actions';
+import { getPlans } from '../actions/plan.actions';
 // const SESSION_APPOINTMENTS: { clientId: string; date: string }[] = [];
 
 const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
@@ -55,6 +56,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   const [showPremiumBanner, setShowPremiumBanner] = useState(true);
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
 
   // Fetch Barbers
   React.useEffect(() => {
@@ -65,6 +67,14 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
       }
     }
     fetchBarbers();
+
+    async function fetchPlans() {
+      const result = await getPlans();
+      if (result.success && result.plans) {
+        setPlans(result.plans);
+      }
+    }
+    fetchPlans();
 
     // Check for Stripe Success
     if (typeof window !== 'undefined') {
@@ -146,8 +156,6 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   };
 
   const confirmBooking = async () => {
-    // ... Premium logic skipped for now, focusing on basic create
-
     if (selectedBarber && selectedTime) {
       const dateTimeStr = `${selectedDateStr}T${selectedTime}:00`;
 
@@ -160,27 +168,54 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
       });
 
       if (result.success && result.appointment) {
-        // 2. Handle Payment
-        // Unified Payment Handler using AbacatePay
-        if (
-          paymentMethod === 'PIX' ||
-          paymentMethod === 'CREDIT' ||
-          paymentMethod === 'DEBIT'
-        ) {
-          const method = paymentMethod === 'PIX' ? 'PIX' : 'CARD';
+        // Premium Flow: Bypass Payment
+        if (user.plan === UserPlan.PREMIUM) {
+          setIsSuccess(true);
+          // We use a custom string or cast to any to allow 'PREMIUM' for logic,
+          // or just set CREDIT to show success message, but let's be explicit if we change the UI.
+          // For now, let's reuse 'CREDIT' but we will add a check in the success view
+          // OR better: Update the paymentMethod type locally or just use a state flag.
+          // Let's force it to 'CREDIT' to ensure the UI shows "Confirmed" but we will add a text override in the UI code if plan is premium.
+          setPaymentMethod('CREDIT');
+          return;
+        }
 
+        // 2. Handle Payment (Standard Flow)
+        // 2. Handle Payment (Standard Flow)
+        if (paymentMethod === 'PIX') {
+          // PIX: Use AbacatePay
           const paymentResult = await createAbacateBilling({
             appointmentId: result.appointment.id,
             services: selectedServices,
             userId: user.id,
-            method,
+            method: 'PIX',
           });
 
           if (paymentResult.success && paymentResult.url) {
             window.location.href = paymentResult.url;
             return;
           } else {
-            alert(paymentResult.message || 'Erro ao iniciar pagamento.');
+            alert(paymentResult.message || 'Erro ao iniciar pagamento Pix.');
+          }
+        } else if (paymentMethod === 'CREDIT' || paymentMethod === 'DEBIT') {
+          // CARD: Use Stripe Checkout
+          // Ensure we import createCheckoutSession
+          const { createCheckoutSession } = await import(
+            '../actions/stripe.actions'
+          );
+
+          const stripeResult = await createCheckoutSession({
+            appointmentId: result.appointment.id,
+            services: selectedServices,
+            userId: user.id,
+            paymentMethodTypes: ['card'], // Stripe Card covers Credit and Debit
+          });
+
+          if (stripeResult && stripeResult.success && stripeResult.url) {
+            window.location.href = stripeResult.url;
+            return;
+          } else {
+            alert('Erro ao iniciar pagamento com Cartão.');
           }
         }
       } else {
@@ -202,10 +237,31 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
 
   const handlePremiumSubscribe = async () => {
     try {
-      // Pass unused priceId because action handles it via env var if missing
+      console.log('Available plans:', plans);
+      if (plans.length === 0) {
+        alert(
+          'Erro: Nenhum plano carregado do sistema. Tente recarregar a página.',
+        );
+        return;
+      }
+
+      // Find the premium plan (assuming 'PREMIUM' or taking the highest priced one, or just the first one for now if user only made one)
+      // The user mentioned creating "o plano PREMIUM".
+      const premiumPlan =
+        plans.find((p) => p.name.toUpperCase().includes('PREMIUM')) || plans[0];
+
+      if (!premiumPlan || !premiumPlan.stripePriceId) {
+        alert(
+          `Plano Premium não encontrado ou sem ID do Stripe. Planos disponíveis: ${plans
+            .map((p) => p.name)
+            .join(', ')}`,
+        );
+        return;
+      }
+
       const result = await createSubscriptionCheckoutSession({
         userId: user.id,
-        priceId: '',
+        priceId: premiumPlan.stripePriceId,
         customerId: user.stripeCustomerId || undefined,
       });
 
@@ -282,7 +338,9 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             paymentMethod === 'DEBIT' ||
             paymentMethod === 'PIX') && (
             <p className="text-amber-500 font-bold text-sm">
-              Pagamento Online Confirmado.
+              {user.plan === UserPlan.PREMIUM
+                ? 'Agendamento Premium Confirmado.'
+                : 'Pagamento Online Confirmado.'}
             </p>
           )}
         </div>

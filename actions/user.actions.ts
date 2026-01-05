@@ -30,3 +30,15 @@ export async function getBarbers() {
     return [];
   }
 }
+
+export async function getUser(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    return user;
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return null;
+  }
+}

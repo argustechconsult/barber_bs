@@ -55,7 +55,7 @@ export async function createAppointment(data: CreateAppointmentData) {
         clientId,
         barberId,
         serviceIds: serviceIds.join(','),
-        status: 'PENDING'
+        status: client?.plan === 'PREMIUM' && client.subscriptionStatus === 'ACTIVE' ? 'CONFIRMED' : 'PENDING'
       }
     });
 

@@ -22,6 +22,7 @@ import {
   User as UserIcon,
   X,
   CheckCircle2,
+  Scissors,
 } from 'lucide-react';
 
 interface BarberDashboardProps {
@@ -77,6 +78,26 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
 
   const currentChartData = growthData[period];
 
+  const [statsData, setStatsData] = useState({
+    clientsServed: 0,
+    totalRevenue: 0,
+    averagePerDay: '0',
+    cutsRevenue: 0,
+    goalPercentage: 0,
+  });
+
+  React.useEffect(() => {
+    if (user.role === UserRole.BARBEIRO && user.id) {
+      import('../actions/barber.actions').then(({ getBarberStats }) => {
+        getBarberStats(user.id).then((res) => {
+          if (res.success && res.stats) {
+            setStatsData(res.stats);
+          }
+        });
+      });
+    }
+  }, [user]);
+
   // Specific stats for each role
   const stats = isAdmin
     ? [
@@ -108,25 +129,31 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
     : [
         {
           label: 'Clientes Atendidos',
-          value: '142',
+          value: statsData.clientsServed.toString(),
           icon: UserIcon,
           color: 'text-blue-500',
         },
         {
           label: 'Faturamento',
-          value: 'R$ 5.420',
+          value: `R$ ${statsData.totalRevenue.toFixed(2)}`,
           icon: TrendingUp,
           color: 'text-green-500',
         },
         {
+          label: 'Receita Cortes',
+          value: `R$ ${statsData.cutsRevenue.toFixed(2)}`,
+          icon: Scissors,
+          color: 'text-indigo-500',
+        },
+        {
           label: 'Média/Dia',
-          value: '6.2',
+          value: statsData.averagePerDay,
           icon: Clock,
           color: 'text-purple-500',
         },
         {
           label: 'Meta Atingida',
-          value: '82%',
+          value: `${statsData.goalPercentage}%`,
           icon: CheckCircle2,
           color: 'text-amber-500',
         },
@@ -194,7 +221,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
       </header>
 
       {/* Main Indicators Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         {stats.map((stat, i) => (
           <div
             key={i}

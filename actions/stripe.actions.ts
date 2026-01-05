@@ -156,16 +156,28 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData) {
         // Calculate total
         const totalAmount = data.services.reduce((acc, curr) => acc + curr.price, 0);
 
-        // 1. Create TRANSACTION record first
-        const transaction = await prisma.transaction.create({
-            data: {
-                amount: totalAmount,
-                type: 'APPOINTMENT',
-                status: 'PENDING',
-                userId: data.userId,
-                appointmentId: data.appointmentId,
-            }
+        // 1. Create or Get TRANSACTION record
+        let transaction = await prisma.transaction.findUnique({
+            where: { appointmentId: data.appointmentId }
         });
+
+        if (!transaction) {
+             transaction = await prisma.transaction.create({
+                data: {
+                    amount: totalAmount,
+                    type: 'APPOINTMENT',
+                    status: 'PENDING',
+                    userId: data.userId,
+                    appointmentId: data.appointmentId,
+                }
+            });
+        } else {
+             // Update amount just in case
+             transaction = await prisma.transaction.update({
+                 where: { id: transaction.id },
+                 data: { amount: totalAmount, updatedAt: new Date() }
+             });
+        }
 
         const paymentMethodTypes = data.paymentMethodTypes || ['card'];
         
@@ -210,7 +222,9 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData) {
 
         return { success: true, url: session.url };
 
-    } catch (error) {
+    } catch (error: any) {
+        console.error('Create Stripe Session Error:', error);
+        return { success: false, message: `Erro Stripe: ${error.message}` };
     }
 }
 
@@ -231,6 +245,10 @@ export async function createSubscriptionCheckoutSession(data: CreateSubscription
         // If no customer ID, we might want to creating one or let Stripe create it during checkout
         // Best practice: Pass customer_email if creating new, or customer ID if existing.
         
+        if (!data.priceId) {
+            throw new Error('Price ID is required (pass a valid plan price ID)');
+        }
+
         const user = await prisma.user.findUnique({
              where: { id: data.userId },
              select: { email: true, stripeCustomerId: true }
@@ -275,5 +293,34 @@ export async function createSubscriptionCheckoutSession(data: CreateSubscription
     } catch (error) {
         console.error('Create Subscription Checkout Error:', error);
         return { success: false, message: `Erro Subscription: ${(error as any).message}` };
+    }
+}
+
+export async function checkCheckoutSession(sessionId: string) {
+    try {
+        const stripeInstance = getStripe();
+        const session = await stripeInstance.checkout.sessions.retrieve(sessionId);
+
+        if (session.payment_status === 'paid') {
+             const userId = session.metadata?.userId;
+             const plan = session.metadata?.plan;
+             
+             if (userId && plan === 'PREMIUM') {
+                 const updatedUser = await prisma.user.update({
+                     where: { id: userId },
+                     data: {
+                         plan: 'PREMIUM',
+                         stripeCustomerId: session.customer as string,
+                         stripeSubscriptionId: session.subscription as string,
+                         subscriptionStatus: 'ACTIVE'
+                     }
+                 });
+                 return { success: true, user: updatedUser };
+             }
+        }
+        return { success: false };
+    } catch (error) {
+        console.error("Check Session Error:", error);
+        return { success: false };
     }
 }
