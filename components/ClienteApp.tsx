@@ -284,7 +284,9 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             window.location.href = stripeResult.url;
             return;
           } else {
-            alert('Erro ao iniciar pagamento com Cartão.');
+            alert(
+              stripeResult.message || 'Erro ao iniciar pagamento com Cartão.',
+            );
           }
         }
       } else {
