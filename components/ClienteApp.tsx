@@ -28,7 +28,7 @@ import {
   createAppointment,
   getAppointmentsByBarber,
 } from '../actions/appointment.actions';
-import { getBarbers } from '../actions/user.actions';
+import { getBarbers } from '../actions/barber.actions';
 import { createSubscriptionCheckoutSession } from '../actions/stripe.actions';
 import { createAbacateBilling } from '../actions/abacatepay.actions';
 import { getPlans } from '../actions/plan.actions';
@@ -61,9 +61,9 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   // Fetch Barbers
   React.useEffect(() => {
     async function fetchBarbers() {
-      const fetched = await getBarbers();
-      if (fetched && fetched.length > 0) {
-        setBarbers(fetched);
+      const result = await getBarbers();
+      if (result.success && result.barbers) {
+        setBarbers(result.barbers);
       }
     }
     fetchBarbers();
@@ -110,11 +110,80 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   const availableDates = useMemo(() => {
     const dates = [];
     const today = new Date();
-    for (let i = 0; i < 14; i++) {
-      const date = new Date();
-      date.setDate(today.getDate() + i);
+    // Adjust local dates if needed, keeping simple loop for now
+
+    // Barber Limits
+    let startDateLimit: Date | null = null;
+    let endDateLimit: Date | null = null;
+
+    if (
+      selectedBarber &&
+      selectedBarber.workStartDate &&
+      selectedBarber.workStartDate.trim() !== ''
+    ) {
+      const parts = selectedBarber.workStartDate.split('-');
+      if (parts.length === 3) {
+        startDateLimit = new Date(
+          parseInt(parts[0]),
+          parseInt(parts[1]) - 1,
+          parseInt(parts[2]),
+          0,
+          0,
+          0,
+        );
+      }
+    }
+    if (
+      selectedBarber &&
+      selectedBarber.workEndDate &&
+      selectedBarber.workEndDate.trim() !== ''
+    ) {
+      const parts = selectedBarber.workEndDate.split('-');
+      if (parts.length === 3) {
+        endDateLimit = new Date(
+          parseInt(parts[0]),
+          parseInt(parts[1]) - 1,
+          parseInt(parts[2]),
+          23,
+          59,
+          59,
+        );
+      }
+    }
+
+    // Default 14 days or longer if needed, let's keep 14 for visibility but respect limits
+    // Actually, if a specific range is set, we might want to show that range?
+    // For now, let's just stick to "Next 14 days" but filter out if outside range.
+    // Or if the start date is in the future, we should probably start FROM there.
+
+    let loopStart = new Date(); // Start from today
+    // Reset time to start of day for accurate comparison
+    loopStart.setHours(0, 0, 0, 0);
+
+    // If startDateLimit is in the future, start from there.
+    // If startDateLimit is valid and AFTER loopStart, update loopStart.
+    // Make sure we don't start in the past just because limit is in the past (unless user wants to see past? No, only future generally)
+    if (startDateLimit && startDateLimit > loopStart) {
+      loopStart = new Date(startDateLimit);
+    }
+
+    // Safety: If limit is in the past and strict, we might show nothing?
+    // Usually valid range is future. If start limit is past, valid range is today...limitEnd.
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(loopStart);
+      date.setDate(loopStart.getDate() + i);
+
+      // Adjust to local ISO string
+      const d = new Date(date);
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      const fullDate = d.toISOString().split('T')[0];
+
+      // Re-check strict limits if needed, but loopStart/end logic above helps.
+      // It's safer to compare fullDate strings or timestamps.
+
       dates.push({
-        fullDate: date.toISOString().split('T')[0],
+        fullDate,
         dayName: date
           .toLocaleDateString('pt-BR', { weekday: 'short' })
           .replace('.', ''),
@@ -126,7 +195,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
       });
     }
     return dates;
-  }, []);
+  }, [selectedBarber]); // Add selectedBarber to dependency
 
   const toggleService = (service: Service) => {
     setSelectedServices((prev) =>
@@ -667,59 +736,102 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                {[
-                  '09:00',
-                  '10:00',
-                  '11:00',
-                  '14:00',
-                  '15:00',
-                  '16:00',
-                  '17:00',
-                  '18:00',
-                  '19:00',
-                ]
-                  .filter((time) => {
-                    // Filter past times if date is today
-                    const now = new Date();
-                    // Local "today" string for comparison
-                    const localNow = new Date(
-                      now.getTime() - now.getTimezoneOffset() * 60000,
+                {(() => {
+                  const slots: string[] = [];
+                  if (selectedBarber) {
+                    const startHr = parseInt(
+                      selectedBarber.horariosTrabalho.inicio.split(':')[0],
                     );
-                    const todayStr = localNow.toISOString().split('T')[0];
+                    const endHr = parseInt(
+                      selectedBarber.horariosTrabalho.fim.split(':')[0],
+                    );
+                    const startMin = parseInt(
+                      selectedBarber.horariosTrabalho.inicio.split(':')[1] ||
+                        '0',
+                    );
+                    const interval = selectedBarber.intervaloAtendimento || 10; // Minutes
 
-                    if (selectedDateStr === todayStr) {
-                      // Parse time "HH:mm"
-                      const [h, m] = time.split(':').map(Number);
-                      const slotDate = new Date();
-                      slotDate.setHours(h, m, 0, 0);
+                    let current = new Date();
+                    current.setHours(startHr, startMin, 0, 0);
 
-                      // Compare with current time
-                      // We can just compare hours/minutes or timestamps
-                      if (slotDate <= now) {
-                        return false;
-                      }
+                    const end = new Date();
+                    end.setHours(endHr, 0, 0, 0);
+
+                    while (current < end) {
+                      const timeStr = current.toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                      });
+                      slots.push(timeStr);
+                      current.setMinutes(current.getMinutes() + interval);
                     }
-                    return true;
-                  })
-                  .map((time) => {
-                    const occupied = isSlotOccupied(time);
-                    return (
-                      <button
-                        key={time}
-                        disabled={occupied}
-                        onClick={() => setSelectedTime(time)}
-                        className={`py-4 rounded-2xl border text-sm font-bold transition-all ${
-                          occupied
-                            ? 'bg-neutral-800 border-neutral-700 text-neutral-700 line-through cursor-not-allowed'
-                            : selectedTime === time
-                            ? 'bg-amber-500 border-amber-500 text-black scale-105 shadow-lg shadow-amber-500/20'
-                            : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'
-                        }`}
-                      >
-                        {occupied ? 'Indisponível' : time}
-                      </button>
-                    );
-                  })}
+                  } else {
+                    // Fallback if no barber selected (shouldn't happen here)
+                    // Or if barber has no hours defined, default to 09:00 - 19:00 with 10 min interval as requested
+                    const startHr = 9;
+                    const endHr = 18;
+                    const interval = 10;
+
+                    let current = new Date();
+                    current.setHours(startHr, 0, 0, 0);
+                    const end = new Date();
+                    end.setHours(endHr, 0, 0, 0);
+
+                    while (current < end) {
+                      const timeStr = current.toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                      });
+                      slots.push(timeStr);
+                      current.setMinutes(current.getMinutes() + interval);
+                    }
+                  }
+
+                  return slots
+                    .filter((time) => {
+                      // Filter past times if date is today
+                      const now = new Date();
+                      // Local "today" string for comparison
+                      const localNow = new Date(
+                        now.getTime() - now.getTimezoneOffset() * 60000,
+                      );
+                      const todayStr = localNow.toISOString().split('T')[0];
+
+                      if (selectedDateStr === todayStr) {
+                        // Parse time "HH:mm"
+                        const [h, m] = time.split(':').map(Number);
+                        const slotDate = new Date();
+                        slotDate.setHours(h, m, 0, 0);
+
+                        // Compare with current time
+                        if (slotDate <= now) {
+                          return false;
+                        }
+                      }
+                      return true;
+                    })
+                    .map((time) => {
+                      const occupied = isSlotOccupied(time);
+                      return (
+                        <button
+                          key={time}
+                          disabled={occupied}
+                          onClick={() => setSelectedTime(time)}
+                          className={`py-4 rounded-2xl border text-sm font-bold transition-all ${
+                            occupied
+                              ? 'bg-neutral-800 border-neutral-700 text-neutral-700 line-through cursor-not-allowed'
+                              : selectedTime === time
+                              ? 'bg-amber-500 border-amber-500 text-black scale-105 shadow-lg shadow-amber-500/20'
+                              : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'
+                          }`}
+                        >
+                          {occupied ? 'Indisponível' : time}
+                        </button>
+                      );
+                    });
+                })()}
               </div>
             </div>
 

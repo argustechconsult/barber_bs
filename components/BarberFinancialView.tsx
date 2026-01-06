@@ -29,78 +29,81 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
   const isAdmin = user.role === UserRole.ADMIN;
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [transType, setTransType] = useState<'INCOME' | 'EXPENSE'>('INCOME');
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: '1',
-      description: 'Corte de Cabelo (PIX)',
-      amount: 50,
-      type: 'INCOME',
-      date: '2024-06-12',
-    },
-    {
-      id: '2',
-      description: 'Pagamento de Aluguel',
-      amount: 1500,
-      type: 'EXPENSE',
-      date: '2024-06-10',
-    },
-    {
-      id: '3',
-      description: 'Pomada Matte Venda',
-      amount: 45,
-      type: 'INCOME',
-      date: '2024-06-12',
-    },
-    {
-      id: '4',
-      description: 'Energia Elétrica',
-      amount: 320,
-      type: 'EXPENSE',
-      date: '2024-06-05',
-    },
-  ]);
 
-  // Common barbers only see their incomes/receitas
-  const displayedTransactions = isAdmin
-    ? transactions
-    : transactions.filter((t) => t.type === 'INCOME');
+  const [financialStats, setFinancialStats] = useState({
+    transactions: [] as Transaction[],
+    totalIncome: 0,
+    totalExpense: 0,
+    netProfit: 0,
+  });
+
+  const fetchStats = () => {
+    if (isAdmin) {
+      import('../actions/barber.actions').then(({ getFinancialStats }) => {
+        getFinancialStats().then((res) => {
+          if (res.success && res.stats) {
+            setFinancialStats({
+              transactions: res.stats.transactions.map((t: any) => ({
+                id: t.id,
+                description: t.description || 'Sem descrição',
+                amount: t.amount,
+                type: t.type as 'INCOME' | 'EXPENSE',
+                date: t.date,
+              })),
+              totalIncome: res.stats.totalIncome,
+              totalExpense: res.stats.totalExpense,
+              netProfit: res.stats.netProfit,
+            });
+          }
+        });
+      });
+    } else if (user.barbeiroId || user.role === UserRole.BARBEIRO) {
+      // Fetch stats strictly for this barber (using user.id)
+      import('../actions/barber.actions').then(({ getBarberStats }) => {
+        getBarberStats(user.id).then((res) => {
+          if (res.success && res.stats) {
+            setFinancialStats({
+              transactions: [], // Add transaction fetching for barber if needed, currently stats only logic in action
+              totalIncome: res.stats.totalRevenue,
+              totalExpense: 0,
+              netProfit: res.stats.totalRevenue,
+            });
+          }
+        });
+      });
+    }
+  };
+
+  React.useEffect(() => {
+    fetchStats();
+  }, [user]);
+
+  // Common barbers only see their incomes/receitas (Mock behavior preserved for non-admin)
+  const displayedTransactions = isAdmin ? financialStats.transactions : []; // TODO: Implement barber financial view if needed, currently focusing on Admin
 
   const stats = isAdmin
     ? [
         {
           label: 'Receita Total',
-          value: `R$ ${transactions
-            .filter((t) => t.type === 'INCOME')
-            .reduce((acc, curr) => acc + curr.amount, 0)
-            .toFixed(2)}`,
+          value: `R$ ${financialStats.totalIncome.toFixed(2)}`,
           icon: ArrowUpCircle,
           color: 'text-green-500',
         },
         {
           label: 'Despesas',
-          value: `R$ ${transactions
-            .filter((t) => t.type === 'EXPENSE')
-            .reduce((acc, curr) => acc + curr.amount, 0)
-            .toFixed(2)}`,
+          value: `R$ ${financialStats.totalExpense.toFixed(2)}`,
           icon: ArrowDownCircle,
           color: 'text-red-500',
         },
         {
           label: 'Lucro Líquido',
-          value: `R$ ${(
-            transactions
-              .filter((t) => t.type === 'INCOME')
-              .reduce((acc, curr) => acc + curr.amount, 0) -
-            transactions
-              .filter((t) => t.type === 'EXPENSE')
-              .reduce((acc, curr) => acc + curr.amount, 0)
-          ).toFixed(2)}`,
+          value: `R$ ${financialStats.netProfit.toFixed(2)}`,
           icon: TrendingUp,
           color: 'text-amber-500',
         },
         {
           label: 'Vendas Market',
-          value: 'R$ 1.800',
+          value: 'R$ 0.00', // Zeroed as requested
           icon: ShoppingBag,
           color: 'text-blue-500',
         },
@@ -108,42 +111,69 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
     : [
         {
           label: 'Meus Ganhos (Mês)',
-          value: 'R$ 3.200',
+          value: `R$ ${financialStats.totalIncome.toFixed(2)}`,
           icon: DollarSign,
           color: 'text-green-500',
         },
         {
-          label: 'Comissões',
-          value: 'R$ 640',
+          label: 'Comissões', // Assuming commission is same as total revenue for now or calculated
+          value: `R$ ${(financialStats.totalIncome * 0.5).toFixed(2)}`, // Example 50% commission if needed, or just show total
           icon: TrendingUp,
           color: 'text-amber-500',
         },
         {
           label: 'Atendimentos',
-          value: '84',
+          value: financialStats.transactions.length.toString(), // or separate count
           icon: Receipt,
           color: 'text-blue-500',
         },
         {
           label: 'Média p/ Corte',
-          value: 'R$ 38',
+          // Avoid division by zero
+          value: `R$ ${(financialStats.transactions.length > 0
+            ? financialStats.totalIncome / financialStats.transactions.length
+            : 0
+          ).toFixed(2)}`,
           icon: DollarSign,
           color: 'text-neutral-500',
         },
       ];
 
-  const handleAddTransaction = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddTransaction = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newT: Transaction = {
-      id: Math.random().toString(36).substr(2, 9),
-      description: formData.get('desc') as string,
-      amount: Number(formData.get('amount')),
-      type: transType,
-      date: new Date().toISOString().split('T')[0],
-    };
-    setTransactions([newT, ...transactions]);
-    setShowAddTransaction(false);
+    const description = formData.get('desc') as string;
+    const amount = Number(formData.get('amount'));
+
+    if (user.id) {
+      const { createTransaction } = await import('../actions/barber.actions');
+      const res = await createTransaction({
+        description,
+        amount,
+        type: transType,
+        userId: user.id,
+      });
+
+      if (res.success) {
+        fetchStats(); // Refresh data
+        setShowAddTransaction(false);
+      } else {
+        alert('Erro ao criar transação');
+      }
+    }
+  };
+
+  const handleDeleteTransaction = async (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta transação?')) {
+      const { deleteTransaction } = await import('../actions/barber.actions');
+      const res = await deleteTransaction(id);
+
+      if (res.success) {
+        fetchStats();
+      } else {
+        alert('Erro ao excluir transação');
+      }
+    }
   };
 
   return (
@@ -258,11 +288,7 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
                       </p>
                       {isAdmin && (
                         <button
-                          onClick={() =>
-                            setTransactions(
-                              transactions.filter((item) => item.id !== t.id),
-                            )
-                          }
+                          onClick={() => handleDeleteTransaction(t.id)}
                           className="p-2 text-neutral-800 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                         >
                           <X size={14} />
@@ -291,15 +317,15 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
               <div className="space-y-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-500">Lucro Bruto Market</span>
-                  <span className="font-bold text-green-500">+R$ 1.200</span>
+                  <span className="font-bold text-green-500">R$ 0.00</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-500">Taxa de Margem</span>
-                  <span className="font-bold">42%</span>
+                  <span className="font-bold">0%</span>
                 </div>
                 <div className="h-[1px] bg-neutral-800 my-2"></div>
                 <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest text-center italic">
-                  Controle global ativo
+                  Marketplace desativado
                 </p>
               </div>
             </div>

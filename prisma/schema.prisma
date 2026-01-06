@@ -25,6 +25,7 @@ model User {
   id                   String    @id @default(uuid())
   name                 String
   email                String?   @unique
+  inviteToken          String?   @unique // Token for INVITE flow
   whatsapp             String?   @unique
   birthDate            String?
   password             String?
@@ -36,6 +37,11 @@ model User {
   stripeSubscriptionId String?   @unique
   subscriptionStatus   String? // ACTIVE, INACTIVE, PAST_DUE, CANCELLED
   createdAt            DateTime  @default(now())
+  appointmentInterval  Int?      @default(10)
+  startTime            String?   @default("09:00")
+  endTime              String?   @default("18:00")
+  workStartDate        String? // Optional start date for schedule (YYYY-MM-DD)
+  workEndDate          String? // Optional end date for schedule (YYYY-MM-DD)
   updatedAt            DateTime  @updatedAt
 
   clientAppointments Appointment[] @relation("ClientAppointments")
@@ -74,6 +80,7 @@ model Product {
   description     String
   category        String
   price           Float
+  image           String? // Base64 storage
   stripeProductId String?
   stripePriceId   String?
   createdAt       DateTime @default(now())
@@ -83,6 +90,8 @@ model Product {
 enum TransactionType {
   APPOINTMENT
   SUBSCRIPTION
+  INCOME
+  EXPENSE
 }
 
 enum TransactionStatus {
@@ -94,6 +103,7 @@ enum TransactionStatus {
 
 model Transaction {
   id              String            @id @default(uuid())
+  description     String? // Added for manual entries
   amount          Float
   status          TransactionStatus @default(PENDING)
   type            TransactionType

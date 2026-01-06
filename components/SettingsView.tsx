@@ -22,6 +22,8 @@ import {
   Users,
   X,
   Sparkles,
+  CalendarCheck,
+  ArrowDownCircle,
 } from 'lucide-react';
 
 interface SettingsViewProps {
@@ -41,22 +43,31 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     user.role === UserRole.BARBEIRO || user.role === UserRole.ADMIN;
 
   const [services, setServices] = useState<Service[]>([]); // Initialize empty or wait for fetch
-  const [barbers, setBarbers] = useState<Barbeiro[]>(INITIAL_BARBERS);
+  const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
   const [showAddBarber, setShowAddBarber] = useState(false);
   const [showAddService, setShowAddService] = useState(false);
   const [showAddPlan, setShowAddPlan] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Fetch Services & Plans
+  // Fetch Services, Plans & Barbers
   React.useEffect(() => {
     async function load() {
+      // Services
       const result = await getServices();
       if (result.success && result.services) {
         setServices(result.services);
       }
+      // Plans
       const planResult = await getPlans();
       if (planResult.success && planResult.plans) {
         setPlans(planResult.plans);
+      }
+      // Barbers
+      const { getBarbers } = await import('../actions/barber.actions');
+      const barbersResult = await getBarbers();
+      if (barbersResult.success && barbersResult.barbers) {
+        setBarbers(barbersResult.barbers);
       }
     }
     load();
@@ -126,7 +137,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         alert('Erro ao remover serviço');
       }
     } else if (deleteConfirmation.type === 'barber') {
-      setBarbers((prev) => prev.filter((b) => b.id !== deleteConfirmation.id));
+      const { deleteBarber } = await import('../actions/barber.actions');
+      const result = await deleteBarber(deleteConfirmation.id);
+      if (result.success) {
+        setBarbers((prev) =>
+          prev.filter((b) => b.id !== deleteConfirmation.id),
+        );
+      } else {
+        alert('Erro ao excluir barbeiro');
+      }
     } else if (deleteConfirmation.type === 'plan') {
       const result = await deletePlan(deleteConfirmation.id);
       if (result.success) {
@@ -153,20 +172,34 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
   // ... (keep handleAddBarber etc) ...
 
-  const handleAddBarber = (e: React.FormEvent<HTMLFormElement>) => {
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+
+  const handleAddBarber = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newBarber: Barbeiro = {
-      id: Math.random().toString(36).substr(2, 9),
-      nome: formData.get('nome') as string,
-      foto: 'https://picsum.photos/200/200?random=' + Math.random(),
-      bio: '',
-      intervaloAtendimento: 30,
-      horariosTrabalho: { inicio: '09:00', fim: '19:00' },
-      ativo: true,
-    };
-    setBarbers([...barbers, newBarber]);
-    setShowAddBarber(false);
+    const nome = formData.get('nome') as string;
+    const email = formData.get('email') as string;
+
+    const { createBarberInvite } = await import('../actions/auth.actions');
+    const result = await createBarberInvite(nome, email);
+
+    if (result.success && result.inviteLink) {
+      setInviteLink(result.inviteLink);
+      // Only close modal after they copy/see the link.
+      // Or we can change the modal content to show the link.
+      // For simplicity, let's keep the modal open but change state to show link.
+    } else {
+      alert(result.message || 'Erro ao criar convite');
+    }
+  };
+
+  const copyLink = () => {
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink);
+      alert('Link copiado!');
+      setInviteLink(null);
+      setShowAddBarber(false);
+    }
   };
 
   // ... (handleAddService) ...
@@ -232,7 +265,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <UserIcon size={48} className="text-neutral-600" />
+                    <img
+                      src="/default.jpeg"
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
                   )}
                 </div>
                 <button
@@ -290,6 +327,235 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Admin and Staff Content Area */}
         <div className="lg:col-span-8 space-y-8">
+          {/* Scheduling Settings for Staff - Moved to top */}
+          {isStaff && (
+            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 shadow-xl animate-in fade-in slide-in-from-left-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="bg-amber-500/10 p-2 rounded-xl text-amber-500">
+                  <CalendarCheck size={24} />
+                </div>
+                <h3 className="text-xl font-bold">Configuração de Agenda</h3>
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const interval = Number(formData.get('interval')) || 10;
+                  const start = (formData.get('start') as string) || '09:00';
+                  const end = (formData.get('end') as string) || '18:00';
+
+                  const formatDateToISO = (dateStr: string) => {
+                    if (!dateStr) return null;
+                    const parts = dateStr.split('/');
+                    if (parts.length === 3) {
+                      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                    return dateStr; // Fallback or unchanged if already ISO (shouldn't happen with text input unless prefill)
+                  };
+
+                  const startDesc = formData.get('workStartDate') as string;
+                  const endDesc = formData.get('workEndDate') as string;
+
+                  const workStartDate = formatDateToISO(startDesc);
+                  const workEndDate = formatDateToISO(endDesc);
+
+                  const { updateBarberSettings } = await import(
+                    '../actions/barber.actions'
+                  );
+                  const result = await updateBarberSettings(user.id, {
+                    interval,
+                    startTime: start,
+                    endTime: end,
+                    workStartDate: workStartDate || null,
+                    workEndDate: workEndDate || null,
+                  });
+
+                  if (result.success) {
+                    setShowSuccessModal(true);
+                    setTimeout(() => setShowSuccessModal(false), 3000); // Auto hide after 3s
+                    onUpdateUser({
+                      ...user,
+                      appointmentInterval: interval,
+                      startTime: start,
+                      endTime: end,
+                      workStartDate: workStartDate || undefined,
+                      workEndDate: workEndDate || undefined,
+                    });
+                  } else {
+                    alert('Erro ao salvar configurações: ' + result.message);
+                  }
+                }}
+                className="space-y-6"
+              >
+                <div className="space-y-2">
+                  <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                    Intervalo (minutos)
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="interval"
+                      defaultValue={user.appointmentInterval || 10}
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 appearance-none"
+                    >
+                      {Array.from({ length: 10 }).map((_, i) => {
+                        const val = 10 + i * 5; // 10, 15, ..., 55 (10 items: 0..9 -> 10 + 45 = 55)
+                        return (
+                          <option key={val} value={val}>
+                            {val} min
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                      <ArrowDownCircle size={16} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                      Início (Horário)
+                    </label>
+                    <div className="relative">
+                      <select
+                        name="start"
+                        defaultValue={user.startTime || '09:00'}
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 appearance-none"
+                      >
+                        {Array.from({ length: 96 }).map((_, i) => {
+                          const totalMins = i * 15;
+                          const h = Math.floor(totalMins / 60);
+                          const m = totalMins % 60;
+                          const time = `${h.toString().padStart(2, '0')}:${m
+                            .toString()
+                            .padStart(2, '0')}`;
+                          return (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                        <ArrowDownCircle size={16} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                      Fim (Horário)
+                    </label>
+                    <div className="relative">
+                      <select
+                        name="end"
+                        defaultValue={user.endTime || '18:00'}
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 appearance-none"
+                      >
+                        {Array.from({ length: 96 }).map((_, i) => {
+                          const totalMins = i * 15;
+                          const h = Math.floor(totalMins / 60);
+                          const m = totalMins % 60;
+                          const time = `${h.toString().padStart(2, '0')}:${m
+                            .toString()
+                            .padStart(2, '0')}`;
+                          return (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                        <ArrowDownCircle size={16} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                    Período de Atendimento (Opcional)
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                        De
+                      </label>
+                      <input
+                        type="text"
+                        name="workStartDate"
+                        placeholder="dd/mm/aaaa"
+                        defaultValue={
+                          user.workStartDate
+                            ? user.workStartDate.split('-').reverse().join('/')
+                            : ''
+                        }
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 text-neutral-400"
+                        onInput={(e) => {
+                          // Simple auto slash mask
+                          let v = e.currentTarget.value.replace(/\D/g, '');
+                          if (v.length > 8) v = v.slice(0, 8);
+                          if (v.length > 4)
+                            v =
+                              v.slice(0, 2) +
+                              '/' +
+                              v.slice(2, 4) +
+                              '/' +
+                              v.slice(4);
+                          else if (v.length > 2)
+                            v = v.slice(0, 2) + '/' + v.slice(2);
+                          e.currentTarget.value = v;
+                        }}
+                        maxLength={10}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                        Até
+                      </label>
+                      <input
+                        type="text"
+                        name="workEndDate"
+                        placeholder="dd/mm/aaaa"
+                        defaultValue={
+                          user.workEndDate
+                            ? user.workEndDate.split('-').reverse().join('/')
+                            : ''
+                        }
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 text-neutral-400"
+                        onInput={(e) => {
+                          // Simple auto slash mask
+                          let v = e.currentTarget.value.replace(/\D/g, '');
+                          if (v.length > 8) v = v.slice(0, 8);
+                          if (v.length > 4)
+                            v =
+                              v.slice(0, 2) +
+                              '/' +
+                              v.slice(2, 4) +
+                              '/' +
+                              v.slice(4);
+                          else if (v.length > 2)
+                            v = v.slice(0, 2) + '/' + v.slice(2);
+                          e.currentTarget.value = v;
+                        }}
+                        maxLength={10}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-neutral-800 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-neutral-700 transition-all shadow-lg active:scale-[0.98]"
+                >
+                  <Save size={18} /> Salvar Agenda
+                </button>
+              </form>
+            </div>
+          )}
+
           {isAdmin && (
             <>
               <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 animate-in fade-in slide-in-from-top-4">
@@ -464,29 +730,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </>
           )}
-
-          {!isAdmin && isStaff && (
-            <div className="bg-neutral-900 border border-neutral-800 p-12 rounded-[2.5rem] text-center space-y-4 shadow-xl">
-              <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <UserIcon className="text-amber-500" size={32} />
-              </div>
-              <p className="text-neutral-500 font-medium">
-                Mantenha seus dados atualizados para que os clientes o
-                identifiquem corretamente no momento do agendamento.
-              </p>
-              <div className="pt-8 space-y-4">
-                <div className="p-4 bg-neutral-800/40 rounded-2xl border border-white/5 text-left">
-                  <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-1">
-                    Dica Profissional
-                  </p>
-                  <p className="text-xs text-neutral-400">
-                    Barbeiros com fotos de alta qualidade e nomes completos
-                    transmitem 40% mais confiança para novos clientes.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -549,45 +792,68 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="bg-neutral-950 border border-neutral-800 w-full max-w-md rounded-[2.5rem] p-10 space-y-8 animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-display font-bold">
-                Novo Profissional
+                {inviteLink ? 'Convite Gerado!' : 'Novo Profissional'}
               </h3>
               <button
-                onClick={() => setShowAddBarber(false)}
+                onClick={() => {
+                  setShowAddBarber(false);
+                  setInviteLink(null);
+                }}
                 className="p-2 text-neutral-500 hover:text-white"
               >
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleAddBarber} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
-                  Nome Completo
-                </label>
-                <input
-                  name="nome"
-                  required
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40"
-                  placeholder="Ex: Lucas Santana"
-                />
+
+            {inviteLink ? (
+              <div className="space-y-6 text-center">
+                <p className="text-neutral-400">
+                  O convite foi criado com sucesso. Envie o link abaixo para o
+                  barbeiro completar o cadastro e definir a senha.
+                </p>
+                <div className="p-4 bg-neutral-900 rounded-xl border border-neutral-800 break-all text-sm font-mono text-amber-500">
+                  {inviteLink}
+                </div>
+                <button
+                  onClick={copyLink}
+                  className="w-full bg-amber-500 text-black font-bold py-5 rounded-3xl shadow-lg shadow-amber-500/10 transition-all active:scale-95"
+                >
+                  Copiar Link e Fechar
+                </button>
               </div>
-              <div className="space-y-2">
-                <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
-                  Email de Acesso
-                </label>
-                <input
-                  type="email"
-                  required
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40"
-                  placeholder="lucas@barbearia.com"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-amber-500 text-black font-bold py-5 rounded-3xl shadow-lg shadow-amber-500/10 transition-all active:scale-95"
-              >
-                Adicionar à Equipe
-              </button>
-            </form>
+            ) : (
+              <form onSubmit={handleAddBarber} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                    Nome Completo
+                  </label>
+                  <input
+                    name="nome"
+                    required
+                    className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40"
+                    placeholder="Ex: Lucas Santana"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                    Email de Acesso
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40"
+                    placeholder="lucas@barbearia.com"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-amber-500 text-black font-bold py-5 rounded-3xl shadow-lg shadow-amber-500/10 transition-all active:scale-95"
+                >
+                  Gerar Convite
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -640,6 +906,30 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 Criar Plano
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-[2rem] p-8 flex flex-col items-center gap-4 shadow-2xl animate-in zoom-in-95 duration-300 max-w-sm w-full">
+            <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 mb-2">
+              <CalendarCheck size={32} />
+            </div>
+            <h3 className="text-xl font-bold font-display text-center">
+              Configurações Salvas!
+            </h3>
+            <p className="text-neutral-500 text-center text-sm">
+              Sua agenda foi atualizada com sucesso e já está disponível para os
+              clientes.
+            </p>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="mt-2 w-full bg-green-500 hover:bg-green-400 text-black font-bold py-3 rounded-xl transition-colors"
+            >
+              Concluir
+            </button>
           </div>
         </div>
       )}

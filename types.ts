@@ -22,6 +22,11 @@ export interface User {
   isActive: boolean;
   stripeCustomerId?: string;
   subscriptionStatus?: string;
+  appointmentInterval?: number;
+  startTime?: string;
+  endTime?: string;
+  workStartDate?: string;
+  workEndDate?: string;
 }
 
 export interface Barbeiro {
@@ -34,6 +39,8 @@ export interface Barbeiro {
     inicio: string;
     fim: string;
   };
+  workStartDate?: string;
+  workEndDate?: string;
   ativo: boolean;
 }
 

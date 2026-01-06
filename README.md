@@ -54,6 +54,13 @@ USUARIO **PREMIUM**
 
 OBS: Comando para criar produtos no stripe: npx tsx scripts/test-stripe-sync.ts
 
+## MARKETPLACE
+ - marketplace - barbeiro ✅
+ - marketplace - Cliente
+
+## NOVO BARBEIRO
+- Barbeiro admin cria o barbeiro, gera o link de convite e envia para o o barbeiro ✅
+
 # DADOS DE ACESSO
 
 versel:
@@ -76,6 +83,9 @@ IP:191.252.102.247
 - **Senha:** admin
 
 ## Barbeiro Premium
+
+- **Login:** novo@barbeiro.com
+- **Senha:** 123456
 
 - **Login:** joao@email.com
 - **Senha:** 123456
@@ -110,4 +120,6 @@ Produtos: Pomada, Óleo, Shampoo.
 - corrigir routes ✅
 - logica pagamento premium mensal - ✅ **terminar testes**
 - criar webhook para mudar status do pagamento NO STRIPE
+- Marketplace - cliente
 - criar área financeiro do PREMIUM
+- verificar agendamento selecionado pelo barbeiro

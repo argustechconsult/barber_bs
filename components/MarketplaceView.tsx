@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, UserRole, Product, ProductCategory } from '../types';
-import { MOCK_PRODUCTS, PRODUCT_CATEGORIES } from '../constants';
+import { User, UserRole, ProductCategory } from '../types';
+import { PRODUCT_CATEGORIES } from '../constants';
 import {
-  ShoppingCart,
   Plus,
   Trash2,
   Search,
@@ -13,6 +12,8 @@ import {
   Image as ImageIcon,
   X,
   FolderPlus,
+  Pencil,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface MarketplaceViewProps {
@@ -21,7 +22,7 @@ interface MarketplaceViewProps {
 
 const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] =
     useState<ProductCategory[]>(PRODUCT_CATEGORIES);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -29,6 +30,8 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,37 +50,123 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
       : categories.find((c) => c.id === activeCategory)?.name ||
         'Todos os Produtos';
 
-  const handleDeleteProduct = (id: string) => {
-    if (confirm('Deseja excluir este produto?')) {
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+  const fetchProducts = async () => {
+    const { getProducts } = await import('../actions/marketplace.actions');
+    const res = await getProducts();
+    if (res.success) {
+      setProducts(res.products || []);
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleDeleteProduct = (id: string) => {
+    setProductToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (productToDelete) {
+      const { deleteProduct } = await import('../actions/marketplace.actions');
+      const res = await deleteProduct(productToDelete);
+      if (res.success) {
+        fetchProducts();
+        setProductToDelete(null);
+      } else {
+        alert('Erro ao excluir produto');
+      }
+    }
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setSelectedImage(product.image);
+    setIsAddingProduct(true);
+  };
+
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compress to JPEG 70% quality
+        };
+      };
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setSelectedImage(reader.result as string);
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file);
+        setSelectedImage(compressed);
+      } catch (err) {
+        console.error('Error compressing image:', err);
+        alert('Erro ao processar imagem. Tente uma imagem menor.');
+      }
     }
   };
 
-  const handleAddProduct = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newProduct: Product = {
-      id: Math.random().toString(36).substr(2, 9),
+
+    // Fallback image if none selected
+    const imageToSave =
+      selectedImage ||
+      'https://images.unsplash.com/photo-1585751119414-ef2636f8aede?q=80&w=400&h=400&auto=format&fit=crop';
+
+    const productData = {
       name: formData.get('name') as string,
       price: Number(formData.get('price')),
       category: formData.get('category') as string,
-      stock: Number(formData.get('stock')),
-      image:
-        selectedImage ||
-        'https://images.unsplash.com/photo-1585751119414-ef2636f8aede?q=80&w=400&h=400&auto=format&fit=crop',
+      image: imageToSave,
     };
-    setProducts([newProduct, ...products]);
-    setIsAddingProduct(false);
-    setSelectedImage(null);
+
+    let res;
+    if (editingProduct) {
+      const { updateProduct } = await import('../actions/marketplace.actions');
+      res = await updateProduct(editingProduct.id, productData);
+    } else {
+      const { createProduct } = await import('../actions/marketplace.actions');
+      res = await createProduct(productData);
+    }
+
+    if (res.success) {
+      fetchProducts();
+      setIsAddingProduct(false);
+      setSelectedImage(null);
+      setEditingProduct(null);
+    } else {
+      alert('Erro ao salvar produto');
+    }
   };
 
   const handleAddCategory = (e: React.FormEvent<HTMLFormElement>) => {
@@ -127,7 +216,11 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
         {isAdmin && (
           <div className="flex gap-4">
             <button
-              onClick={() => setIsAddingProduct(true)}
+              onClick={() => {
+                setEditingProduct(null);
+                setSelectedImage(null);
+                setIsAddingProduct(true);
+              }}
               className="bg-amber-500 hover:bg-amber-400 text-black px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl transition-all hover:scale-[1.02] active:scale-95"
             >
               <Plus size={20} /> <span className="text-sm">Novo Produto</span>
@@ -265,9 +358,25 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                   <span className="text-xs text-amber-500/70 mr-0.5">R$</span>
                   {product.price}
                 </p>
-                <button className="bg-white text-black p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-amber-500 transition-all shadow-xl active:scale-90">
-                  <ShoppingCart size={18} />
+                <button className="bg-white text-black p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-amber-500 transition-all shadow-xl active:scale-90 opacity-0 cursor-default">
+                  {/* Shopping cart hidden per request */}
                 </button>
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditProduct(product)}
+                      className="bg-neutral-800 text-white p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-amber-500 hover:text-black transition-all shadow-xl active:scale-90"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProduct(product.id)}
+                      className="bg-neutral-800 text-white p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-xl active:scale-90"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -280,7 +389,7 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
           <div className="bg-neutral-950 border border-neutral-800/60 w-full max-w-xl rounded-[3rem] p-12 shadow-[0_0_100px_rgba(0,0,0,1)] animate-in zoom-in-95 duration-500 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="mb-8 text-center">
               <h3 className="text-4xl font-display font-bold text-white mb-3">
-                Novo Produto
+                {editingProduct ? 'Editar Produto' : 'Novo Produto'}
               </h3>
               <p className="text-neutral-500 text-sm font-medium">
                 Cadastre itens no Marketplace
@@ -335,6 +444,7 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                 <input
                   required
                   name="name"
+                  defaultValue={editingProduct?.name}
                   className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-5 outline-none text-white focus:border-amber-500/40"
                 />
               </div>
@@ -349,6 +459,7 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                     name="price"
                     type="number"
                     step="0.01"
+                    defaultValue={editingProduct?.price}
                     className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-5 outline-none text-white focus:border-amber-500/40"
                   />
                 </div>
@@ -358,6 +469,7 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                   </label>
                   <select
                     name="category"
+                    defaultValue={editingProduct?.category}
                     className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-5 outline-none text-white focus:border-amber-500/40 appearance-none"
                   >
                     {categories.map((c) => (
@@ -385,7 +497,7 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                   type="submit"
                   className="flex-1 py-5 bg-amber-500 text-black rounded-2xl font-bold"
                 >
-                  Cadastrar
+                  {editingProduct ? 'Salvar Alterações' : 'Cadastrar'}
                 </button>
               </div>
             </form>
@@ -433,6 +545,43 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {productToDelete && (
+        <div className="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200">
+          <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-[2rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-2">
+                <AlertTriangle size={32} className="text-red-500" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white">
+                  Excluir Produto
+                </h3>
+                <p className="text-sm text-neutral-400">
+                  Tem certeza que deseja remover este item? Essa ação não pode
+                  ser desfeita.
+                </p>
+              </div>
+
+              <div className="flex w-full gap-3 mt-4">
+                <button
+                  onClick={() => setProductToDelete(null)}
+                  className="flex-1 py-3 px-4 border border-neutral-800 rounded-xl font-bold text-neutral-400 hover:bg-neutral-800 transition-colors text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-3 px-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-all text-sm"
+                >
+                  Excluir
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

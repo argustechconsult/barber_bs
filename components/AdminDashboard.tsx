@@ -22,8 +22,9 @@ import {
   Phone,
   Search,
   Package,
-  // Added User as UserIcon to fix the compilation error on line 268
   User as UserIcon,
+  Scissors,
+  TrendingUp,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -42,6 +43,22 @@ const CUSTOMER_LIST = MOCK_USERS.filter((u) => u.role === UserRole.CLIENTE).map(
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [listFilter, setListFilter] = useState<'ALL' | 'DEBT' | 'CHURN'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [adminStats, setAdminStats] = useState({
+    marketSales: 0,
+    totalRevenue: 0,
+    planStats: [] as { plan: string; count: number }[],
+    totalClients: 0,
+  });
+
+  React.useEffect(() => {
+    import('../actions/barber.actions').then(({ getAdminStats }) => {
+      getAdminStats().then((res) => {
+        if (res.success && res.stats) {
+          setAdminStats(res.stats);
+        }
+      });
+    });
+  }, []);
 
   const revenueData = [
     { name: 'Jan', value: 12000 },
@@ -52,14 +69,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     { name: 'Jun', value: 28000 },
   ];
 
-  const totalMarketSales = 4250.0;
+  const totalMarketSales = 0; // Requests: Zero out
   const bestSeller = MOCK_PRODUCTS[0]; // Pomada Matte
 
   const clients = CUSTOMER_LIST;
-  const startCount = clients.filter((u) => u.plan === UserPlan.START).length;
-  const premiumCount = clients.filter(
-    (u) => u.plan === UserPlan.PREMIUM,
-  ).length;
+  // Use fetched stats for counts if available, otherwise fallback (or 0) for initial render checks
+  const startCount =
+    adminStats.planStats.find((p) => p.plan === UserPlan.START)?.count || 0;
+  const premiumCount =
+    adminStats.planStats.find((p) => p.plan === UserPlan.PREMIUM)?.count || 0;
+
   const debtCount = clients.filter((u) => u.status === 'DEBT').length;
   const churnCount = clients.filter((u) => u.status === 'CHURN').length;
 
@@ -113,7 +132,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       </header>
 
       {/* Primary Indicators */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Receita de Cortes - NEW */}
+        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl relative overflow-hidden group shadow-lg">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+            <Scissors size={48} className="text-indigo-500" />
+          </div>
+          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+            Receita de Cortes
+          </p>
+          <p className="text-2xl font-display font-bold mt-2">
+            R$ {adminStats.totalRevenue.toFixed(2)}
+          </p>
+          <div className="mt-4 flex items-center gap-2 text-[10px] text-indigo-400 font-bold">
+            <TrendingUp size={12} />
+            <span>Serviços Realizados</span>
+          </div>
+        </div>
+
         <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl relative overflow-hidden group shadow-lg">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <ShoppingBag size={48} className="text-blue-500" />
@@ -138,7 +174,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             Assinantes Ativos
           </p>
           <p className="text-2xl font-display font-bold mt-2">
-            {clients.length}
+            {adminStats.totalClients}
           </p>
           <div className="mt-4 flex items-center gap-2 text-[10px] text-amber-500 font-bold">
             <span>
@@ -260,7 +296,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-3xl font-display font-bold">
-                {clients.length}
+                {adminStats.totalClients}
               </span>
               <span className="text-[10px] text-neutral-500 uppercase font-bold">
                 Total

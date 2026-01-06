@@ -162,3 +162,71 @@ export async function checkSession() {
   }
   return { isAuth: false, user: null };
 }
+
+export async function createBarberInvite(name: string, email: string) {
+  try {
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return { success: false, message: 'Email já cadastrado.' };
+    }
+
+    // Generate random token (simple version for now)
+    const token = crypto.randomUUID();
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        role: UserRole.BARBEIRO,
+        isActive: true,
+        inviteToken: token,
+      },
+    });
+
+    // In a real app, send email here. For now, return the link.
+    const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite?token=${token}`;
+
+    return { success: true, inviteLink };
+  } catch (error) {
+    console.error('Invite Error:', error);
+    return { success: false, message: 'Erro ao criar convite.' };
+  }
+}
+
+export async function getInviteDetails(token: string) {
+    const user = await prisma.user.findUnique({
+        where: { inviteToken: token }
+    });
+
+    if (!user) return null;
+
+    return {
+        name: user.name,
+        email: user.email
+    };
+}
+
+export async function acceptInvite(token: string, password: string) {
+   try {
+     const user = await prisma.user.findUnique({
+         where: { inviteToken: token }
+     });
+
+     if (!user) return { success: false, message: 'Convite inválido.' };
+
+     const hashedPassword = await bcrypt.hash(password, 10);
+
+     await prisma.user.update({
+         where: { id: user.id },
+         data: {
+             password: hashedPassword,
+             inviteToken: null, // Clear token so it can't be used again
+         }
+     });
+
+     return { success: true };
+   } catch (error) {
+       console.error("Accept Invite Error:", error);
+       return { success: false, message: 'Erro ao definir senha.' };
+   }
+}

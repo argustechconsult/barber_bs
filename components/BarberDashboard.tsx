@@ -37,15 +37,6 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
 
   const isAdmin = user.role === UserRole.ADMIN;
   const clients = MOCK_USERS.filter((u) => u.role === UserRole.CLIENTE);
-  const startCount = clients.filter((u) => u.plan === UserPlan.START).length;
-  const premiumCount = clients.filter(
-    (u) => u.plan === UserPlan.PREMIUM,
-  ).length;
-
-  const subscriberData = [
-    { name: 'Start', value: startCount, fill: '#404040' },
-    { name: 'Premium', value: premiumCount, fill: '#f59e0b' },
-  ];
 
   const marketSales = 2450.0;
   const bestSeller = MOCK_PRODUCTS[0];
@@ -86,6 +77,13 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
     goalPercentage: 0,
   });
 
+  const [adminStatsData, setAdminStatsData] = useState({
+    marketSales: 0,
+    totalRevenue: 0,
+    planStats: [] as { plan: string; count: number }[],
+    totalClients: 0,
+  });
+
   React.useEffect(() => {
     if (user.role === UserRole.BARBEIRO && user.id) {
       import('../actions/barber.actions').then(({ getBarberStats }) => {
@@ -95,21 +93,51 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
           }
         });
       });
+    } else if (user.role === UserRole.ADMIN) {
+      import('../actions/barber.actions').then(({ getAdminStats }) => {
+        getAdminStats().then((res) => {
+          if (res.success && res.stats) {
+            setAdminStatsData(res.stats);
+          }
+        });
+      });
     }
   }, [user]);
+
+  // Recalculate plan counts from fetched data for Admin
+  const startCount = isAdmin
+    ? adminStatsData.planStats.find((p) => p.plan === UserPlan.START)?.count ||
+      0
+    : clients.filter((u) => u.plan === UserPlan.START).length;
+
+  const premiumCount = isAdmin
+    ? adminStatsData.planStats.find((p) => p.plan === UserPlan.PREMIUM)
+        ?.count || 0
+    : clients.filter((u) => u.plan === UserPlan.PREMIUM).length;
+
+  const subscriberData = [
+    { name: 'Start', value: startCount, fill: '#404040' },
+    { name: 'Premium', value: premiumCount, fill: '#f59e0b' },
+  ];
 
   // Specific stats for each role
   const stats = isAdmin
     ? [
         {
+          label: 'Receita Cortes',
+          value: `R$ ${adminStatsData.totalRevenue.toFixed(2)}`,
+          icon: Scissors,
+          color: 'text-indigo-500',
+        },
+        {
           label: 'Vendas Market',
-          value: `R$ ${marketSales.toFixed(2)}`,
+          value: `R$ ${adminStatsData.marketSales.toFixed(2)}`,
           icon: ShoppingBag,
           color: 'text-blue-500',
         },
         {
           label: 'Total Assinantes',
-          value: clients.length.toString(),
+          value: adminStatsData.totalClients.toString(),
           icon: Users,
           color: 'text-amber-500',
         },
@@ -118,12 +146,6 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
           value: '+12.5%',
           icon: TrendingUp,
           color: 'text-green-500',
-        },
-        {
-          label: 'Ticket Médio',
-          value: 'R$ 48.00',
-          icon: Clock,
-          color: 'text-purple-500',
         },
       ]
     : [
@@ -313,7 +335,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
                 <span className="text-xs text-neutral-500">
                   Unidades Vendidas
                 </span>
-                <span className="font-bold">128</span>
+                <span className="font-bold">0</span>
               </div>
             </div>
 
@@ -387,7 +409,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-3xl font-display font-bold">
-                  {clients.length}
+                  {adminStatsData.totalClients}
                 </span>
                 <span className="text-[9px] uppercase font-bold text-neutral-500">
                   Total
