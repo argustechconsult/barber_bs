@@ -3,13 +3,24 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia' as any, // Using 'as any' to bypass specific version check for now, or use latest supported
-});
+// Initialize Stripe only if the key is available to prevent build errors
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-12-18.acacia' as any,
+    })
+  : null;
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: Request) {
+  if (!process.env.STRIPE_SECRET_KEY || !stripe) {
+    console.error('Stripe Secret Key not configured');
+    return NextResponse.json(
+      { error: 'Stripe Secret Key not configured' },
+      { status: 500 }
+    );
+  }
+
   if (!webhookSecret) {
     return NextResponse.json(
       { error: 'Stripe Webhook Secret not configured' },
