@@ -81,7 +81,25 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
       const params = new URLSearchParams(window.location.search);
       if (params.get('success') === 'true') {
         setIsSuccess(true);
-        setPaymentMethod('CREDIT'); // Just to show success state correctly, type doesn't matter for text currently
+        // Default to CREDIT/Card visual if not found, but try to restore
+        setPaymentMethod('CREDIT');
+
+        const saved = sessionStorage.getItem('pendingBooking');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed.barber) setSelectedBarber(parsed.barber);
+            if (parsed.services) setSelectedServices(parsed.services);
+            if (parsed.date) setSelectedDateStr(parsed.date);
+            if (parsed.time) setSelectedTime(parsed.time);
+            if (parsed.method) setPaymentMethod(parsed.method);
+
+            // Optional: clear storage so it doesn't persist if they navigate away and back
+            sessionStorage.removeItem('pendingBooking');
+          } catch (e) {
+            console.error('Failed to parse pending booking', e);
+          }
+        }
       }
     }
   }, []);
@@ -251,6 +269,18 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
 
         // 2. Handle Payment (Standard Flow)
         // 2. Handle Payment (Standard Flow)
+        // Save booking details to storage for success page
+        sessionStorage.setItem(
+          'pendingBooking',
+          JSON.stringify({
+            barber: selectedBarber,
+            services: selectedServices,
+            date: selectedDateStr,
+            time: selectedTime,
+            method: paymentMethod,
+          }),
+        );
+
         if (paymentMethod === 'PIX') {
           // PIX: Use AbacatePay
           const paymentResult = await createAbacateBilling({

@@ -8,8 +8,12 @@
 ## AUTH
 
 - Signup
+    **Cliente**
     - Criação de usuário   
     - Criação de sessão com JWT
+    - Login com o Google - **PRECISA CADASTRAR CARTÃO DO CLIENTE**
+    **Barbeiro**
+    - Recebe o link criado pelo Barbeiro Administrador
 - Login
     - Validação de usuário
     - Criação de sessão com JWT

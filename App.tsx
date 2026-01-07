@@ -61,16 +61,18 @@ const App: React.FC = () => {
             if (updatedUser && updatedUser.plan === 'PREMIUM') {
               clearInterval(pollInterval);
 
-              // Create a merged user object compatible with the User type
+              // Clear URL params
+              window.history.replaceState({}, '', window.location.pathname);
+
+              // Update local state immediately
               const newUserState = {
                 ...user,
                 ...updatedUser,
+                plan: 'PREMIUM' as UserPlan, // Force type check
                 role: updatedUser.role as UserRole,
-                plan: updatedUser.plan as UserPlan,
               };
 
               handleUpdateUser(newUserState);
-              window.history.replaceState({}, '', window.location.pathname);
             }
           } catch (err) {
             console.error('Error polling user plan:', err);
