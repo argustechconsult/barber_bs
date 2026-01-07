@@ -283,10 +283,20 @@ export async function createSubscriptionCheckoutSession(data: CreateSubscription
 
         const session = await stripeInstance.checkout.sessions.create(sessionParams);
 
-        // We do NOT create a 'Transaction' record here yet, or maybe we should?
-        // Usually, subscription payments are handled via webhooks (invoice.payment_succeeded).
-        // But we can create a pending Transaction record if we want to track the *attempt*.
-        // For simplicity, we rely on webhook to activate subscription.
+        // Create PENDING Transaction for Subscription
+        const transaction = await prisma.transaction.create({
+            data: {
+                amount: 150.00, // Fixed Premium Price for now, ideally fetch from Price ID or DB Plan
+                type: 'SUBSCRIPTION',
+                status: 'PENDING',
+                userId: data.userId,
+                stripeSessionId: session.id,
+                // createdAt is default
+            }
+        });
+
+        // Update session metadata with transactionId to retrieve it later if needed via webhook
+        // (Optional for this flow but good practice)
 
         return { success: true, url: session.url };
 
@@ -315,6 +325,35 @@ export async function checkCheckoutSession(sessionId: string) {
                          subscriptionStatus: 'ACTIVE'
                      }
                  });
+
+                 // Update Transaction to PAID
+                 // Find transaction by session ID
+                 const transaction = await prisma.transaction.findFirst({
+                     where: { stripeSessionId: sessionId }
+                 });
+
+                 if (transaction) {
+                     await prisma.transaction.update({
+                         where: { id: transaction.id },
+                         data: { 
+                             status: 'PAID',
+                             updatedAt: new Date()
+                         }
+                     });
+                 } else {
+                     // Fallback: Create if not found
+                     await prisma.transaction.create({
+                         data: {
+                             amount: (session.amount_total || 15000) / 100,
+                             type: 'SUBSCRIPTION',
+                             status: 'PAID',
+                             userId: userId,
+                             stripeSessionId: sessionId,
+                             // createdAt is default
+                         }
+                     });
+                 }
+
                  return { success: true, user: updatedUser };
              }
         }

@@ -28,11 +28,44 @@ const App: React.FC = () => {
   const [isSigningUp, setIsSigningUp] = useState(false);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('stayler_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
+    const initUser = async () => {
+      const savedUser = localStorage.getItem('stayler_user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+
+        // Background revalidation
+        try {
+          const { getUser } = await import('./actions/user.actions');
+          const freshUser = await getUser(parsed.id);
+
+          if (freshUser) {
+            // Check for differences to avoid unnecessary re-renders loop if we were strict,
+            // but setting it is safe.
+            const mergedUser = {
+              ...parsed, // keep local props if any
+              ...freshUser, // overwrite with db
+              role: freshUser.role as UserRole,
+              plan: freshUser.plan as UserPlan,
+            };
+
+            // Update if plan changed
+            if (
+              mergedUser.plan !== parsed.plan ||
+              mergedUser.role !== parsed.role
+            ) {
+              console.log('User updated from server:', mergedUser);
+              setUser(mergedUser);
+              localStorage.setItem('stayler_user', JSON.stringify(mergedUser));
+            }
+          }
+        } catch (error) {
+          console.error('Failed to revalidate user', error);
+        }
+      }
+      setLoading(false);
+    };
+    initUser();
   }, []);
 
   // Poll for verifying subscription update
