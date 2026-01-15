@@ -4,14 +4,15 @@
     - Signup ✅
     - Login ✅
     - Logout ✅
-- AGENDA ⚠️
-    - Agenda de barbeiros ⚠️
-    - Agenda de Clientes ⚠️
+    - Reset Password ⚠️
+- AGENDA ✅ - VALIDAR EM PROD
+    - Agenda de barbeiros ✅
+    - Agenda de Clientes ✅
 - PAGAMENTOS ⚠️
-    - START (UNICO) ⚠️
-        - Crédito ⚠️
-        - Débito ⚠️
-        - PIX ⚠️
+    - START (ÚNICO) ✅
+        - Crédito ✅
+        - Débito ✅
+        - PIX ✅
     - PREMIUM (RECORRENTE) ⚠️
         - Crédito ⚠️
         - Débito ⚠️

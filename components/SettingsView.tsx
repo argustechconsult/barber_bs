@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { User, UserPlan, UserRole, Barbeiro, Service } from '../types';
+import { ImageCropper } from './shared/ImageCropper';
 import {
   SERVICES as INITIAL_SERVICES,
   MOCK_BARBERS as INITIAL_BARBERS,
@@ -24,7 +25,19 @@ import {
   Sparkles,
   CalendarCheck,
   ArrowDownCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  startOfDay,
+  parseISO,
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface SettingsViewProps {
   user: User;
@@ -49,6 +62,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [showAddService, setShowAddService] = useState(false);
   const [showAddPlan, setShowAddPlan] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [offDays, setOffDays] = useState<string[]>(user.offDays || []);
 
   // Fetch Services, Plans & Barbers
   React.useEffect(() => {
@@ -78,13 +93,18 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        onUpdateUser({
-          ...user,
-          whatsapp: reader.result as string, // Using whatsapp field to store base64 for simulation
-        });
+        setImageToCrop(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    onUpdateUser({
+      ...user,
+      whatsapp: croppedImage,
+    });
+    setImageToCrop(null);
   };
 
   // Currency Helpers
@@ -242,9 +262,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       {/* ... header ... */}
       <header className="text-center pt-4">
         <h2 className="text-4xl font-display font-bold">Configurações</h2>
-        <p className="text-neutral-500 mt-2">
-          Personalize seu perfil profissional
-        </p>
+        <p className="text-neutral-500 mt-2">Personalize seu perfil</p>
       </header>
       {/* ... content ... */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -367,8 +385,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     interval,
                     startTime: start,
                     endTime: end,
-                    workStartDate: workStartDate || null,
-                    workEndDate: workEndDate || null,
+                    offDays,
                   });
 
                   if (result.success) {
@@ -379,8 +396,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       appointmentInterval: interval,
                       startTime: start,
                       endTime: end,
-                      workStartDate: workStartDate || undefined,
-                      workEndDate: workEndDate || undefined,
+                      offDays,
                     });
                   } else {
                     alert('Erro ao salvar configurações: ' + result.message);
@@ -390,7 +406,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               >
                 <div className="space-y-2">
                   <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
-                    Intervalo (minutos)
+                    Intervalo entre atendimentos (minutos)
                   </label>
                   <div className="relative">
                     <select
@@ -474,76 +490,75 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
-                    Período de Atendimento (Opcional)
+                    Folga - {format(new Date(), 'MM/yyyy')}
                   </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
-                        De
-                      </label>
-                      <input
-                        type="text"
-                        name="workStartDate"
-                        placeholder="dd/mm/aaaa"
-                        defaultValue={
-                          user.workStartDate
-                            ? user.workStartDate.split('-').reverse().join('/')
-                            : ''
-                        }
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 text-neutral-400"
-                        onInput={(e) => {
-                          // Simple auto slash mask
-                          let v = e.currentTarget.value.replace(/\D/g, '');
-                          if (v.length > 8) v = v.slice(0, 8);
-                          if (v.length > 4)
-                            v =
-                              v.slice(0, 2) +
-                              '/' +
-                              v.slice(2, 4) +
-                              '/' +
-                              v.slice(4);
-                          else if (v.length > 2)
-                            v = v.slice(0, 2) + '/' + v.slice(2);
-                          e.currentTarget.value = v;
-                        }}
-                        maxLength={10}
-                      />
+
+                  <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-4">
+                    <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                      {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[8px] font-bold text-neutral-600"
+                        >
+                          {day}
+                        </span>
+                      ))}
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
-                        Até
-                      </label>
-                      <input
-                        type="text"
-                        name="workEndDate"
-                        placeholder="dd/mm/aaaa"
-                        defaultValue={
-                          user.workEndDate
-                            ? user.workEndDate.split('-').reverse().join('/')
-                            : ''
-                        }
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 text-neutral-400"
-                        onInput={(e) => {
-                          // Simple auto slash mask
-                          let v = e.currentTarget.value.replace(/\D/g, '');
-                          if (v.length > 8) v = v.slice(0, 8);
-                          if (v.length > 4)
-                            v =
-                              v.slice(0, 2) +
-                              '/' +
-                              v.slice(2, 4) +
-                              '/' +
-                              v.slice(4);
-                          else if (v.length > 2)
-                            v = v.slice(0, 2) + '/' + v.slice(2);
-                          e.currentTarget.value = v;
-                        }}
-                        maxLength={10}
-                      />
+
+                    <div className="grid grid-cols-7 gap-1">
+                      {(() => {
+                        const now = new Date();
+                        const start = startOfMonth(now);
+                        const end = endOfMonth(now);
+                        const days = eachDayOfInterval({ start, end });
+
+                        // Fill leading empty days
+                        const blanks = Array.from({ length: start.getDay() });
+
+                        return (
+                          <>
+                            {blanks.map((_, i) => (
+                              <div key={`blank-${i}`} />
+                            ))}
+                            {days.map((day) => {
+                              const dateStr = format(day, 'yyyy-MM-dd');
+                              const isOff = offDays.includes(dateStr);
+
+                              return (
+                                <button
+                                  key={dateStr}
+                                  type="button"
+                                  onClick={() => {
+                                    setOffDays((prev) =>
+                                      isOff
+                                        ? prev.filter((d) => d !== dateStr)
+                                        : [...prev, dateStr],
+                                    );
+                                  }}
+                                  className={`
+                                    aspect-square rounded-xl text-xs font-bold transition-all
+                                    flex items-center justify-center
+                                    ${
+                                      isOff
+                                        ? 'bg-red-500/20 text-red-500 border border-red-500/30'
+                                        : 'hover:bg-neutral-800 text-neutral-400 border border-transparent'
+                                    }
+                                  `}
+                                >
+                                  {format(day, 'd')}
+                                </button>
+                              );
+                            })}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
+                  <p className="text-[8px] text-neutral-600 text-center italic">
+                    Clique nas datas para marcar sua folga
+                  </p>
                 </div>
 
                 <button

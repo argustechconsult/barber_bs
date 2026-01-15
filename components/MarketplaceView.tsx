@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole, ProductCategory } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
+import { ImageCropper } from './shared/ImageCropper';
 import {
   Plus,
   Trash2,
@@ -32,6 +33,7 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -124,14 +126,17 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      try {
-        const compressed = await compressImage(file);
-        setSelectedImage(compressed);
-      } catch (err) {
-        console.error('Error compressing image:', err);
-        alert('Erro ao processar imagem. Tente uma imagem menor.');
-      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageToCrop(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    setSelectedImage(croppedImage);
+    setImageToCrop(null);
   };
 
   const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -343,8 +348,8 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
               />
             </div>
 
-            <div className="p-4 md:p-6 flex flex-col flex-1">
-              <div className="mb-2">
+            <div className="p-4 md:p-6 flex flex-col items-center text-center flex-1">
+              <div className="mb-2 w-full">
                 <h4 className="font-bold text-base md:text-lg text-white/90 group-hover:text-amber-500 transition-colors">
                   {product.name}
                 </h4>
@@ -353,27 +358,33 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                 </p>
               </div>
 
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-800/40">
+              <div className="flex items-center justify-center w-full mt-2 pt-2 border-t border-neutral-800/40">
                 <p className="text-lg md:text-2xl font-display font-bold text-white">
                   <span className="text-xs text-amber-500/70 mr-0.5">R$</span>
                   {product.price}
                 </p>
-                <button className="bg-white text-black p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-amber-500 transition-all shadow-xl active:scale-90 opacity-0 cursor-default">
+                <button className="hidden opacity-0 cursor-default">
                   {/* Shopping cart hidden per request */}
                 </button>
                 {isAdmin && (
-                  <div className="flex gap-2">
+                  <div className="absolute top-4 right-4 flex gap-2">
                     <button
-                      onClick={() => handleEditProduct(product)}
-                      className="bg-neutral-800 text-white p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-amber-500 hover:text-black transition-all shadow-xl active:scale-90"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditProduct(product);
+                      }}
+                      className="bg-black/50 backdrop-blur-md text-white p-2 rounded-xl hover:bg-amber-500 hover:text-black transition-all shadow-xl active:scale-90"
                     >
-                      <Pencil size={18} />
+                      <Pencil size={14} />
                     </button>
                     <button
-                      onClick={() => handleDeleteProduct(product.id)}
-                      className="bg-neutral-800 text-white p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-xl active:scale-90"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteProduct(product.id);
+                      }}
+                      className="bg-black/50 backdrop-blur-md text-white p-2 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-xl active:scale-90"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 )}
@@ -584,6 +595,15 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {imageToCrop && (
+        <ImageCropper
+          image={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setImageToCrop(null)}
+          aspect={1}
+        />
       )}
     </div>
   );

@@ -42,6 +42,7 @@ model User {
   endTime              String?   @default("18:00")
   workStartDate        String? // Optional start date for schedule (YYYY-MM-DD)
   workEndDate          String? // Optional end date for schedule (YYYY-MM-DD)
+  offDays              String[]  @default([])
   updatedAt            DateTime  @updatedAt
 
   clientAppointments Appointment[] @relation("ClientAppointments")

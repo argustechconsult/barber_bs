@@ -53,7 +53,18 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   const [nextAvailableDate, setNextAvailableDate] = useState<string | null>(
     null,
   );
-  const [showPremiumBanner, setShowPremiumBanner] = useState(true);
+  const [showPremiumBanner, setShowPremiumBanner] = useState(false);
+
+  // Initialize showPremiumBanner from sessionStorage
+  React.useEffect(() => {
+    if (user.plan === UserPlan.START) {
+      const bannerHidden = sessionStorage.getItem('premiumBannerHidden');
+      if (!bannerHidden) {
+        setShowPremiumBanner(true);
+      }
+    }
+  }, [user.plan]);
+
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
@@ -199,6 +210,10 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
 
       // Re-check strict limits if needed, but loopStart/end logic above helps.
       // It's safer to compare fullDate strings or timestamps.
+
+      // FILTER FOR OFF DAYS
+      const isOffDay = selectedBarber?.offDays?.includes(fullDate);
+      if (isOffDay) continue;
 
       dates.push({
         fullDate,
@@ -601,6 +616,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowPremiumBanner(false);
+                      sessionStorage.setItem('premiumBannerHidden', 'true');
                     }}
                     className="bg-black/10 p-1 rounded-full hover:bg-black/20 transition-colors"
                   >
@@ -1006,7 +1022,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                 Localização
               </p>
               <p className="text-xs font-medium text-white/60">
-                Av. Paulista, 1000 - São Paulo, SP
+                Estr. Velha de Maricá - Inoã, Maricá - RJ, 24931-185
               </p>
             </div>
           </div>

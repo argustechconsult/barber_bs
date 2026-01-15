@@ -27,6 +27,7 @@ export interface User {
   endTime?: string;
   workStartDate?: string;
   workEndDate?: string;
+  offDays?: string[];
 }
 
 export interface Barbeiro {
@@ -41,6 +42,7 @@ export interface Barbeiro {
   };
   workStartDate?: string;
   workEndDate?: string;
+  offDays?: string[];
   ativo: boolean;
 }
 

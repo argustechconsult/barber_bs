@@ -256,6 +256,7 @@ export async function getBarbers() {
       },
       workStartDate: u.workStartDate,
       workEndDate: u.workEndDate,
+      offDays: u.offDays,
     }));
 
     return { success: true, barbers: mappedBarbers };
@@ -285,6 +286,7 @@ export async function updateBarberSettings(
       endTime?: string;
       workStartDate?: string | null;
       workEndDate?: string | null;
+      offDays?: string[];
   }
 ) {
   try {
@@ -294,6 +296,7 @@ export async function updateBarberSettings(
     if (data.endTime) updateData.endTime = data.endTime;
     if (data.workStartDate !== undefined) updateData.workStartDate = data.workStartDate;
     if (data.workEndDate !== undefined) updateData.workEndDate = data.workEndDate;
+    if (data.offDays !== undefined) updateData.offDays = data.offDays;
 
     await prisma.user.update({
       where: { id: userId },
