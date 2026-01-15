@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useTransition } from 'react';
-import { Scissors } from 'lucide-react';
+import { Scissors, Eye, EyeOff } from 'lucide-react';
 import { login } from '../actions/auth.actions';
 
 interface LoginProps {
@@ -14,6 +14,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
   const [isBarberView, setIsBarberView] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,18 +91,27 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
                 required
               />
             </div>
-            <div>
+            <div className="relative">
               <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
                 Senha
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 md:py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 md:py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all pr-12"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-amber-500 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
             {error && (

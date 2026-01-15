@@ -19,21 +19,16 @@ export async function login(prevState: AuthState | null, formData: FormData): Pr
     return { success: false, message: 'Login e senha são obrigatórios.' };
   }
 
-  const isEmail = loginInput.includes('@');
-  const sanitizedInput = isEmail ? loginInput : loginInput.replace(/\D/g, '');
-
   try {
-    let user;
-    
-    if (isEmail) {
-        user = await prisma.user.findUnique({
-            where: { email: sanitizedInput }
-        });
-    } else {
-        user = await prisma.user.findUnique({
-            where: { whatsapp: sanitizedInput }
-        });
-    }
+    // Try to find the user by email or whatsapp
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: loginInput },
+          { whatsapp: loginInput.replace(/\D/g, '') }
+        ]
+      }
+    });
 
     if (user && user.password) {
       const isValidPass = await bcrypt.compare(password, user.password);
