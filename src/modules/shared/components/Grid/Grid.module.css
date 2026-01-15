@@ -1,0 +1,17 @@
+/* src/modules/shared/components/Grid/Grid.module.css */
+.container {
+  display: grid;
+  gap: 16px;
+  padding: var(--mobile-padding);
+  
+  /* Lógica: Crie colunas de no mínimo 300px (perfeito para mobile 360px com padding) 
+     e no máximo 1 fração do espaço. Se não couber dois de 300px, ele empilha. */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+@media (min-width: 1024px) {
+  .container {
+    gap: 24px;
+    padding: 40px;
+  }
+}

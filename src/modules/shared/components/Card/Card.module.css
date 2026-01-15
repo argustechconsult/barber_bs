@@ -1,0 +1,73 @@
+/* src/modules/shared/components/Card/Card.module.css */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 100%; /* Mobile: Ocupa toda a largura disponível */
+  background: var(--bg-card);
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.content {
+  padding: var(--mobile-padding);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-white);
+  margin-bottom: 8px;
+}
+
+.description {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+}
+
+.button {
+  width: 100%;
+  height: var(--touch-target); /* Mínimo para toque */
+  margin-top: 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--accent-gold);
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.button:active {
+  opacity: 0.8;
+}
+
+/* Progressão para Desktop */
+@media (min-width: 1024px) {
+  .card {
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  }
+
+  .button {
+    width: auto; /* Botão não precisa ser full-width no desktop */
+    padding: 0 24px;
+  }
+  
+  .button:hover {
+    opacity: 0.9;
+  }
+}

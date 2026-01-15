@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Metadata, Viewport } from 'next';
+import '../src/styles/variables.css';
 
 export const viewport: Viewport = {
   themeColor: '#0a0a0a',
