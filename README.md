@@ -1,29 +1,80 @@
 # MÓDULOS
 
-- AUTH - Signup, Login, Logout ✅
-- AGENDA - Agenda de barbeiros
-- PAGAMENTOS - Pagamento com cartão de crédito / PIX
-- MARKETPLACE - Produtos
+- AUTH
+    - Signup ✅
+    - Login ✅
+    - Logout ✅
+- AGENDA ⚠️
+    - Agenda de barbeiros ⚠️
+    - Agenda de Clientes ⚠️
+- PAGAMENTOS ⚠️
+    - START (UNICO) ⚠️
+        - Crédito ⚠️
+        - Débito ⚠️
+        - PIX ⚠️
+    - PREMIUM (RECORRENTE) ⚠️
+        - Crédito ⚠️
+        - Débito ⚠️
+        - PIX
+- MARKETPLACE ⚠️
+    - Barbeiro ⚠️
+        - CRUD feito apenas pelo barbeiro administrador
+    - Cliente ⚠️
+        - Fluxo de compra de produtos
+- FINANCEIRO ⚠️
+    - Barbeiro ⚠️
+        - Administrador ⚠️
+            - Visualiza todos os ganhos ⚠️
+            - lança receita e despesas ⚠️
+        - Barbeiro ⚠️
+            - Visualiza seus ganhos ⚠️
+    - Cliente ⚠️
+        - Start ⚠️
+            - Visualiza seus ultimos gastos ⚠️
+        - Premium ⚠️
+            - Visualiza suas ultimas mensalidades ⚠️
+CONFIGURAÇÃO ⚠️
+    - Barbeiro ⚠️
+        - Administrador ⚠️
+            - Altera nome ⚠️
+            - Altera Foto ⚠️
+            - Intervalo de tempo entre cortes ⚠️
+            - Datas que irá atender ⚠️
+            - Cadastra barbeiros ⚠️
+            - Cadastra serviços ⚠️
+            - Cadastra produtos ⚠️
+            - Cadastra planos ⚠️
+        - Barbeiro ⚠️
+            - Altera nome ⚠️
+            - Altera Foto ⚠️
+    - Cliente
+        - Start⚠️
+            - Altera nome ⚠️
+            - Altera Foto ⚠️
+        - Premium ⚠️
+            - Altera nome ⚠️
+            - Altera Foto ⚠️
 
-## AUTH
+## AUTH ✅
 
 - Signup
     **Cliente**
-    - Criação de usuário   
-    - Criação de sessão com JWT
+    - Criação de usuário   ✅
+    - Criação de sessão com JWT ✅
     - Login com o Google - **PRECISA CADASTRAR CARTÃO DO CLIENTE**
     **Barbeiro**
-    - Recebe o link criado pelo Barbeiro Administrador
+    - Recebe o link criado pelo Barbeiro Administrador ✅
 - Login
-    - Validação de usuário
-    - Criação de sessão com JWT
+    **Cliente**
+    - Validação de usuário ✅
+    - Criação de sessão com JWT ✅
     - Login com o Google - **PRECISA CADASTRAR CARTÃO DO CLIENTE**
+    **Barbeiro**
+    - Loga após a criação do barbeiro via link ✅
 - Logout
-    - Remoção de sessão
+    - Remoção de sessão ✅
 
-
-
-## AGENDA
+## AGENDA ⚠️
 
 - Agenda de barbeiros ✅
     - Listagem de barbeiros
@@ -39,16 +90,16 @@
 
 
 
-## PAGAMENTOS
-USUARIO **START** ✅
-- Pagamento com cartão de crédito - STRIPE
-- Pagamento com débito - STRIPE
-- Pagamento com PIX - ABACATEPAY
-    - OBS ABACATEPAY OU STRIPE
+## PAGAMENTOS ⚠️
+USUARIO **START** ⚠️
+- Pagamento com cartão de crédito - INFINITYPAY
+- Pagamento com débito - INFINITYPAY
+- Pagamento com PIX - INFINITYPAY
+    - OBS INFINITYPAY
 
-USUARIO **PREMIUM**
-- Pagamento com cartão de crédito
-    - OBS STRIPE (**Pagamento Mensal**)
+USUARIO **PREMIUM**⚠️
+- Pagamento com cartão de crédito - INFINITYPAY
+OBS: não gera pagamento mensal * criar lógica
 
 
 * verificar tabela do pagamento no DB - (produto,servico,plano,usuario,id_usuario,data_vencimento,status_pagamento)✅
@@ -56,14 +107,36 @@ USUARIO **PREMIUM**
     - O stripe tenta verificar o pagamento durante sete dias,após isso o status é atualizado para CANCELADO. E o cliente não usa mais o serviço
 * produtos,serviços e planos cadastrados no banco devem refletir no stripe ✅
 
-OBS: Comando para criar produtos no stripe: npx tsx scripts/test-stripe-sync.ts
+OBS: REFATORAR DE ACORDO COM https://www.infinitepay.io/checkout#codeSetupBlock
 
-## MARKETPLACE
+video referencia:https://www.youtube.com/watch?v=zJrbLAHYvaY&t=30s
+
+* tem que enviar os dados do cliente para o infinitepay
+* Gerar uma tela unica de pagamento para todos os pagamentos
+* criar tela de sucesso de pagamento + tela de pagamento cancelado
+* converter valor em centavos antes de enviar para o infinitepay
+0º enviar dados do cliente para o infinitepay
+"customer": {
+  "name": "João Silva",
+  "email": "joao@email.com",
+  "phone_number": "+5511999887766"
+}
+1º criar pagamento no banco de dados e vinculando o id do pagamento no order_nsu
+2º criar webhook no infinitepay para atualizar o status do pagamento
+3º enviar e armazenar reicpt_url para o whatsapp do cliente
+4º armazenar o transaction_nsu do infinitepay no banco de dados para futuras consultas
+
+## MARKETPLACE ⚠️
  - marketplace - barbeiro ✅
- - marketplace - Cliente
+ - marketplace - Cliente ⚠️
 
-## NOVO BARBEIRO
+## NOVO BARBEIRO ✅
 - Barbeiro admin cria o barbeiro, gera o link de convite e envia para o o barbeiro ✅
+
+
+
+
+
 
 # DADOS DE ACESSO
 
@@ -126,4 +199,5 @@ Produtos: Pomada, Óleo, Shampoo.
 - criar webhook para mudar status do pagamento NO STRIPE
 - Marketplace - cliente
 - criar área financeiro do PREMIUM
-- verificar agendamento selecionado pelo barbeiro
+- verificar agendamento selecionado pelo barbeiro ⚠️
+- testar pagamentos no infinitepay com 1 real

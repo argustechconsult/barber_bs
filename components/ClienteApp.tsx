@@ -281,6 +281,37 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
           }),
         );
 
+        // Create InfinitePay Checkout
+        const { createInfinitePayCheckout } = await import(
+          '../actions/infinitepay.actions'
+        );
+
+        const infinitePayResult = await createInfinitePayCheckout({
+          appointmentId: result.appointment.id,
+          services: selectedServices,
+          userId: user.id,
+          customer: {
+            name: user.name,
+            email: user.email || '',
+            phone: user.whatsapp || '',
+          },
+        });
+
+        if (infinitePayResult.success && infinitePayResult.url) {
+          window.location.href = infinitePayResult.url;
+          return;
+        } else {
+          alert(
+            infinitePayResult.message ||
+              'Erro ao iniciar pagamento com InfinitePay.',
+          );
+        }
+        /*
+        // Success marked directly for deactivation bypassing redirection
+        setIsSuccess(true);
+        if (paymentMethod) {
+            setPaymentMethod(paymentMethod); // Visual state sync
+        }
         if (paymentMethod === 'PIX') {
           // PIX: Use AbacatePay
           const paymentResult = await createAbacateBilling({
@@ -319,6 +350,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             );
           }
         }
+        */
       } else {
         alert(result.message || 'Erro ao agendar');
       }
@@ -337,44 +369,17 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   };
 
   const handlePremiumSubscribe = async () => {
+    alert(
+      'Assinaturas Premium estão temporariamente desabilitadas para manutenção do sistema de pagamentos.',
+    );
+    /*
     try {
-      console.log('Available plans:', plans);
-      if (plans.length === 0) {
-        alert(
-          'Erro: Nenhum plano carregado do sistema. Tente recarregar a página.',
-        );
-        return;
-      }
-
-      // Find the premium plan (assuming 'PREMIUM' or taking the highest priced one, or just the first one for now if user only made one)
-      // The user mentioned creating "o plano PREMIUM".
-      const premiumPlan =
-        plans.find((p) => p.name.toUpperCase().includes('PREMIUM')) || plans[0];
-
-      if (!premiumPlan || !premiumPlan.stripePriceId) {
-        alert(
-          `Plano Premium não encontrado ou sem ID do Stripe. Planos disponíveis: ${plans
-            .map((p) => p.name)
-            .join(', ')}`,
-        );
-        return;
-      }
-
-      const result = await createSubscriptionCheckoutSession({
-        userId: user.id,
-        priceId: premiumPlan.stripePriceId,
-        customerId: user.stripeCustomerId || undefined,
-      });
-
-      if (result.success && result.url) {
-        window.location.href = result.url;
-      } else {
-        alert(result.message || 'Erro ao iniciar assinatura.');
-      }
+      ...
     } catch (error) {
       console.error(error);
       alert('Erro ao processar solicitação.');
     }
+    */
   };
 
   if (showPremiumRestriction) {
@@ -901,62 +906,64 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             <div className="grid grid-cols-1 gap-4">
               <button
                 onClick={() => setPaymentMethod('CREDIT')}
-                className={`flex items-center gap-4 bg-neutral-900 p-6 rounded-[2rem] border transition-all ${
+                className={`group relative flex flex-col items-center justify-center gap-6 p-8 rounded-[2.5rem] border transition-all duration-300 overflow-hidden ${
                   paymentMethod === 'CREDIT'
-                    ? 'border-amber-500 bg-amber-500/5'
-                    : 'border-neutral-800'
+                    ? 'border-amber-500 bg-amber-500/10 shadow-[0_0_25px_rgba(245,158,11,0.2)] scale-[1.02]'
+                    : 'border-neutral-800 bg-neutral-900 hover:border-neutral-700 hover:bg-neutral-800/80'
                 }`}
               >
-                <div className="bg-amber-500 p-3 rounded-2xl text-black">
-                  <CreditCard size={24} />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-bold text-lg">Pagar com Crédito</p>
-                  <p className="text-xs text-neutral-500">Cartão de Crédito</p>
-                </div>
+                {/* Background Glow */}
                 {paymentMethod === 'CREDIT' && (
-                  <Check className="text-amber-500" />
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full -mr-16 -mt-16 blur-3xl animate-pulse"></div>
                 )}
-              </button>
 
-              <button
-                onClick={() => setPaymentMethod('DEBIT')}
-                className={`flex items-center gap-4 bg-neutral-900 p-6 rounded-[2rem] border transition-all ${
-                  paymentMethod === 'DEBIT'
-                    ? 'border-amber-500 bg-amber-500/5'
-                    : 'border-neutral-800'
-                }`}
-              >
-                <div className="bg-amber-500 p-3 rounded-2xl text-black">
-                  <CreditCard size={24} />
+                {/* Selected Indicator - Top Right */}
+                <div
+                  className={`absolute top-6 right-6 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
+                    paymentMethod === 'CREDIT'
+                      ? 'bg-amber-500 border-amber-500 scale-100'
+                      : 'border-neutral-700 scale-75 opacity-0'
+                  }`}
+                >
+                  <Check
+                    size={16}
+                    className="text-black font-bold"
+                    strokeWidth={4}
+                  />
                 </div>
-                <div className="text-left flex-1">
-                  <p className="font-bold text-lg">Pagar com Débito</p>
-                  <p className="text-xs text-neutral-500">Cartão de Débito</p>
-                </div>
-                {paymentMethod === 'DEBIT' && (
-                  <Check className="text-amber-500" />
-                )}
-              </button>
 
-              <button
-                onClick={() => setPaymentMethod('PIX')}
-                className={`flex items-center gap-4 bg-neutral-900 p-6 rounded-[2rem] border transition-all ${
-                  paymentMethod === 'PIX'
-                    ? 'border-amber-500 bg-amber-500/5'
-                    : 'border-neutral-800'
-                }`}
-              >
-                <div className="bg-green-500 p-3 rounded-2xl text-black">
-                  <QrCode size={24} />
+                <div
+                  className={`p-5 rounded-2xl transition-all duration-300 ${
+                    paymentMethod === 'CREDIT'
+                      ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20 rotate-[-4deg]'
+                      : 'bg-neutral-800 text-neutral-400 group-hover:text-amber-500'
+                  }`}
+                >
+                  <CreditCard size={32} strokeWidth={2.5} />
                 </div>
-                <div className="text-left flex-1">
-                  <p className="font-bold text-lg">Pagar com Pix</p>
-                  <p className="text-xs text-neutral-500">Aprovação Imediata</p>
+
+                <div className="text-center space-y-4 w-full">
+                  <p
+                    className={`font-display font-bold text-2xl tracking-tight transition-colors ${
+                      paymentMethod === 'CREDIT'
+                        ? 'text-white'
+                        : 'text-neutral-300'
+                    }`}
+                  >
+                    Pagamento Integrado
+                  </p>
+                  <div className="flex justify-center">
+                    <span
+                      className={`text-[11px] uppercase font-black tracking-[0.25em] px-5 py-2.5 rounded-full border transition-all duration-500 ${
+                        paymentMethod === 'CREDIT'
+                          ? 'bg-gradient-to-r from-amber-500/20 via-amber-400/25 to-amber-500/20 text-amber-500 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.25)]'
+                          : 'bg-neutral-800/50 text-amber-500/70 border-amber-500/20 hover:text-amber-500 hover:border-amber-500/40'
+                      }`}
+                    >
+                      Crédito • Débito • Pix
+                    </span>
+                  </div>
                 </div>
-                {paymentMethod === 'PIX' && (
-                  <Check className="text-amber-500" />
-                )}
               </button>
             </div>
 

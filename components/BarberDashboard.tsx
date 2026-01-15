@@ -41,33 +41,8 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
   const marketSales = 2450.0;
   const bestSeller = MOCK_PRODUCTS[0];
 
-  const growthData = {
-    monthly: [
-      { name: 'Jan', value: 400 },
-      { name: 'Fev', value: 300 },
-      { name: 'Mar', value: 600 },
-      { name: 'Abr', value: 800 },
-      { name: 'Mai', value: 500 },
-      { name: 'Jun', value: 900 },
-    ],
-    quarterly: [
-      { name: 'Trim 1', value: 1300 },
-      { name: 'Trim 2', value: 2200 },
-      { name: 'Trim 3', value: 1800 },
-      { name: 'Trim 4', value: 2500 },
-    ],
-    semiannual: [
-      { name: 'Sem 1', value: 3500 },
-      { name: 'Sem 2', value: 4300 },
-    ],
-    annual: [
-      { name: '2022', value: 12000 },
-      { name: '2023', value: 15400 },
-      { name: '2024', value: 18200 },
-    ],
-  };
-
-  const currentChartData = growthData[period];
+  // const growthData = { ... removed ... };
+  // const currentChartData = growthData[period];
 
   const [statsData, setStatsData] = useState({
     clientsServed: 0,
@@ -75,6 +50,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
     averagePerDay: '0',
     cutsRevenue: 0,
     goalPercentage: 0,
+    chartData: [] as any[], // Add chartData to state
   });
 
   const [adminStatsData, setAdminStatsData] = useState({
@@ -271,7 +247,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={currentChartData}>
+              <AreaChart data={isAdmin ? [] : statsData.chartData}>
                 <defs>
                   <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
@@ -354,33 +330,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
               </div>
             </div>
           </div>
-        ) : (
-          <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-3xl space-y-6">
-            <h3 className="text-xl font-bold flex items-center gap-2 text-indigo-400">
-              <Sparkles size={20} /> Insights Pessoais
-            </h3>
-            <div className="p-6 bg-indigo-500/5 border border-indigo-500/20 rounded-[2rem]">
-              <p className="text-sm text-neutral-400 leading-relaxed italic">
-                "Seu ticket médio subiu 15% este mês. Foque em oferecer Barba
-                Completa para clientes de Degradê."
-              </p>
-            </div>
-            <div className="space-y-4 pt-4">
-              <div className="flex items-center gap-3">
-                <Users className="text-neutral-500" size={18} />
-                <p className="text-sm font-bold">
-                  Fidelização: <span className="text-green-500">74%</span>
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Clock className="text-neutral-500" size={18} />
-                <p className="text-sm font-bold">
-                  Pontualidade: <span className="text-amber-500">98%</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        ) : null}
       </div>
 
       {/* Second Row: Subscriber Info - Admin ONLY */}

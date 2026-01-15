@@ -41,7 +41,8 @@ export async function createService(data: CreateServiceData) {
             }
         });
 
-        // 2. Create in Stripe
+        // 2. Create in Stripe BYPASSED
+        /*
         try {
             const stripeInstance = getStripe();
             
@@ -76,6 +77,8 @@ export async function createService(data: CreateServiceData) {
             // For now, returning the service created in DB but warning about sync.
             return { success: true, service, warning: 'Created in DB, but failed to sync to Stripe.' };
         }
+        */
+       return { success: true, service };
 
     } catch (error) {
         console.error('Create Service Error:', error);
@@ -97,7 +100,8 @@ export async function createProduct(data: CreateProductData) {
             }
         });
 
-        // 2. Sync to Stripe
+        // 2. Sync to Stripe BYPASSED
+        /*
         try {
             const stripeInstance = getStripe();
 
@@ -134,6 +138,8 @@ export async function createProduct(data: CreateProductData) {
              console.error('Stripe Sync Error (Product):', stripeError);
              return { success: true, product, warning: 'Created in DB, but failed to sync to Stripe.' };
         }
+        */
+       return { success: true, product };
 
     } catch (error) {
         console.error('Create Product Error:', error);
@@ -211,7 +217,8 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData) {
             };
         }
 
-        // 2. Create Stripe Checkout Session
+        // 2. Create Stripe Checkout Session BYPASSED
+        /*
         const session = await stripeInstance.checkout.sessions.create(sessionParams);
         
         // Update transaction with session ID
@@ -221,6 +228,8 @@ export async function createCheckoutSession(data: CreateCheckoutSessionData) {
         });
 
         return { success: true, url: session.url };
+        */
+        return { success: true, url: '/?success=true' };
 
     } catch (error: any) {
         console.error('Create Stripe Session Error:', error);
@@ -281,6 +290,7 @@ export async function createSubscriptionCheckoutSession(data: CreateSubscription
             sessionParams.customer_email = user.email;
         }
 
+        /*
         const session = await stripeInstance.checkout.sessions.create(sessionParams);
 
         // Create PENDING Transaction for Subscription
@@ -294,11 +304,12 @@ export async function createSubscriptionCheckoutSession(data: CreateSubscription
                 // createdAt is default
             }
         });
+        */
 
-        // Update session metadata with transactionId to retrieve it later if needed via webhook
-        // (Optional for this flow but good practice)
-
-        return { success: true, url: session.url };
+        // Manually update user to PREMIUM for Instant activation in this deactivation scenario?
+        // Or just return a "success" URL that would normally be the checkout.
+        // Let's just return a link that doesn't do much or a success link.
+        return { success: true, url: '/?subscription_success=true' };
 
     } catch (error) {
         console.error('Create Subscription Checkout Error:', error);

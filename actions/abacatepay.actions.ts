@@ -111,6 +111,7 @@ export async function createAbacateBilling(data: CreateAbacateBillingData) {
     //    payload.customer = customerData;
     // }
 
+    /* 
     const response = await fetch(`${ABACATE_API_URL}/billing/create`, {
       method: 'POST',
       headers: {
@@ -134,8 +135,10 @@ export async function createAbacateBilling(data: CreateAbacateBillingData) {
         where: { id: transaction.id },
         data: { stripeSessionId: abacateId } 
     });
+    */
 
-    return { success: true, url };
+    return { success: true, url: '/?success=true' }; // Return local success URL directly
+
 
   } catch (error: any) {
     console.error('Create AbacateBilling Error:', error);

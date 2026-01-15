@@ -70,6 +70,7 @@ const App: React.FC = () => {
 
   // Poll for verifying subscription update
   useEffect(() => {
+    /* 
     if (typeof window !== 'undefined' && user?.id) {
       const params = new URLSearchParams(window.location.search);
       if (params.get('subscription_success') === 'true') {
@@ -118,6 +119,7 @@ const App: React.FC = () => {
         return () => clearInterval(pollInterval);
       }
     }
+    */
   }, [user]);
 
   const handleLogin = (loggedInUser: User) => {

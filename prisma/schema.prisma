@@ -109,6 +109,11 @@ model Transaction {
   type            TransactionType
   stripeSessionId String?           @unique
 
+  infinitePayOrderNSU       String? @unique
+  infinitePayTransactionNSU String? @unique
+  infinitePaySlug           String? @unique
+  infinitePayReceiptUrl     String?
+
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
