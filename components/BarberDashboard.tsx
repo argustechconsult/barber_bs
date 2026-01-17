@@ -169,7 +169,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
               <>
                 <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
                   <img
-                    src={barber.foto}
+                    src={user.image || barber.foto}
                     alt={barber.nome}
                     className="w-full h-full rounded-full object-cover"
                   />
@@ -207,10 +207,10 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
                   {p === 'monthly'
                     ? 'Mensal'
                     : p === 'quarterly'
-                    ? 'Trim'
-                    : p === 'semiannual'
-                    ? 'Semest'
-                    : 'Anual'}
+                      ? 'Trim'
+                      : p === 'semiannual'
+                        ? 'Semest'
+                        : 'Anual'}
                 </button>
               ),
             )}

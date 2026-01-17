@@ -28,6 +28,7 @@ export interface User {
   workStartDate?: string;
   workEndDate?: string;
   offDays?: string[];
+  image?: string;
 }
 
 export interface Barbeiro {

@@ -63,6 +63,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [showAddPlan, setShowAddPlan] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [croppingTarget, setCroppingTarget] = useState<{
+    type: 'user' | 'barber';
+    id?: string;
+  } | null>(null);
   const [offDays, setOffDays] = useState<string[]>(user.offDays || []);
 
   // Fetch Services, Plans & Barbers
@@ -94,17 +98,48 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       const reader = new FileReader();
       reader.onloadend = () => {
         setImageToCrop(reader.result as string);
+        if (!croppingTarget) {
+          setCroppingTarget({ type: 'user' });
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleCropComplete = (croppedImage: string) => {
-    onUpdateUser({
-      ...user,
-      whatsapp: croppedImage,
-    });
+  const handleCropComplete = async (croppedImage: string) => {
+    if (croppingTarget?.type === 'user') {
+      onUpdateUser({
+        ...user,
+        image: croppedImage,
+      });
+    } else if (croppingTarget?.type === 'barber' && croppingTarget.id) {
+      setBarbers((prev) =>
+        prev.map((b) =>
+          b.id === croppingTarget.id ? { ...b, foto: croppedImage } : b,
+        ),
+      );
+      const { updateBarberSettings } =
+        await import('../actions/barber.actions');
+      await updateBarberSettings(croppingTarget.id, { image: croppedImage });
+    }
+
     setImageToCrop(null);
+    setCroppingTarget(null);
+  };
+
+  const handleSaveProfile = async () => {
+    const { updateUser } = await import('../actions/user.actions');
+    const result = await updateUser(user.id, {
+      name: user.name,
+      image: user.image,
+    });
+
+    if (result.success) {
+      setShowSuccessModal(true);
+      setTimeout(() => setShowSuccessModal(false), 3000);
+    } else {
+      alert(result.message || 'Erro ao salvar perfil');
+    }
   };
 
   // Currency Helpers
@@ -276,9 +311,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="relative group">
                 <div className="w-32 h-32 rounded-full border-4 border-amber-500 overflow-hidden bg-neutral-800 flex items-center justify-center">
-                  {user.whatsapp && user.whatsapp.startsWith('data:image') ? (
+                  {(user.image || user.whatsapp)?.startsWith('data:image') ||
+                  (user.image || user.whatsapp)?.startsWith('http') ? (
                     <img
-                      src={user.whatsapp}
+                      src={user.image || user.whatsapp}
                       alt="Avatar"
                       className="w-full h-full object-cover"
                     />
@@ -291,7 +327,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   )}
                 </div>
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    setCroppingTarget({ type: 'user' });
+                    fileInputRef.current?.click();
+                  }}
                   className="absolute bottom-0 right-0 bg-amber-500 p-3 rounded-full text-black shadow-xl hover:scale-110 transition-transform"
                 >
                   <Camera size={20} />
@@ -328,7 +367,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
             <div className="space-y-4">
               <button
-                onClick={() => alert('Alterações salvas com sucesso!')}
+                onClick={handleSaveProfile}
                 className="w-full bg-amber-500 text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-amber-400 transition-all shadow-lg active:scale-[0.98]"
               >
                 <Save size={18} /> Salvar Alterações
@@ -378,9 +417,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   const workStartDate = formatDateToISO(startDesc);
                   const workEndDate = formatDateToISO(endDesc);
 
-                  const { updateBarberSettings } = await import(
-                    '../actions/barber.actions'
-                  );
+                  const { updateBarberSettings } =
+                    await import('../actions/barber.actions');
                   const result = await updateBarberSettings(user.id, {
                     interval,
                     startTime: start,
@@ -593,10 +631,24 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       className="p-4 bg-neutral-950 border border-neutral-800 rounded-3xl flex items-center justify-between group"
                     >
                       <div className="flex items-center gap-4">
-                        <img
-                          src={barber.foto}
-                          className="w-12 h-12 rounded-2xl object-cover"
-                        />
+                        <div className="relative group/photo">
+                          <img
+                            src={barber.foto}
+                            className="w-12 h-12 rounded-2xl object-cover"
+                          />
+                          <button
+                            onClick={() => {
+                              setCroppingTarget({
+                                type: 'barber',
+                                id: barber.id,
+                              });
+                              fileInputRef.current?.click();
+                            }}
+                            className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity"
+                          >
+                            <Camera size={16} className="text-white" />
+                          </button>
+                        </div>
                         <div>
                           <p className="font-bold text-sm">{barber.nome}</p>
                           <p className="text-[10px] text-neutral-500 uppercase tracking-widest">
@@ -981,6 +1033,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {imageToCrop && (
+        <ImageCropper
+          image={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setImageToCrop(null)}
+          circular={true}
+        />
       )}
     </div>
   );

@@ -107,7 +107,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               <>
                 <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
                   <img
-                    src={barber.foto}
+                    src={user.image || barber.foto}
                     alt={barber.nome}
                     className="w-full h-full rounded-full object-cover"
                   />
@@ -456,15 +456,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                           client.status === 'PAID'
                             ? 'text-green-500'
                             : client.status === 'DEBT'
-                            ? 'text-red-500'
-                            : 'text-neutral-500'
+                              ? 'text-red-500'
+                              : 'text-neutral-500'
                         }`}
                       >
                         {client.status === 'PAID'
                           ? 'Em dia'
                           : client.status === 'DEBT'
-                          ? 'Em atraso'
-                          : 'Cancelado'}
+                            ? 'Em atraso'
+                            : 'Cancelado'}
                       </span>
                     </div>
                   </td>

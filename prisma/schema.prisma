@@ -45,6 +45,7 @@ model User {
   offDays              String[]  @default([])
   resetToken           String?   @unique
   resetTokenExpiry     DateTime?
+  image                String? // User/Barber profile photo (Base64 or URL)
   updatedAt            DateTime  @updatedAt
 
   clientAppointments Appointment[] @relation("ClientAppointments")

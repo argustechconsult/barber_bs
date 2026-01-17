@@ -42,3 +42,19 @@ export async function getUser(userId: string) {
     return null;
   }
 }
+export async function updateUser(userId: string, data: { name?: string; image?: string; whatsapp?: string }) {
+  try {
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: data.name,
+        image: data.image,
+        whatsapp: data.whatsapp,
+      },
+    });
+    return { success: true, user: updated };
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return { success: false, message: 'Falha ao atualizar perfil' };
+  }
+}

@@ -246,8 +246,8 @@ export async function getBarbers() {
     const mappedBarbers = barbers.map((u) => ({
       id: u.id,
       nome: u.name,
-      foto: u.whatsapp || '/default.jpeg', // Using whatsapp field as photo URL for now as per SettingsView logic
-      bio: '', // No bio field in User schema yet
+      foto: u.image || u.whatsapp || '/default.jpeg', // Prefer image, then whatsapp (legacy), then default
+      bio: '', 
       ativo: u.isActive,
       intervaloAtendimento: u.appointmentInterval || 30,
       horariosTrabalho: { 
@@ -287,6 +287,7 @@ export async function updateBarberSettings(
       workStartDate?: string | null;
       workEndDate?: string | null;
       offDays?: string[];
+      image?: string;
   }
 ) {
   try {
@@ -297,6 +298,7 @@ export async function updateBarberSettings(
     if (data.workStartDate !== undefined) updateData.workStartDate = data.workStartDate;
     if (data.workEndDate !== undefined) updateData.workEndDate = data.workEndDate;
     if (data.offDays !== undefined) updateData.offDays = data.offDays;
+    if (data.image !== undefined) updateData.image = data.image;
 
     await prisma.user.update({
       where: { id: userId },
