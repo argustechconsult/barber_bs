@@ -3,7 +3,7 @@
 - AUTH
     - Signup ✅
     - Login ✅
-     - visualizar senha ⚠️
+     - visualizar senha ✅
     - Logout ✅
     - Reset Password ⚠️
 - AGENDA ✅ - VALIDAR EM PROD
