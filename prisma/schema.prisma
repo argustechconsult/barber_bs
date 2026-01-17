@@ -43,6 +43,8 @@ model User {
   workStartDate        String? // Optional start date for schedule (YYYY-MM-DD)
   workEndDate          String? // Optional end date for schedule (YYYY-MM-DD)
   offDays              String[]  @default([])
+  resetToken           String?   @unique
+  resetTokenExpiry     DateTime?
   updatedAt            DateTime  @updatedAt
 
   clientAppointments Appointment[] @relation("ClientAppointments")

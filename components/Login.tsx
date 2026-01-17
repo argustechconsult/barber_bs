@@ -112,6 +112,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <div className="flex justify-end mt-1">
+                <a
+                  href="/auth/forgot-password"
+                  className="text-[11px] text-amber-500/80 hover:text-amber-500 transition-colors"
+                >
+                  Esqueci minha senha
+                </a>
+              </div>
             </div>
 
             {error && (

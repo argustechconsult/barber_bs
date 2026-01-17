@@ -5,7 +5,7 @@
     - Login ✅
      - visualizar senha ✅
     - Logout ✅
-    - Reset Password ⚠️
+    - Reset Password ⚠️ - Criar conta no emailjs para continuar
 - AGENDA ✅ - VALIDAR EM PROD
     - Agenda de barbeiros ✅
     - Agenda de Clientes ✅
@@ -203,3 +203,34 @@ Produtos: Pomada, Óleo, Shampoo.
 - criar área financeiro do PREMIUM
 - verificar agendamento selecionado pelo barbeiro ⚠️
 - testar pagamentos no infinitepay com 1 real
+
+# RESET DE SENHA
+
+1. Configurar Variáveis de Ambiente no Servidor
+No seu ambiente de produção (Vercel ou VPS), você precisa cadastrar as mesmas variáveis que usamos no .env local:
+
+NEXT_PUBLIC_APP_URL: Deve ser a URL oficial do seu site (ex: https://seusite.com.br). Isso garante que o link de reset no e-mail não aponte para localhost.
+EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID e EMAILJS_PUBLIC_KEY: Pegue estes valores no painel do EmailJS.
+2. Configurar o Template no EmailJS
+No painel do EmailJS, crie ou edite o template para que ele aceite as variáveis que o código está enviando:
+
+Use {{to_name}} para o nome do destinatário.
+Use {{reset_link}} para o link de recuperação.
+Configure o "Reply-to" para o e-mail do seu suporte.
+3. Verificar o Domínio (Opcional, mas recomendado)
+Se estiver usando um e-mail próprio (ex: contato@barbeariastayler.com.br), verifique as configurações de SPF e DKIM no EmailJS para garantir que os e-mails não caiam na caixa de SPAM do cliente.
+
+4. Backup e Migração do Banco de Dados
+Como adicionamos novos campos ao banco (resetToken e resetTokenExpiry), certifique-se de que ao fazer o deploy, você execute o comando de migração no servidor:
+
+bash
+npx prisma migrate deploy
+(Se estiver usando o comando db push no deploy, ele fará isso automaticamente).
+
+5. Resumo da Segurança já implementada:
+Você já está seguro com:
+
+Tokens Temporários: O link expira em 1 hora.
+Hash de Senha: Usamos bcrypt com 10 salt rounds (padrão ouro).
+Enumeração de E-mail: O sistema retorna "sucesso" mesmo se o e-mail não existir, impedindo que hackers descubram quem tem conta no seu sistema.
+Dúvida: Você já tem uma conta no EmailJS configurada ou gostaria que eu te passasse um exemplo de como o template deve ficar por lá?
