@@ -23,29 +23,28 @@
         - CRUD feito apenas pelo barbeiro administrador
     - Cliente ⚠️
         - Fluxo de compra de produtos
-- FINANCEIRO ⚠️
-    - Barbeiro ⚠️
-        - Administrador ⚠️
-            - Visualiza todos os ganhos ⚠️
-            - lança receita e despesas ⚠️
-        - Barbeiro ⚠️
-            - Visualiza seus ganhos ⚠️
-    - Cliente ⚠️
-        - Start ⚠️
-            - Visualiza seus ultimos gastos ⚠️
-        - Premium ⚠️
-            - Visualiza suas ultimas mensalidades ⚠️
-CONFIGURAÇÃO ⚠️
-    - Barbeiro ⚠️
-        - Administrador ⚠️
+- FINANCEIRO ✅
+    - Barbeiro ✅
+        - Administrador ✅
+            - Visualiza todos os ganhos ✅
+            - lança receita e despesas ✅
+        - Barbeiro ✅
+            - Visualiza seus ganhos ✅
+    - Cliente ✅
+        - Start ✅
+            - Visualiza seus ultimos gastos ✅
+        - Premium ✅
+            - Visualiza suas ultimas mensalidades ✅
+CONFIGURAÇÃO ✅
+    - Barbeiro ✅
+        - Administrador ✅
             - Altera nome ✅
             - Altera Foto ✅
             - Intervalo de tempo entre cortes ✅
             - Datas que irá atender ✅
-            - Cadastra barbeiros ⚠️
+            - Cadastra barbeiros ✅
             - Cadastra serviços ✅
-            - Cadastra produtos ⚠️
-            - Cadastra planos ⚠️
+            - Cadastra planos ✅                              
         - Barbeiro ✅
             - Altera nome ✅
             - Altera Foto ✅

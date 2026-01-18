@@ -72,24 +72,28 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
       icon: isAdmin ? ArrowUpCircle : DollarSign,
       color: 'text-green-500',
     },
-    {
-      label: isAdmin ? 'Despesas' : 'Despesas Pessoais',
-      value: `R$ ${financialStats.totalExpense.toFixed(2)}`,
-      icon: ArrowDownCircle,
-      color: 'text-red-500',
-    },
-    {
-      label: isAdmin ? 'Lucro Líquido' : 'Rendimento Líquido',
-      value: `R$ ${financialStats.netProfit.toFixed(2)}`,
-      icon: TrendingUp,
-      color: 'text-amber-500',
-    },
-    {
-      label: 'Vendas Market',
-      value: 'R$ 0.00',
-      icon: ShoppingBag,
-      color: 'text-blue-500',
-    },
+    ...(isAdmin
+      ? [
+          {
+            label: 'Despesas',
+            value: `R$ ${financialStats.totalExpense.toFixed(2)}`,
+            icon: ArrowDownCircle,
+            color: 'text-red-500',
+          },
+          {
+            label: 'Lucro Líquido',
+            value: `R$ ${financialStats.netProfit.toFixed(2)}`,
+            icon: TrendingUp,
+            color: 'text-amber-500',
+          },
+          {
+            label: 'Vendas Market',
+            value: 'R$ 0.00',
+            icon: ShoppingBag,
+            color: 'text-blue-500',
+          },
+        ]
+      : []),
   ];
 
   const handleAddTransaction = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -173,7 +177,9 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
       </header>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div
+        className={`grid gap-4 ${isAdmin ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-1'}`}
+      >
         {stats.map((s, i) => (
           <div
             key={i}
@@ -259,47 +265,38 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
 
         {/* Sidebar Info */}
         <div className="space-y-6">
-          {isAdmin ? (
-            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-6">
-              <h3 className="font-bold flex items-center gap-2 text-lg">
-                <ShoppingBag className="text-amber-500" size={18} /> Marketplace
-                Stats
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-neutral-500">Lucro Bruto Market</span>
-                  <span className="font-bold text-green-500">R$ 0.00</span>
+          {isAdmin && (
+            <>
+              <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-6">
+                <h3 className="font-bold flex items-center gap-2 text-lg">
+                  <ShoppingBag className="text-amber-500" size={18} />{' '}
+                  Marketplace Stats
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-500">Lucro Bruto Market</span>
+                    <span className="font-bold text-green-500">R$ 0.00</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-500">Taxa de Margem</span>
+                    <span className="font-bold">0%</span>
+                  </div>
+                  <div className="h-[1px] bg-neutral-800 my-2"></div>
+                  <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest text-center italic">
+                    Marketplace desativado
+                  </p>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-neutral-500">Taxa de Margem</span>
-                  <span className="font-bold">0%</span>
-                </div>
-                <div className="h-[1px] bg-neutral-800 my-2"></div>
-                <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest text-center italic">
-                  Marketplace desativado
+              </div>
+
+              <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-4">
+                <Calendar className="text-blue-500 w-8 h-8" />
+                <h4 className="font-bold">Próximo Fechamento</h4>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  O fechamento detalhado do caixa quinzenal ocorre em 4 dias.
                 </p>
               </div>
-            </div>
-          ) : (
-            <div className="bg-amber-500/5 border border-amber-500/20 p-8 rounded-[2.5rem] space-y-6">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="text-amber-500" />
-                <h4 className="font-bold">Meta do Mês</h4>
-              </div>
-              <p className="text-xs text-neutral-500 leading-relaxed">
-                Continue assim! Suas receitas de comissão subiram 10% em relação
-                ao mesmo período do mês passado.
-              </p>
-            </div>
+            </>
           )}
-
-          <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-4">
-            <Calendar className="text-blue-500 w-8 h-8" />
-            <h4 className="font-bold">Próximo Fechamento</h4>
-            <p className="text-xs text-neutral-500 leading-relaxed">
-              O fechamento detalhado do caixa quinzenal ocorre em 4 dias.
-            </p>
-          </div>
         </div>
       </div>
 
