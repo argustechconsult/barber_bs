@@ -40,6 +40,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     totalRevenue: 0,
     planStats: [] as { plan: string; count: number }[],
     totalClients: 0,
+    chartData: [] as { name: string; value: number }[],
   });
   const [clients, setClients] = useState<any[]>([]);
   const [bestSeller, setBestSeller] = useState<any>({ name: 'Carregando...' });
@@ -49,6 +50,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     import('../actions/users/barber.actions').then(({ getAdminStats }) => {
       getAdminStats().then((res) => {
         if (res.success && res.stats) {
+          // @ts-ignore
           setAdminStats(res.stats);
         }
       });
@@ -75,14 +77,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     );
   }, []);
 
-  const revenueData = [
-    { name: 'Jan', value: 12000 },
-    { name: 'Fev', value: 15000 },
-    { name: 'Mar', value: 13000 },
-    { name: 'Abr', value: 22000 },
-    { name: 'Mai', value: 19000 },
-    { name: 'Jun', value: 28000 },
-  ];
+  // Use fetched stats or defaults
+  const revenueData = adminStats.chartData || [];
   // const bestSeller = MOCK_PRODUCTS[0]; // REMOVED
 
   // Use fetched stats for counts if available, otherwise fallback (or 0) for initial render checks

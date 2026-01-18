@@ -75,29 +75,35 @@ export async function getBarberStats(barberId: string) {
 }
 
 // Helper to get last 6 months revenue
-async function getMonthlyRevenue(barberId: string) {
+// Helper to get last 6 months revenue
+async function getMonthlyRevenue(barberId?: string) {
     const months = [];
     const now = new Date();
     
-    for (let i = 4; i >= 0; i--) {
+    for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
         const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1);
         
+        const where: any = {
+            status: 'PAID',
+            createdAt: {
+                gte: d,
+                lt: nextMonth
+            }
+        };
+
+        if (barberId) {
+            where.OR = [
+                { appointment: { barberId } },
+                { userId: barberId, type: 'INCOME' }
+            ];
+        }
+
         // Sum revenue for this month (Appointments + Manual Income)
         const revenue = await prisma.transaction.aggregate({
             _sum: { amount: true },
-            where: {
-                status: 'PAID',
-                createdAt: {
-                    gte: d,
-                    lt: nextMonth
-                },
-                OR: [
-                    { appointment: { barberId } },
-                    { userId: barberId, type: 'INCOME' }
-                ]
-            }
+            where
         });
 
         months.push({
@@ -176,6 +182,7 @@ export async function getAdminStats() {
         marketSales,
         planStats,
         totalClients,
+        chartData: await getMonthlyRevenue(),
       },
     };
   } catch (error) {

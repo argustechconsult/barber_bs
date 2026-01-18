@@ -52,16 +52,20 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
     null,
   );
   const [showPremiumBanner, setShowPremiumBanner] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   // Initialize showPremiumBanner from sessionStorage
   React.useEffect(() => {
+    // console.log('DEBUG: User Plan:', user.plan);
     if (user.plan === UserPlan.START) {
-      const bannerHidden = sessionStorage.getItem('premiumBannerHidden');
+      const bannerHidden = sessionStorage.getItem(
+        `premiumBannerHidden_${user.id}`,
+      );
       if (!bannerHidden) {
         setShowPremiumBanner(true);
       }
     }
-  }, [user.plan]);
+  }, [user.plan, user.id]);
 
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
@@ -587,11 +591,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             {/* Premium Upgrade Banner for Start Plan */}
             {user.plan === UserPlan.START && showPremiumBanner && (
               <div
-                onClick={() => {
-                  alert(
-                    'Assinaturas Premium estão temporariamente desabilitadas para manutenção do sistema de pagamentos.',
-                  );
-                }}
+                onClick={() => setShowMaintenanceModal(true)}
                 className="fixed bottom-20 left-0 right-0 md:left-64 mx-auto w-fit max-w-[90%] md:max-w-md bg-gradient-to-r from-amber-600 to-amber-400 p-4 rounded-[2rem] shadow-2xl shadow-amber-500/20 flex items-center justify-between gap-4 group cursor-pointer hover:scale-[1.02] transition-transform z-40"
               >
                 <div className="flex items-center gap-3">
@@ -613,7 +613,10 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowPremiumBanner(false);
-                      sessionStorage.setItem('premiumBannerHidden', 'true');
+                      sessionStorage.setItem(
+                        `premiumBannerHidden_${user.id}`,
+                        'true',
+                      );
                     }}
                     className="bg-black/10 p-1 rounded-full hover:bg-black/20 transition-colors"
                   >
@@ -622,6 +625,39 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Maintenance Modal */}
+        {showMaintenanceModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] max-w-sm w-full text-center space-y-6 shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 to-amber-400"></div>
+
+              <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
+                <Sparkles className="text-amber-500 w-10 h-10" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-2xl font-display font-bold text-white">
+                  Estamos melhorando!
+                </h3>
+                <p className="text-neutral-400 text-sm leading-relaxed">
+                  As assinaturas Premium estão temporariamente desabilitadas
+                  para manutenção do sistema de pagamentos.
+                </p>
+                <p className="text-amber-500 text-xs font-bold pt-2">
+                  Voltaremos em breve com novidades!
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowMaintenanceModal(false)}
+                className="w-full bg-white text-black font-bold py-4 rounded-2xl hover:bg-neutral-200 transition-colors shadow-lg active:scale-95"
+              >
+                Entendi
+              </button>
+            </div>
           </div>
         )}
 

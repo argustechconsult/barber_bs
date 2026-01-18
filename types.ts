@@ -28,6 +28,7 @@ export interface User {
   workEndDate?: string;
   offDays?: string[];
   image?: string;
+  lastRenewal?: string;
 }
 
 export interface Barbeiro {

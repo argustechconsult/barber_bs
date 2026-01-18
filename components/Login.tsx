@@ -53,7 +53,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
             STAYLER
           </h1>
           <p className="text-neutral-500 mt-2 text-sm tracking-widest uppercase">
-            Estilo que permanece
+            Seu estilo, sua assinatura.
           </p>
         </div>
 

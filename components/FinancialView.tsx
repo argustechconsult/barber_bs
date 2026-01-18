@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, UserPlan } from '../types';
 import {
   Download,
@@ -7,6 +7,8 @@ import {
   ReceiptText,
   ShieldCheck,
 } from 'lucide-react';
+import { format, addMonths, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface FinancialViewProps {
   user: User;
@@ -14,6 +16,35 @@ interface FinancialViewProps {
 
 const FinancialView: React.FC<FinancialViewProps> = ({ user }) => {
   const isPremium = user.plan === UserPlan.PREMIUM;
+  const [invoices, setInvoices] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isPremium) {
+      import('../actions/users/barber.actions').then(
+        ({ getFinancialStats }) => {
+          getFinancialStats(user.id).then((res) => {
+            if (res.success && res.stats?.transactions) {
+              // Filter only subscription payments
+              const subs = res.stats.transactions.filter(
+                (t: any) =>
+                  t.type === 'SUBSCRIPTION' ||
+                  t.description.toLowerCase().includes('mensalidade'),
+              );
+              setInvoices(subs);
+            }
+          });
+        },
+      );
+    }
+  }, [user.id, isPremium]);
+
+  // Calculate next renewal based on lastRenewal or default to next month
+  // Assuming lastRenewal is stored as string 'YYYY-MM-DD' or similar in user object
+  // If not present, maybe default to today + 30 days or handle gracefully
+  const lastRenewalDate = user.lastRenewal
+    ? parseISO(user.lastRenewal)
+    : new Date();
+  const nextRenewalDate = addMonths(lastRenewalDate, 1);
 
   return (
     <div className="max-w-md mx-auto space-y-8 animate-in fade-in duration-500">
@@ -70,7 +101,11 @@ const FinancialView: React.FC<FinancialViewProps> = ({ user }) => {
                     <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
                       Próxima Renovação
                     </p>
-                    <p className="text-sm font-bold">15 de Julho, 2024</p>
+                    <p className="text-sm font-bold">
+                      {format(nextRenewalDate, "d 'de' MMMM, yyyy", {
+                        locale: ptBR,
+                      })}
+                    </p>
                   </div>
                 </div>
                 <p className="text-amber-500 font-bold">R$ 150</p>
@@ -81,30 +116,37 @@ const FinancialView: React.FC<FinancialViewProps> = ({ user }) => {
                   Minhas Faturas
                 </h4>
                 <div className="space-y-3">
-                  {[1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-4 bg-neutral-800/50 border border-neutral-800 rounded-2xl"
-                    >
-                      <div className="flex items-center gap-3">
-                        <ReceiptText className="text-neutral-400" size={18} />
-                        <div>
-                          <p className="text-sm font-bold">
-                            Mensalidade - Mês {i + 4}
-                          </p>
-                          <p className="text-[10px] text-neutral-500">
-                            Pago em 15/0{i + 4}/2024
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => alert('Baixando fatura...')}
-                        className="p-2 bg-amber-500 text-black rounded-xl hover:scale-105 transition-transform"
+                  {invoices.length > 0 ? (
+                    invoices.map((invoice) => (
+                      <div
+                        key={invoice.id}
+                        className="flex items-center justify-between p-4 bg-neutral-800/50 border border-neutral-800 rounded-2xl"
                       >
-                        <Download size={16} />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-3">
+                          <ReceiptText className="text-neutral-400" size={18} />
+                          <div>
+                            <p className="text-sm font-bold">
+                              {invoice.description || 'Mensalidade'}
+                            </p>
+                            <p className="text-[10px] text-neutral-500">
+                              Pago em{' '}
+                              {format(parseISO(invoice.date), 'dd/MM/yyyy')}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => alert('Baixando fatura...')}
+                          className="p-2 bg-amber-500 text-black rounded-xl hover:scale-105 transition-transform"
+                        >
+                          <Download size={16} />
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-neutral-500 text-center py-4">
+                      Nenhuma fatura encontrada.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
