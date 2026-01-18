@@ -38,8 +38,8 @@
 CONFIGURAÇÃO ⚠️
     - Barbeiro ⚠️
         - Administrador ⚠️
-            - Altera nome ⚠️
-            - Altera Foto ⚠️
+            - Altera nome ✅
+            - Altera Foto ✅
             - Intervalo de tempo entre cortes ⚠️
             - Datas que irá atender ⚠️
             - Cadastra barbeiros ⚠️
@@ -47,15 +47,16 @@ CONFIGURAÇÃO ⚠️
             - Cadastra produtos ⚠️
             - Cadastra planos ⚠️
         - Barbeiro ⚠️
-            - Altera nome ⚠️
-            - Altera Foto ⚠️
+            - Altera nome ✅
+            - Altera Foto ✅
+            - Datas que irá atender ⚠️
     - Cliente
-        - Start⚠️
-            - Altera nome ⚠️
-            - Altera Foto ⚠️
-        - Premium ⚠️
-            - Altera nome ⚠️
-            - Altera Foto ⚠️
+        - Start ✅
+            - Altera nome ✅
+            - Altera Foto ✅
+        - Premium ✅
+            - Altera nome ✅
+            - Altera Foto ✅
 
 ## AUTH ✅
 
