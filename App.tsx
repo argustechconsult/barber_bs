@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, UserPlan } from './types';
-import { MOCK_USERS } from './constants';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
 import ClienteApp from './components/ClienteApp';
@@ -36,27 +35,24 @@ const App: React.FC = () => {
 
         // Background revalidation
         try {
-          const { getUser } = await import('./actions/user.actions');
+          const { getUser } = await import('./actions/users/user.actions');
           const freshUser = await getUser(parsed.id);
 
           if (freshUser) {
             // Check for differences to avoid unnecessary re-renders loop if we were strict,
             // but setting it is safe.
-            const mergedUser = {
+            const merged = {
               ...parsed, // keep local props if any
               ...freshUser, // overwrite with db
               role: freshUser.role as UserRole,
               plan: freshUser.plan as UserPlan,
             };
 
-            // Update if plan changed
-            if (
-              mergedUser.plan !== parsed.plan ||
-              mergedUser.role !== parsed.role
-            ) {
-              console.log('User updated from server:', mergedUser);
-              setUser(mergedUser);
-              localStorage.setItem('stayler_user', JSON.stringify(mergedUser));
+            // Stringify comparison to detect any change
+            if (JSON.stringify(merged) !== JSON.stringify(parsed)) {
+              console.log('User updated from server (all fields):', merged);
+              setUser(merged);
+              localStorage.setItem('stayler_user', JSON.stringify(merged));
             }
           }
         } catch (error) {

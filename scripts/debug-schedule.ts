@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { getBarberSchedule } from '../actions/appointment.actions';
+import { getBarberSchedule } from '../actions/appointment/appointment.actions';
 
 async function main() {
   const barberId = '89c5de24-0b0f-4879-bd01-ac9a01d526b9'; // João ID

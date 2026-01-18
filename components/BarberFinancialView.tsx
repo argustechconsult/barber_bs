@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
-import { MOCK_BARBERS } from '../constants';
 import {
   DollarSign,
   TrendingUp,
@@ -38,106 +37,60 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
   });
 
   const fetchStats = () => {
-    if (isAdmin) {
-      import('../actions/barber.actions').then(({ getFinancialStats }) => {
-        getFinancialStats().then((res) => {
-          if (res.success && res.stats) {
-            setFinancialStats({
-              transactions: res.stats.transactions.map((t: any) => ({
-                id: t.id,
-                description: t.description || 'Sem descrição',
-                amount: t.amount,
-                type: t.type as 'INCOME' | 'EXPENSE',
-                date: t.date,
-              })),
-              totalIncome: res.stats.totalIncome,
-              totalExpense: res.stats.totalExpense,
-              netProfit: res.stats.netProfit,
-            });
-          }
-        });
+    import('../actions/users/barber.actions').then(({ getFinancialStats }) => {
+      const barberId = isAdmin ? undefined : user.id;
+      getFinancialStats(barberId).then((res) => {
+        if (res.success && res.stats) {
+          setFinancialStats({
+            transactions: res.stats.transactions.map((t: any) => ({
+              id: t.id,
+              description: t.description || 'Sem descrição',
+              amount: t.amount,
+              type: t.type as 'INCOME' | 'EXPENSE',
+              date: t.date,
+            })),
+            totalIncome: res.stats.totalIncome,
+            totalExpense: res.stats.totalExpense,
+            netProfit: res.stats.netProfit,
+          });
+        }
       });
-    } else if (user.barbeiroId || user.role === UserRole.BARBEIRO) {
-      // Fetch stats strictly for this barber (using user.id)
-      import('../actions/barber.actions').then(({ getBarberStats }) => {
-        getBarberStats(user.id).then((res) => {
-          if (res.success && res.stats) {
-            setFinancialStats({
-              transactions: [], // Add transaction fetching for barber if needed, currently stats only logic in action
-              totalIncome: res.stats.totalRevenue,
-              totalExpense: 0,
-              netProfit: res.stats.totalRevenue,
-            });
-          }
-        });
-      });
-    }
+    });
   };
 
   React.useEffect(() => {
     fetchStats();
   }, [user]);
 
-  // Common barbers only see their incomes/receitas (Mock behavior preserved for non-admin)
-  const displayedTransactions = isAdmin ? financialStats.transactions : []; // TODO: Implement barber financial view if needed, currently focusing on Admin
+  // Historical Transactions
+  const displayedTransactions = financialStats.transactions;
 
-  const stats = isAdmin
-    ? [
-        {
-          label: 'Receita Total',
-          value: `R$ ${financialStats.totalIncome.toFixed(2)}`,
-          icon: ArrowUpCircle,
-          color: 'text-green-500',
-        },
-        {
-          label: 'Despesas',
-          value: `R$ ${financialStats.totalExpense.toFixed(2)}`,
-          icon: ArrowDownCircle,
-          color: 'text-red-500',
-        },
-        {
-          label: 'Lucro Líquido',
-          value: `R$ ${financialStats.netProfit.toFixed(2)}`,
-          icon: TrendingUp,
-          color: 'text-amber-500',
-        },
-        {
-          label: 'Vendas Market',
-          value: 'R$ 0.00', // Zeroed as requested
-          icon: ShoppingBag,
-          color: 'text-blue-500',
-        },
-      ]
-    : [
-        {
-          label: 'Meus Ganhos (Mês)',
-          value: `R$ ${financialStats.totalIncome.toFixed(2)}`,
-          icon: DollarSign,
-          color: 'text-green-500',
-        },
-        {
-          label: 'Comissões', // Assuming commission is same as total revenue for now or calculated
-          value: `R$ ${(financialStats.totalIncome * 0.5).toFixed(2)}`, // Example 50% commission if needed, or just show total
-          icon: TrendingUp,
-          color: 'text-amber-500',
-        },
-        {
-          label: 'Atendimentos',
-          value: financialStats.transactions.length.toString(), // or separate count
-          icon: Receipt,
-          color: 'text-blue-500',
-        },
-        {
-          label: 'Média p/ Corte',
-          // Avoid division by zero
-          value: `R$ ${(financialStats.transactions.length > 0
-            ? financialStats.totalIncome / financialStats.transactions.length
-            : 0
-          ).toFixed(2)}`,
-          icon: DollarSign,
-          color: 'text-neutral-500',
-        },
-      ];
+  const stats = [
+    {
+      label: isAdmin ? 'Receita Total' : 'Meus Ganhos (Mês)',
+      value: `R$ ${financialStats.totalIncome.toFixed(2)}`,
+      icon: isAdmin ? ArrowUpCircle : DollarSign,
+      color: 'text-green-500',
+    },
+    {
+      label: isAdmin ? 'Despesas' : 'Despesas Pessoais',
+      value: `R$ ${financialStats.totalExpense.toFixed(2)}`,
+      icon: ArrowDownCircle,
+      color: 'text-red-500',
+    },
+    {
+      label: isAdmin ? 'Lucro Líquido' : 'Rendimento Líquido',
+      value: `R$ ${financialStats.netProfit.toFixed(2)}`,
+      icon: TrendingUp,
+      color: 'text-amber-500',
+    },
+    {
+      label: 'Vendas Market',
+      value: 'R$ 0.00',
+      icon: ShoppingBag,
+      color: 'text-blue-500',
+    },
+  ];
 
   const handleAddTransaction = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -146,7 +99,8 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
     const amount = Number(formData.get('amount'));
 
     if (user.id) {
-      const { createTransaction } = await import('../actions/barber.actions');
+      const { createTransaction } =
+        await import('../actions/users/barber.actions');
       const res = await createTransaction({
         description,
         amount,
@@ -165,7 +119,8 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
 
   const handleDeleteTransaction = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta transação?')) {
-      const { deleteTransaction } = await import('../actions/barber.actions');
+      const { deleteTransaction } =
+        await import('../actions/users/barber.actions');
       const res = await deleteTransaction(id);
 
       if (res.success) {
@@ -181,24 +136,20 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
       {/* Barber Profile Header */}
       {user.barbeiroId && (
         <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
-          {(() => {
-            const barber = MOCK_BARBERS.find((b) => b.id === user.barbeiroId);
-            if (!barber) return null;
-            return (
-              <>
-                <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
-                  <img
-                    src={barber.foto}
-                    alt={barber.nome}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </div>
-                <h2 className="text-2xl font-display font-bold text-white">
-                  {barber.nome}
-                </h2>
-              </>
-            );
-          })()}
+          {user.barbeiroId && (
+            <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
+              <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
+                <img
+                  src={user.image || '/default.jpeg'}
+                  alt={user.name}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </div>
+              <h2 className="text-2xl font-display font-bold text-white">
+                {user.name}
+              </h2>
+            </div>
+          )}
         </div>
       )}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 md:pt-0">

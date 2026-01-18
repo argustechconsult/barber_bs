@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { User, Barbeiro, Service, UserPlan } from '../types';
-import { MOCK_BARBERS, SERVICES, MOCK_APPOINTMENTS } from '../constants';
 import {
   ChevronRight,
   Check,
@@ -27,11 +26,10 @@ const GLOBAL_BOOKED_SLOTS = new Set<string>();
 import {
   createAppointment,
   getAppointmentsByBarber,
-} from '../actions/appointment.actions';
-import { getBarbers } from '../actions/barber.actions';
-import { createSubscriptionCheckoutSession } from '../actions/stripe.actions';
-import { createAbacateBilling } from '../actions/abacatepay.actions';
-import { getPlans } from '../actions/plan.actions';
+} from '../actions/appointment/appointment.actions';
+import { getBarbers } from '../actions/users/barber.actions';
+import { getPlans } from '../actions/services/plan.actions';
+import { getServices } from '../actions/services/service.actions';
 // const SESSION_APPOINTMENTS: { clientId: string; date: string }[] = [];
 
 const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
@@ -68,6 +66,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
 
   // Fetch Barbers
   React.useEffect(() => {
@@ -86,6 +85,14 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
       }
     }
     fetchPlans();
+
+    async function fetchServices() {
+      const result = await getServices();
+      if (result.success && result.services) {
+        setServices(result.services);
+      }
+    }
+    fetchServices();
 
     // Check for Stripe Success
     if (typeof window !== 'undefined') {
@@ -297,9 +304,8 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
         );
 
         // Create InfinitePay Checkout
-        const { createInfinitePayCheckout } = await import(
-          '../actions/infinitepay.actions'
-        );
+        const { createInfinitePayCheckout } =
+          await import('../actions/payment/infinitepay.actions');
 
         const infinitePayResult = await createInfinitePayCheckout({
           appointmentId: result.appointment.id,
@@ -381,20 +387,6 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
     setPaymentMethod(null);
     setIsSuccess(false);
     setShowPremiumRestriction(false);
-  };
-
-  const handlePremiumSubscribe = async () => {
-    alert(
-      'Assinaturas Premium estão temporariamente desabilitadas para manutenção do sistema de pagamentos.',
-    );
-    /*
-    try {
-      ...
-    } catch (error) {
-      console.error(error);
-      alert('Erro ao processar solicitação.');
-    }
-    */
   };
 
   if (showPremiumRestriction) {
@@ -591,10 +583,15 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
               ))}
             </div>
 
+            {/* Maintenance Card for Premium Subscriptions */}
             {/* Premium Upgrade Banner for Start Plan */}
             {user.plan === UserPlan.START && showPremiumBanner && (
               <div
-                onClick={handlePremiumSubscribe}
+                onClick={() => {
+                  alert(
+                    'Assinaturas Premium estão temporariamente desabilitadas para manutenção do sistema de pagamentos.',
+                  );
+                }}
                 className="fixed bottom-20 left-0 right-0 md:left-64 mx-auto w-fit max-w-[90%] md:max-w-md bg-gradient-to-r from-amber-600 to-amber-400 p-4 rounded-[2rem] shadow-2xl shadow-amber-500/20 flex items-center justify-between gap-4 group cursor-pointer hover:scale-[1.02] transition-transform z-40"
               >
                 <div className="flex items-center gap-3">
@@ -648,7 +645,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             </div>
 
             <div className="space-y-3">
-              {SERVICES.map((s) => {
+              {services.map((s) => {
                 const isSelected = selectedServices.some(
                   (item) => item.id === s.id,
                 );
@@ -747,8 +744,8 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                           isDisabled
                             ? 'opacity-10 grayscale cursor-not-allowed border-transparent'
                             : isSelected
-                            ? 'bg-amber-500 border-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
-                            : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'
+                              ? 'bg-amber-500 border-amber-500 text-black font-bold shadow-lg shadow-amber-500/20'
+                              : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'
                         }`}
                       >
                         <span className="text-[9px] uppercase font-bold opacity-60">
@@ -795,12 +792,15 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     const startHr = parseInt(
                       selectedBarber.horariosTrabalho.inicio.split(':')[0],
                     );
-                    const endHr = parseInt(
-                      selectedBarber.horariosTrabalho.fim.split(':')[0],
-                    );
                     const startMin = parseInt(
                       selectedBarber.horariosTrabalho.inicio.split(':')[1] ||
                         '0',
+                    );
+                    const endHr = parseInt(
+                      selectedBarber.horariosTrabalho.fim.split(':')[0],
+                    );
+                    const endMin = parseInt(
+                      selectedBarber.horariosTrabalho.fim.split(':')[1] || '0',
                     );
                     const interval = selectedBarber.intervaloAtendimento || 10; // Minutes
 
@@ -808,7 +808,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     current.setHours(startHr, startMin, 0, 0);
 
                     const end = new Date();
-                    end.setHours(endHr, 0, 0, 0);
+                    end.setHours(endHr, endMin, 0, 0);
 
                     while (current < end) {
                       const timeStr = current.toLocaleTimeString('pt-BR', {
@@ -821,7 +821,6 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     }
                   } else {
                     // Fallback if no barber selected (shouldn't happen here)
-                    // Or if barber has no hours defined, default to 09:00 - 19:00 with 10 min interval as requested
                     const startHr = 9;
                     const endHr = 18;
                     const interval = 10;
@@ -876,8 +875,8 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                             occupied
                               ? 'bg-neutral-800 border-neutral-700 text-neutral-700 line-through cursor-not-allowed'
                               : selectedTime === time
-                              ? 'bg-amber-500 border-amber-500 text-black scale-105 shadow-lg shadow-amber-500/20'
-                              : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'
+                                ? 'bg-amber-500 border-amber-500 text-black scale-105 shadow-lg shadow-amber-500/20'
+                                : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'
                           }`}
                         >
                           {occupied ? 'Indisponível' : time}

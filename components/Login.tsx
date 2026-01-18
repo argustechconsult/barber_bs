@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useTransition } from 'react';
 import { Scissors, Eye, EyeOff } from 'lucide-react';
-import { login } from '../actions/auth.actions';
+import { login } from '../actions/auth/auth.actions';
 
 interface LoginProps {
   onLogin: (user: any) => void;
@@ -84,6 +84,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
               </label>
               <input
                 type="text"
+                name="email"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={isBarberView ? 'Seu usuário' : 'Seu usuário'}
@@ -98,6 +100,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"

@@ -2,7 +2,10 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getInviteDetails, acceptInvite } from '../../actions/auth.actions';
+import {
+  getInviteDetails,
+  acceptInvite,
+} from '../../actions/auth/auth.actions';
 import { Loader2, CheckCircle2, Lock } from 'lucide-react';
 
 function InviteContent() {

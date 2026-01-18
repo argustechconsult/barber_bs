@@ -1,7 +1,7 @@
 'use server';
 
-import { prisma } from '../lib/prisma';
-import { UserRole } from '../types';
+import { prisma } from '../../lib/prisma';
+import { UserRole } from '../../types';
 
 export async function getBarbers() {
   try {
@@ -56,5 +56,43 @@ export async function updateUser(userId: string, data: { name?: string; image?: 
   } catch (error) {
     console.error('Error updating user:', error);
     return { success: false, message: 'Falha ao atualizar perfil' };
+  }
+}
+
+export async function getClients() {
+  try {
+    const clients = await prisma.user.findMany({
+      where: {
+        role: UserRole.CLIENTE,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return clients.map((c) => {
+        let status = 'DEBT'; 
+        if (c.subscriptionStatus === 'ACTIVE') status = 'PAID';
+        if (c.subscriptionStatus === 'PAST_DUE') status = 'DEBT';
+        if (c.subscriptionStatus === 'CANCELLED') status = 'CHURN';
+        
+        const lastRenewal = c.updatedAt.toLocaleDateString('pt-BR');
+
+        return {
+            id: c.id,
+            name: c.name,
+            email: c.email,
+            whatsapp: c.whatsapp,
+            role: c.role,
+            plan: c.plan,
+            isActive: c.isActive,
+            status,
+            lastRenewal,
+            image: c.image
+        };
+    });
+  } catch (error) {
+    console.error('Error fetching clients:', error);
+    return [];
   }
 }

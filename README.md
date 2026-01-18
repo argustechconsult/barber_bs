@@ -40,16 +40,16 @@ CONFIGURAÇÃO ⚠️
         - Administrador ⚠️
             - Altera nome ✅
             - Altera Foto ✅
-            - Intervalo de tempo entre cortes ⚠️
-            - Datas que irá atender ⚠️
+            - Intervalo de tempo entre cortes ✅
+            - Datas que irá atender ✅
             - Cadastra barbeiros ⚠️
-            - Cadastra serviços ⚠️
+            - Cadastra serviços ✅
             - Cadastra produtos ⚠️
             - Cadastra planos ⚠️
-        - Barbeiro ⚠️
+        - Barbeiro ✅
             - Altera nome ✅
             - Altera Foto ✅
-            - Datas que irá atender ⚠️
+            - Datas que irá atender ✅
     - Cliente
         - Start ✅
             - Altera nome ✅

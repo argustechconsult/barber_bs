@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '../lib/prisma';
+import { prisma } from '../../lib/prisma';
 import { subDays } from 'date-fns';
 
 export async function getBarberStats(barberId: string) {
@@ -17,17 +17,20 @@ export async function getBarberStats(barberId: string) {
     });
     const clientsServed = uniqueClients.length;
 
-    // 2. Faturamento (Total Revenue from PAID transactions linked to barber's appointments)
-    // Note: Transaction connects to Appointment, which connects to Barber.
+    // 2. Faturamento (Total Revenue from PAID transactions linked to barber)
+    // Includes: 
+    // - Transactions linked to barber's appointments
+    // - Manual income transactions linked to barber's userId
     const revenueResult = await prisma.transaction.aggregate({
         _sum: {
             amount: true
         },
         where: {
             status: 'PAID',
-            appointment: {
-                barberId
-            }
+            OR: [
+                { appointment: { barberId } },
+                { userId: barberId, type: 'INCOME' }
+            ]
         }
     });
     const totalRevenue = revenueResult._sum.amount || 0;
@@ -76,12 +79,12 @@ async function getMonthlyRevenue(barberId: string) {
     const months = [];
     const now = new Date();
     
-    for (let i = 5; i >= 0; i--) {
+    for (let i = 4; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
         const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1);
         
-        // Sum revenue for this month
+        // Sum revenue for this month (Appointments + Manual Income)
         const revenue = await prisma.transaction.aggregate({
             _sum: { amount: true },
             where: {
@@ -90,9 +93,10 @@ async function getMonthlyRevenue(barberId: string) {
                     gte: d,
                     lt: nextMonth
                 },
-                appointment: {
-                    barberId: barberId
-                }
+                OR: [
+                    { appointment: { barberId } },
+                    { userId: barberId, type: 'INCOME' }
+                ]
             }
         });
 
@@ -106,8 +110,20 @@ async function getMonthlyRevenue(barberId: string) {
 
 export async function getAdminStats() {
   try {
-    // 1. Receita de Cortes (Total Revenue from PAID transactions)
-    const revenueResult = await prisma.transaction.aggregate({
+    // 1. Receita de Cortes (Revenue from APPOINTMENT type PAID transactions)
+    const cutsRevenueResult = await prisma.transaction.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: {
+        status: 'PAID',
+        type: 'APPOINTMENT',
+      },
+    });
+    const cutsRevenue = cutsRevenueResult._sum.amount || 0;
+
+    // 2. Receita Total (All PAID transactions)
+    const totalRevenueResult = await prisma.transaction.aggregate({
       _sum: {
         amount: true,
       },
@@ -115,9 +131,21 @@ export async function getAdminStats() {
         status: 'PAID',
       },
     });
-    const totalRevenue = revenueResult._sum.amount || 0;
+    const totalRevenue = totalRevenueResult._sum.amount || 0;
 
-    // 2. Clientes por Plano
+    // 3. Vendas Market (SUBSCRIPTION type or manual marked as such)
+    const marketRevenueResult = await prisma.transaction.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: {
+        status: 'PAID',
+        type: 'SUBSCRIPTION',
+      },
+    });
+    const marketSales = marketRevenueResult._sum.amount || 0;
+
+    // 4. Clientes por Plano
     const clientDistribution = await prisma.user.groupBy({
       by: ['plan'],
       where: {
@@ -143,8 +171,9 @@ export async function getAdminStats() {
     return {
       success: true,
       stats: {
-        marketSales: 0, // Hardcoded as requested
+        cutsRevenue,
         totalRevenue,
+        marketSales,
         planStats,
         totalClients,
       },
@@ -155,37 +184,63 @@ export async function getAdminStats() {
   }
 }
 
-export async function getFinancialStats() {
+export async function getFinancialStats(barberId?: string) {
   try {
+    const where: any = { status: 'PAID' };
+
+    if (barberId) {
+      where.OR = [
+        { appointment: { barberId: barberId } },
+        { userId: barberId }
+      ];
+    }
+
     const transactions = await prisma.transaction.findMany({
+      where,
       orderBy: {
         createdAt: 'desc',
       },
-      take: 20, // Limit for recent list
+      take: 50, // More items for financial view
     });
 
-    const income = await prisma.transaction.aggregate({
+    const incomeResult = await prisma.transaction.aggregate({
       _sum: { amount: true },
-      where: { type: 'INCOME', status: 'PAID' },
+      where: {
+        ...where,
+        type: { in: ['INCOME', 'APPOINTMENT'] as any },
+      },
     });
 
-    const expense = await prisma.transaction.aggregate({
+    const expenseResult = await prisma.transaction.aggregate({
       _sum: { amount: true },
-      where: { type: 'EXPENSE', status: 'PAID' },
+      where: {
+        ...where,
+        type: 'EXPENSE',
+      },
     });
 
-    const totalIncome = income._sum.amount || 0;
-    const totalExpense = expense._sum.amount || 0;
+    const marketResult = await prisma.transaction.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        type: 'SUBSCRIPTION', // Assuming market sales are linked to plan/product in some way or just filter by desc
+      },
+    });
+
+    const totalIncome = incomeResult._sum.amount || 0;
+    const totalExpense = expenseResult._sum.amount || 0;
+    const marketSales = marketResult._sum.amount || 0;
 
     return {
       success: true,
       stats: {
         transactions: transactions.map((t) => ({
           ...t,
-          date: t.createdAt.toISOString().split('T')[0], // Format date for UI
+          date: t.createdAt.toISOString().split('T')[0],
         })),
         totalIncome,
         totalExpense,
+        marketSales,
         netProfit: totalIncome - totalExpense,
       },
     };
@@ -249,7 +304,7 @@ export async function getBarbers() {
       foto: u.image || u.whatsapp || '/default.jpeg', // Prefer image, then whatsapp (legacy), then default
       bio: '', 
       ativo: u.isActive,
-      intervaloAtendimento: u.appointmentInterval || 30,
+      intervaloAtendimento: u.appointmentInterval || 10,
       horariosTrabalho: { 
           inicio: u.startTime || '09:00', 
           fim: u.endTime || '19:00' 
@@ -268,13 +323,64 @@ export async function getBarbers() {
 
 export async function deleteBarber(id: string) {
     try {
-        await prisma.user.delete({
-            where: { id }
+        // 1. Check for dependencies (Appointments or Transactions)
+        // We check for ANY appointment (past/future) because we want to preserve history.
+        // We also check for transactions where the user is the 'userId' (e.g. income) or linked via appointment.
+        
+        const hasAppointments = await prisma.appointment.count({
+            where: { barberId: id }
         });
-        return { success: true };
-    } catch (error) {
+
+        const hasTransactions = await prisma.transaction.count({
+            where: { userId: id }
+        });
+
+        if (hasAppointments > 0 || hasTransactions > 0) {
+            // SOFT DELETE (Deactivate and Anonymize to release unique constraints)
+            const timestamp = new Date().getTime();
+            
+            // Fetch current user to get email/whatsapp for anonymization logic if needed, 
+            // or just append timestamp.
+            const currentUser = await prisma.user.findUnique({
+                where: { id },
+                select: { email: true, whatsapp: true }
+            });
+
+            await prisma.user.update({
+                where: { id },
+                data: {
+                    isActive: false,
+                    // Release unique constraints
+                    email: currentUser?.email ? `deleted_${timestamp}_${currentUser.email}` : undefined,
+                    whatsapp: currentUser?.whatsapp ? `deleted_${timestamp}_${currentUser.whatsapp}` : undefined,
+                    // Clear other potentially unique fields or sensitive data if necessary
+                    inviteToken: null, 
+                    // stripeCustomerId: null, 
+                    // stripeSubscriptionId: null
+                }
+            });
+            
+            // Revalidate to update UI immediately
+            const { revalidatePath } = await import('next/cache');
+            revalidatePath('/');
+            revalidatePath('/settings');
+            
+            return { success: true, message: 'Barbeiro desativado (histórico preservado)' };
+        } else {
+            // HARD DELETE (Safe to remove completely)
+            await prisma.user.delete({
+                where: { id }
+            });
+            
+            const { revalidatePath } = await import('next/cache');
+            revalidatePath('/');
+            revalidatePath('/settings');
+
+            return { success: true, message: 'Barbeiro excluído permanentemente' };
+        }
+    } catch (error: any) {
         console.error("Delete Barber Error:", error);
-        return { success: false, message: "Erro ao excluir barbeiro" };
+        return { success: false, message: "Erro ao excluir barbeiro: " + error.message };
     }
 }
 
@@ -292,9 +398,9 @@ export async function updateBarberSettings(
 ) {
   try {
     const updateData: any = {};
-    if (data.interval) updateData.appointmentInterval = data.interval;
-    if (data.startTime) updateData.startTime = data.startTime;
-    if (data.endTime) updateData.endTime = data.endTime;
+    if (data.interval !== undefined) updateData.appointmentInterval = data.interval;
+    if (data.startTime !== undefined) updateData.startTime = data.startTime;
+    if (data.endTime !== undefined) updateData.endTime = data.endTime;
     if (data.workStartDate !== undefined) updateData.workStartDate = data.workStartDate;
     if (data.workEndDate !== undefined) updateData.workEndDate = data.workEndDate;
     if (data.offDays !== undefined) updateData.offDays = data.offDays;
@@ -306,9 +412,9 @@ export async function updateBarberSettings(
     });
     
     // Revalidate paths to ensure client app sees changes immediately
-    import('next/cache').then(({ revalidatePath }) => {
-        revalidatePath('/');
-    });
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath('/');
+    revalidatePath('/settings');
 
     return { success: true };
   } catch (error: any) {

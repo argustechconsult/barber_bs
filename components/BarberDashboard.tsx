@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, UserPlan, UserRole } from '../types';
-import { MOCK_USERS, MOCK_PRODUCTS, MOCK_BARBERS } from '../constants';
+// import { MOCK_USERS, MOCK_PRODUCTS, MOCK_BARBERS } from '../constants'; // REMOVED
 import {
   XAxis,
   YAxis,
@@ -36,10 +36,15 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
   >('monthly');
 
   const isAdmin = user.role === UserRole.ADMIN;
-  const clients = MOCK_USERS.filter((u) => u.role === UserRole.CLIENTE);
+  // const clients = MOCK_USERS.filter((u) => u.role === UserRole.CLIENTE); // REMOVED
+  const [clients, setClients] = useState<any[]>([]); // Real clients
 
-  const marketSales = 2450.0;
-  const bestSeller = MOCK_PRODUCTS[0];
+  // const marketSales = 2450.0;
+  // const bestSeller = MOCK_PRODUCTS[0]; // REMOVED
+  const [bestSeller, setBestSeller] = useState<any>({
+    name: 'Carregando...',
+    image: '',
+  });
 
   // const growthData = { ... removed ... };
   // const currentChartData = growthData[period];
@@ -54,6 +59,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
   });
 
   const [adminStatsData, setAdminStatsData] = useState({
+    cutsRevenue: 0,
     marketSales: 0,
     totalRevenue: 0,
     planStats: [] as { plan: string; count: number }[],
@@ -62,7 +68,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
 
   React.useEffect(() => {
     if (user.role === UserRole.BARBEIRO && user.id) {
-      import('../actions/barber.actions').then(({ getBarberStats }) => {
+      import('../actions/users/barber.actions').then(({ getBarberStats }) => {
         getBarberStats(user.id).then((res) => {
           if (res.success && res.stats) {
             setStatsData(res.stats);
@@ -70,13 +76,32 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
         });
       });
     } else if (user.role === UserRole.ADMIN) {
-      import('../actions/barber.actions').then(({ getAdminStats }) => {
+      // 1. Get Admin Stats
+      import('../actions/users/barber.actions').then(({ getAdminStats }) => {
         getAdminStats().then((res) => {
           if (res.success && res.stats) {
             setAdminStatsData(res.stats);
           }
         });
       });
+      // 2. Get Clients
+      import('../actions/users/user.actions').then(({ getClients }) => {
+        getClients().then((fetchedClients) => {
+          setClients(fetchedClients);
+        });
+      });
+      // 3. Get Best Seller
+      import('../actions/marketplace/marketplace.actions').then(
+        ({ getProducts }) => {
+          getProducts().then((res) => {
+            if (res.success && res.products.length > 0) {
+              setBestSeller(res.products[0]);
+            } else {
+              setBestSeller({ name: 'Nenhum', image: '' });
+            }
+          });
+        },
+      );
     }
   }, [user]);
 
@@ -101,7 +126,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
     ? [
         {
           label: 'Receita Cortes',
-          value: `R$ ${adminStatsData.totalRevenue.toFixed(2)}`,
+          value: `R$ ${adminStatsData.cutsRevenue.toFixed(2)}`,
           icon: Scissors,
           color: 'text-indigo-500',
         },
@@ -138,22 +163,10 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
           color: 'text-green-500',
         },
         {
-          label: 'Receita Cortes',
-          value: `R$ ${statsData.cutsRevenue.toFixed(2)}`,
-          icon: Scissors,
-          color: 'text-indigo-500',
-        },
-        {
           label: 'Média/Dia',
           value: statsData.averagePerDay,
           icon: Clock,
           color: 'text-purple-500',
-        },
-        {
-          label: 'Meta Atingida',
-          value: `${statsData.goalPercentage}%`,
-          icon: CheckCircle2,
-          color: 'text-amber-500',
         },
       ];
 
@@ -162,24 +175,16 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
       {/* Barber Profile Header */}
       {user.barbeiroId && (
         <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
-          {(() => {
-            const barber = MOCK_BARBERS.find((b) => b.id === user.barbeiroId);
-            if (!barber) return null;
-            return (
-              <>
-                <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
-                  <img
-                    src={user.image || barber.foto}
-                    alt={barber.nome}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </div>
-                <h2 className="text-2xl font-display font-bold text-white">
-                  {barber.nome}
-                </h2>
-              </>
-            );
-          })()}
+          <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
+            <img
+              src={user.image || '/default.jpeg'}
+              alt={user.name}
+              className="w-full h-full rounded-full object-cover"
+            />
+          </div>
+          <h2 className="text-2xl font-display font-bold text-white">
+            {user.name}
+          </h2>
         </div>
       )}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 md:pt-0">
@@ -193,8 +198,9 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <div className="bg-neutral-900 border border-neutral-800 p-1 rounded-2xl flex whitespace-nowrap">
-            {(['monthly', 'quarterly', 'semiannual', 'annual'] as const).map(
-              (p) => (
+            {(['monthly', 'quarterly', 'semiannual', 'annual'] as const)
+              .filter((p) => isAdmin || p === 'monthly')
+              .map((p) => (
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
@@ -212,8 +218,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
                         ? 'Semest'
                         : 'Anual'}
                 </button>
-              ),
-            )}
+              ))}
           </div>
         </div>
       </header>

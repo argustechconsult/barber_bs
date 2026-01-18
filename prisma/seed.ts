@@ -11,17 +11,17 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const passwordAdmin = await bcrypt.hash('admin', 10);
-  const passwordStart = await bcrypt.hash('start', 10);
-  const passwordPremium = await bcrypt.hash('premium', 10);
+  const passwordAdmin = await bcrypt.hash('123456', 10);
+  const passwordStart = await bcrypt.hash('123456', 10);
+  const passwordPremium = await bcrypt.hash('123456', 10);
 
   // Admin
   await prisma.user.upsert({
-    where: { email: 'admin' },
+    where: { email: 'admin@email.com' },
     update: {},
     create: {
       name: 'Barbeiro Administrador',
-      email: 'admin',
+      email: 'admin@email.com',
       password: passwordAdmin,
       role: UserRole.ADMIN,
       isActive: true,
@@ -30,11 +30,11 @@ async function main() {
 
   // Start User
   await prisma.user.upsert({
-    where: { email: 'start' },
+    where: { email: 'start@email.com' },
     update: {},
     create: {
       name: 'User Start',
-      email: 'start',
+      email: 'start@email.com',
       password: passwordStart,
       role: UserRole.CLIENTE,
       plan: UserPlan.START,
@@ -44,11 +44,11 @@ async function main() {
 
   // Premium User
   await prisma.user.upsert({
-    where: { email: 'premium' },
+    where: { email: 'premium@email.com' },
     update: {},
     create: {
       name: 'User Premium',
-      email: 'premium',
+      email: 'premium@email.com',
       password: passwordPremium,
       role: UserRole.CLIENTE,
       plan: UserPlan.PREMIUM,
@@ -58,11 +58,11 @@ async function main() {
 
   // Barbeiro
   const barber = await prisma.user.upsert({
-    where: { email: 'barbeiro' },
+    where: { email: 'barbeiro@email.com' },
     update: {},
     create: {
       name: 'Jorge o Barbeiro',
-      email: 'barbeiro',
+      email: 'barbeiro@email.com',
       password: passwordAdmin,
       role: UserRole.BARBEIRO,
       isActive: true,
@@ -73,25 +73,15 @@ async function main() {
   // Services
   await prisma.service.createMany({
     data: [
-      { name: 'Corte de Cabelo', price: 50.0, duration: 45 },
-      { name: 'Barba Completa', price: 35.0, duration: 30 },
-      { name: 'Corte + Barba', price: 75.0, duration: 60 },
-      { name: 'Acabamento/Pezinho', price: 20.0, duration: 15 },
+      { name: 'Corte de Cabelo', price: 1000, duration: 45 },
+      { name: 'Barba Completa', price: 1000, duration: 30 },
+      { name: 'Corte + Barba', price: 1000, duration: 60 },
+      { name: 'Acabamento/Pezinho', price: 1000, duration: 15 },
     ],
     skipDuplicates: true,
   });
 
-  // Products
-  await prisma.product.createMany({
-      data: [
-          { name: 'Pomada Efeito Matte', description: 'Alta fixação e efeito seco', category: 'Cabelo', price: 45.0 },
-          { name: 'Óleo para Barba', description: 'Hidratação e maciez', category: 'Barba', price: 30.0 },
-          { name: 'Shampoo Mentolado', description: 'Limpeza refrescante', category: 'Cabelo', price: 35.0 },
-      ],
-      skipDuplicates: true
-  });
-
-  console.log('Seed executed: Users, Barbers, Services, and Products created.');
+  console.log('Seed executed: Users, Barbers, Services created.');
 }
 
 main()

@@ -1,7 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole, ProductCategory } from '../types';
-import { PRODUCT_CATEGORIES } from '../constants';
 import { ImageCropper } from './shared/ImageCropper';
+
+const PRODUCT_CATEGORIES: ProductCategory[] = [
+  { id: '1', name: 'Cabelo' },
+  { id: '2', name: 'Barba' },
+  { id: '3', name: 'Acessórios' },
+  { id: '4', name: 'Pós-Barba' },
+];
 import {
   Plus,
   Trash2,
@@ -53,7 +59,8 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
         'Todos os Produtos';
 
   const fetchProducts = async () => {
-    const { getProducts } = await import('../actions/marketplace.actions');
+    const { getProducts } =
+      await import('../actions/marketplace/marketplace.actions');
     const res = await getProducts();
     if (res.success) {
       setProducts(res.products || []);
@@ -70,7 +77,8 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
 
   const confirmDelete = async () => {
     if (productToDelete) {
-      const { deleteProduct } = await import('../actions/marketplace.actions');
+      const { deleteProduct } =
+        await import('../actions/marketplace/marketplace.actions');
       const res = await deleteProduct(productToDelete);
       if (res.success) {
         fetchProducts();
@@ -157,10 +165,12 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
 
     let res;
     if (editingProduct) {
-      const { updateProduct } = await import('../actions/marketplace.actions');
+      const { updateProduct } =
+        await import('../actions/marketplace/marketplace.actions');
       res = await updateProduct(editingProduct.id, productData);
     } else {
-      const { createProduct } = await import('../actions/marketplace.actions');
+      const { createProduct } =
+        await import('../actions/marketplace/marketplace.actions');
       res = await createProduct(productData);
     }
 

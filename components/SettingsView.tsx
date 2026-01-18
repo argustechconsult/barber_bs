@@ -1,17 +1,22 @@
 import React, { useRef, useState } from 'react';
 import { User, UserPlan, UserRole, Barbeiro, Service } from '../types';
 import { ImageCropper } from './shared/ImageCropper';
-import {
-  SERVICES as INITIAL_SERVICES,
-  MOCK_BARBERS as INITIAL_BARBERS,
-} from '../constants';
+// import {
+//   SERVICES as INITIAL_SERVICES,
+//   MOCK_BARBERS as INITIAL_BARBERS,
+// } from '../constants'; // REMOVED
 import {
   getServices,
   updateService,
   deleteService,
-} from '../actions/service.actions';
-import { createService } from '../actions/stripe.actions';
-import { getPlans, createPlan, deletePlan } from '../actions/plan.actions';
+  createService, // Now imported from service.actions
+} from '../actions/services/service.actions';
+// import { createService } from '../actions/payment/stripe.actions'; // REMOVED
+import {
+  getPlans,
+  createPlan,
+  deletePlan,
+} from '../actions/services/plan.actions';
 import {
   Camera,
   User as UserIcon,
@@ -68,6 +73,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     id?: string;
   } | null>(null);
   const [offDays, setOffDays] = useState<string[]>(user.offDays || []);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Fetch Services, Plans & Barbers
   React.useEffect(() => {
@@ -83,7 +89,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         setPlans(planResult.plans);
       }
       // Barbers
-      const { getBarbers } = await import('../actions/barber.actions');
+      const { getBarbers } = await import('../actions/users/barber.actions');
       const barbersResult = await getBarbers();
       if (barbersResult.success && barbersResult.barbers) {
         setBarbers(barbersResult.barbers);
@@ -119,7 +125,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         ),
       );
       const { updateBarberSettings } =
-        await import('../actions/barber.actions');
+        await import('../actions/users/barber.actions');
       await updateBarberSettings(croppingTarget.id, { image: croppedImage });
     }
 
@@ -128,7 +134,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleSaveProfile = async () => {
-    const { updateUser } = await import('../actions/user.actions');
+    const { updateUser } = await import('../actions/users/user.actions');
     const result = await updateUser(user.id, {
       name: user.name,
       image: user.image,
@@ -192,7 +198,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         alert('Erro ao remover serviço');
       }
     } else if (deleteConfirmation.type === 'barber') {
-      const { deleteBarber } = await import('../actions/barber.actions');
+      const { deleteBarber } = await import('../actions/users/barber.actions');
       const result = await deleteBarber(deleteConfirmation.id);
       if (result.success) {
         setBarbers((prev) =>
@@ -235,7 +241,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     const nome = formData.get('nome') as string;
     const email = formData.get('email') as string;
 
-    const { createBarberInvite } = await import('../actions/auth.actions');
+    const { createBarberInvite } = await import('../actions/auth/auth.actions');
     const result = await createBarberInvite(nome, email);
 
     if (result.success && result.inviteLink) {
@@ -402,23 +408,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   const start = (formData.get('start') as string) || '09:00';
                   const end = (formData.get('end') as string) || '18:00';
 
-                  const formatDateToISO = (dateStr: string) => {
-                    if (!dateStr) return null;
-                    const parts = dateStr.split('/');
-                    if (parts.length === 3) {
-                      return `${parts[2]}-${parts[1]}-${parts[0]}`;
-                    }
-                    return dateStr; // Fallback or unchanged if already ISO (shouldn't happen with text input unless prefill)
-                  };
-
-                  const startDesc = formData.get('workStartDate') as string;
-                  const endDesc = formData.get('workEndDate') as string;
-
-                  const workStartDate = formatDateToISO(startDesc);
-                  const workEndDate = formatDateToISO(endDesc);
-
                   const { updateBarberSettings } =
-                    await import('../actions/barber.actions');
+                    await import('../actions/users/barber.actions');
                   const result = await updateBarberSettings(user.id, {
                     interval,
                     startTime: start,
@@ -529,9 +520,45 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
 
                 <div className="space-y-4">
-                  <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
-                    Folga - {format(new Date(), 'MM/yyyy')}
-                  </p>
+                  <div className="flex items-center justify-between px-2">
+                    <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
+                      Folga - {format(currentMonth, 'MM/yyyy')}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCurrentMonth(
+                            (prev) =>
+                              new Date(
+                                prev.getFullYear(),
+                                prev.getMonth() - 1,
+                                1,
+                              ),
+                          )
+                        }
+                        className="p-1 hover:bg-neutral-800 rounded-lg text-neutral-500"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCurrentMonth(
+                            (prev) =>
+                              new Date(
+                                prev.getFullYear(),
+                                prev.getMonth() + 1,
+                                1,
+                              ),
+                          )
+                        }
+                        className="p-1 hover:bg-neutral-800 rounded-lg text-neutral-500"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
 
                   <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-4">
                     <div className="grid grid-cols-7 gap-1 text-center mb-2">
@@ -547,9 +574,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
                     <div className="grid grid-cols-7 gap-1">
                       {(() => {
-                        const now = new Date();
-                        const start = startOfMonth(now);
-                        const end = endOfMonth(now);
+                        const start = startOfMonth(currentMonth);
+                        const end = endOfMonth(currentMonth);
                         const days = eachDayOfInterval({ start, end });
 
                         // Fill leading empty days
@@ -778,11 +804,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                           </p>
                         </div>
                         <div className="flex items-center gap-4">
-                          {plan.stripeProductId && (
-                            <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-1 rounded-md border border-green-500/20 font-bold uppercase tracking-widest">
-                              Stripe Ativo
-                            </span>
-                          )}
                           <button
                             onClick={() => deletePlanHandler(plan.id)}
                             className="p-2 text-neutral-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"

@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '../lib/prisma';
+import { prisma } from '../../lib/prisma';
 
 const INFINITEPAY_API_URL = 'https://api.infinitepay.io/invoices/public/checkout/links';
 

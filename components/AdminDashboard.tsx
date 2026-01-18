@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, UserPlan, UserRole } from '../types';
-import { MOCK_USERS, MOCK_PRODUCTS, MOCK_BARBERS } from '../constants';
+// import { MOCK_USERS, MOCK_PRODUCTS, MOCK_BARBERS } from '../constants'; // REMOVED
 import {
   AreaChart,
   Area,
@@ -31,33 +31,48 @@ interface AdminDashboardProps {
   user: User;
 }
 
-// Simulated status for demo purposes
-const CUSTOMER_LIST = MOCK_USERS.filter((u) => u.role === UserRole.CLIENTE).map(
-  (u) => ({
-    ...u,
-    status: u.id === 'u2' ? 'DEBT' : u.id === 'start' ? 'CHURN' : 'PAID',
-    lastRenewal: u.id === 'start' ? '60 dias atrás' : 'Hoje',
-  }),
-);
-
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [listFilter, setListFilter] = useState<'ALL' | 'DEBT' | 'CHURN'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [adminStats, setAdminStats] = useState({
+    cutsRevenue: 0,
     marketSales: 0,
     totalRevenue: 0,
     planStats: [] as { plan: string; count: number }[],
     totalClients: 0,
   });
+  const [clients, setClients] = useState<any[]>([]);
+  const [bestSeller, setBestSeller] = useState<any>({ name: 'Carregando...' });
 
   React.useEffect(() => {
-    import('../actions/barber.actions').then(({ getAdminStats }) => {
+    // 1. Fetch Admin Stats
+    import('../actions/users/barber.actions').then(({ getAdminStats }) => {
       getAdminStats().then((res) => {
         if (res.success && res.stats) {
           setAdminStats(res.stats);
         }
       });
     });
+
+    // 2. Fetch Clients
+    import('../actions/users/user.actions').then(({ getClients }) => {
+      getClients().then((fetchedClients) => {
+        setClients(fetchedClients);
+      });
+    });
+
+    // 3. Fetch Products for Best Seller
+    import('../actions/marketplace/marketplace.actions').then(
+      ({ getProducts }) => {
+        getProducts().then((res) => {
+          if (res.success && res.products.length > 0) {
+            setBestSeller(res.products[0]); // Simple "latest" as fallback for now
+          } else {
+            setBestSeller({ name: 'Nenhum' });
+          }
+        });
+      },
+    );
   }, []);
 
   const revenueData = [
@@ -68,11 +83,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     { name: 'Mai', value: 19000 },
     { name: 'Jun', value: 28000 },
   ];
+  // const bestSeller = MOCK_PRODUCTS[0]; // REMOVED
 
-  const totalMarketSales = 0; // Requests: Zero out
-  const bestSeller = MOCK_PRODUCTS[0]; // Pomada Matte
-
-  const clients = CUSTOMER_LIST;
   // Use fetched stats for counts if available, otherwise fallback (or 0) for initial render checks
   const startCount =
     adminStats.planStats.find((p) => p.plan === UserPlan.START)?.count || 0;
@@ -100,24 +112,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       {/* Barber Profile Header */}
       {user.barbeiroId && (
         <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
-          {(() => {
-            const barber = MOCK_BARBERS.find((b) => b.id === user.barbeiroId);
-            if (!barber) return null;
-            return (
-              <>
-                <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
-                  <img
-                    src={user.image || barber.foto}
-                    alt={barber.nome}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </div>
-                <h2 className="text-2xl font-display font-bold text-white">
-                  {barber.nome}
-                </h2>
-              </>
-            );
-          })()}
+          <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
+            <img
+              src={user.image || '/default.jpeg'}
+              alt={user.name}
+              className="w-full h-full rounded-full object-cover"
+            />
+          </div>
+          <h2 className="text-2xl font-display font-bold text-white">
+            {user.name}
+          </h2>
         </div>
       )}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 md:pt-0">
@@ -142,7 +146,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             Receita de Cortes
           </p>
           <p className="text-2xl font-display font-bold mt-2">
-            R$ {adminStats.totalRevenue.toFixed(2)}
+            R$ {adminStats.cutsRevenue.toFixed(2)}
           </p>
           <div className="mt-4 flex items-center gap-2 text-[10px] text-indigo-400 font-bold">
             <TrendingUp size={12} />
@@ -158,7 +162,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             Vendas Marketplace
           </p>
           <p className="text-2xl font-display font-bold mt-2">
-            R$ {totalMarketSales.toFixed(2)}
+            R$ {adminStats.marketSales.toFixed(2)}
           </p>
           <div className="mt-4 flex items-center gap-2 text-[10px] text-blue-400 font-bold">
             <Package size={12} />

@@ -1,7 +1,7 @@
 'use server';
 
-import { prisma } from '../lib/prisma';
-import { Appointment } from '../types';
+import { prisma } from '../../lib/prisma';
+import { Appointment } from '../../types';
 import { revalidatePath } from 'next/cache';
 
 export interface CreateAppointmentData {
@@ -149,7 +149,9 @@ export async function getBarberSchedule(barberId: string, dateStr: string) {
                     gte: start,
                     lte: end
                 },
-                status: { not: 'CANCELLED' }
+                // Only show confirmed or completed appointments in the agenda view.
+                // PENDING appointments (waiting for payment) block the slot but don't show here.
+                status: { in: ['CONFIRMED', 'COMPLETED'] }
             },
             include: {
                 client: true // Include client details (name, etc)

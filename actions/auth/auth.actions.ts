@@ -1,9 +1,9 @@
 'use server';
 
 import bcrypt from 'bcrypt';
-import { prisma } from '../lib/prisma';
-import { UserRole, UserPlan, User } from '../types';
-import { createSession, deleteSession, verifySession } from '../lib/session';
+import { prisma } from '../../lib/prisma';
+import { UserRole, UserPlan, User } from '../../types';
+import { createSession, deleteSession, verifySession } from '../../lib/session';
 
 export interface AuthState {
   success: boolean;

@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { User, UserRole, Appointment, Barbeiro } from '../types';
-import { MOCK_BARBERS } from '../constants';
-import { getBarberSchedule } from '../actions/appointment.actions';
+import { getBarberSchedule } from '../actions/appointment/appointment.actions';
+import {
+  getBarbers,
+  updateBarberSettings,
+} from '../actions/users/barber.actions';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import {
   Calendar as CalendarIcon,
   Clock,
   CheckCircle2,
+  CalendarCheck,
   User as UserIcon,
   Filter,
   ChevronLeft,
   ChevronRight,
-  Grid,
+  ArrowDownCircle,
 } from 'lucide-react';
 
 interface BarberAgendaViewProps {
@@ -24,32 +29,75 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
   );
   const isAdmin = user.role === UserRole.ADMIN;
 
-  /* const filteredAppointments = isAdmin
-    ? MOCK_APPOINTMENTS.filter((ap) => ap.barbeiroId === selectedBarberId)
-    : MOCK_APPOINTMENTS.filter((ap) => ap.barbeiroId === user.barbeiroId); */
-
   // Real State
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [barbers, setBarbers] = useState<Barbeiro[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Stats/Settings State for the selected barber
+  const [appointmentInterval, setAppointmentInterval] = useState<number>(10);
+  const [startTime, setStartTime] = useState<string>('09:00');
+  const [endTime, setEndTime] = useState<string>('18:00');
+  const [offDays, setOffDays] = useState<string[]>([]);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Fetch initial data
+  React.useEffect(() => {
+    async function loadData() {
+      const resBarbers = await getBarbers();
+      if (resBarbers.success && resBarbers.barbers) {
+        setBarbers(resBarbers.barbers);
+
+        // Find current selected barber to initialize settings
+        const currentBarberId = isAdmin
+          ? selectedBarberId || user.barbeiroId || resBarbers.barbers[0]?.id
+          : user.id;
+
+        if (isAdmin && !selectedBarberId && resBarbers.barbers.length > 0) {
+          setSelectedBarberId(currentBarberId);
+        }
+
+        const barber = resBarbers.barbers.find((b) => b.id === currentBarberId);
+        if (barber) {
+          setAppointmentInterval(barber.intervaloAtendimento);
+          setStartTime(barber.horariosTrabalho.inicio);
+          setEndTime(barber.horariosTrabalho.fim);
+          setOffDays(barber.offDays || []);
+        }
+      }
+    }
+    loadData();
+  }, [isAdmin, user.barbeiroId]);
+
+  // Sync settings when selectedBarberId changes (for Admin)
+  React.useEffect(() => {
+    if (isAdmin && selectedBarberId) {
+      const barber = barbers.find((b) => b.id === selectedBarberId);
+      if (barber) {
+        setAppointmentInterval(barber.intervaloAtendimento);
+        setStartTime(barber.horariosTrabalho.inicio);
+        setEndTime(barber.horariosTrabalho.fim);
+        setOffDays(barber.offDays || []);
+      }
+    }
+  }, [selectedBarberId, barbers, isAdmin]);
 
   // Fetch appointments
   React.useEffect(() => {
     async function fetchApps() {
       setLoading(true);
-      // If admin, use selected. If Barber, use own ID.
       const barberId = isAdmin
         ? selectedBarberId
         : user.role === UserRole.BARBEIRO
-        ? user.id
-        : user.barbeiroId;
+          ? user.id
+          : user.barbeiroId;
 
       if (!barberId) {
         setLoading(false);
         return;
       }
 
-      // For simplicity in this view, let's fetch for "today" or based on view logic.
-      // Assuming "Day View" is main focus for now. Defaulting to Today.
       const todayStr = new Date().toISOString().split('T')[0];
 
       const res = await getBarberSchedule(barberId, todayStr);
@@ -57,7 +105,7 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
         setAppointments(
           res.appointments.map((a) => ({
             id: a.id,
-            clientName: a.client.name, // using include from action
+            clientName: a.client.name,
             date: a.date,
             barbeiroId: a.barberId,
             status: a.status,
@@ -71,14 +119,67 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
     fetchApps();
   }, [selectedBarberId, user.barbeiroId, isAdmin, viewType]);
 
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const targetId = isAdmin ? selectedBarberId : user.id;
+    if (!targetId) return;
+
+    const res = await updateBarberSettings(targetId, {
+      interval: appointmentInterval,
+      startTime,
+      endTime,
+      offDays,
+    });
+
+    if (res.success) {
+      setShowSuccessModal(true);
+      setTimeout(() => setShowSuccessModal(false), 3000);
+
+      // Update local barbers list to keep in sync
+      setBarbers((prev) =>
+        prev.map((b) =>
+          b.id === targetId
+            ? {
+                ...b,
+                intervaloAtendimento: appointmentInterval,
+                horariosTrabalho: { inicio: startTime, fim: endTime },
+                offDays,
+              }
+            : b,
+        ),
+      );
+    } else {
+      alert('Erro ao salvar configurações: ' + res.message);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] max-w-sm w-full text-center space-y-4 shadow-2xl scale-in-center">
+            <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2 border border-green-500/20">
+              <CheckCircle2 className="text-green-500 w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold">Configurações Salvas!</h3>
+            <p className="text-neutral-400 text-sm">
+              Sua agenda foi atualizada com sucesso e já está refletindo para os
+              clientes.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Barber Profile Header */}
       {!isAdmin && (
         <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
           {(() => {
-            const name = user.name;
-            const photo = user.whatsapp;
+            const barber = barbers.find(
+              (b) => b.id === (isAdmin ? selectedBarberId : user.id),
+            );
+            const name = barber?.nome || user.name;
+            const photo = barber?.foto || user.image || user.whatsapp;
 
             return (
               <>
@@ -112,7 +213,7 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
           <p className="text-neutral-500">
             {isAdmin
               ? `Visualizando agenda de ${
-                  MOCK_BARBERS.find((b) => b.id === selectedBarberId)?.nome
+                  barbers.find((b) => b.id === selectedBarberId)?.nome || '...'
                 }`
               : 'Seu fluxo diário de trabalho'}
           </p>
@@ -143,7 +244,7 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                 onChange={(e) => setSelectedBarberId(e.target.value)}
                 className="bg-transparent border-none text-sm font-bold text-amber-500 focus:ring-0 cursor-pointer"
               >
-                {MOCK_BARBERS.map((b) => (
+                {barbers.map((b) => (
                   <option key={b.id} value={b.id} className="bg-neutral-900">
                     {b.nome}
                   </option>
@@ -188,11 +289,13 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                       <div className="flex items-center justify-center sm:justify-start gap-4 mt-2 text-neutral-500">
                         <div className="flex items-center gap-1">
                           <Clock size={14} />
-                          <span className="text-xs">45 min</span>
+                          <span className="text-xs">
+                            Intervalo: {appointmentInterval} min
+                          </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <UserIcon size={14} />
-                          <span className="text-xs">Serviço: Degradê</span>
+                          <span className="text-xs">Serviço: Agendado</span>
                         </div>
                       </div>
                     </div>
@@ -227,13 +330,8 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                 <p className="text-center font-bold text-xs uppercase text-neutral-500 border-b border-neutral-800 pb-2">
                   {day}
                 </p>
-                <div className="space-y-2">
-                  <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] text-amber-500 font-bold">
-                    10:00 - Corte
-                  </div>
-                  <div className="p-2 bg-white/5 border border-white/5 rounded-xl text-[10px] text-neutral-500 font-bold">
-                    14:30 - Barba
-                  </div>
+                <div className="space-y-2 text-center text-[10px] text-neutral-600 font-medium italic">
+                  Visualização semanal em breve
                 </div>
               </div>
             ))}
@@ -248,14 +346,220 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                 <span className="text-xs text-neutral-600 font-bold">
                   {i + 1}
                 </span>
-                {i === 14 && (
-                  <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
-                )}
                 <div className="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity"></div>
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      {/* Agenda Configuration Section - Same as Admin for standard barber too */}
+      <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 shadow-xl animate-in fade-in slide-in-from-bottom-4">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="bg-amber-500/10 p-2 rounded-xl text-amber-500">
+            <CalendarCheck size={24} />
+          </div>
+          <h3 className="text-xl font-bold">Configuração de Agenda</h3>
+        </div>
+
+        <form onSubmit={handleSaveSettings} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+              Intervalo entre atendimentos (minutos)
+            </label>
+            <div className="relative">
+              <select
+                value={appointmentInterval}
+                onChange={(e) => setAppointmentInterval(Number(e.target.value))}
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 appearance-none text-white"
+              >
+                {Array.from({ length: 10 }).map((_, i) => {
+                  const val = 10 + i * 5;
+                  return (
+                    <option key={val} value={val} className="bg-neutral-900">
+                      {val} min
+                    </option>
+                  );
+                })}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                <ArrowDownCircle size={16} />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                Início (Horário)
+              </label>
+              <div className="relative">
+                <select
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 appearance-none text-white"
+                >
+                  {Array.from({ length: 96 }).map((_, i) => {
+                    const totalMins = i * 15;
+                    const h = Math.floor(totalMins / 60);
+                    const m = totalMins % 60;
+                    const time = `${h.toString().padStart(2, '0')}:${m
+                      .toString()
+                      .padStart(2, '0')}`;
+                    return (
+                      <option
+                        key={time}
+                        value={time}
+                        className="bg-neutral-900"
+                      >
+                        {time}
+                      </option>
+                    );
+                  })}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                  <ArrowDownCircle size={16} />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-2">
+                Fim (Horário)
+              </label>
+              <div className="relative">
+                <select
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 appearance-none text-white"
+                >
+                  {Array.from({ length: 96 }).map((_, i) => {
+                    const totalMins = i * 15;
+                    const h = Math.floor(totalMins / 60);
+                    const m = totalMins % 60;
+                    const time = `${h.toString().padStart(2, '0')}:${m
+                      .toString()
+                      .padStart(2, '0')}`;
+                    return (
+                      <option
+                        key={time}
+                        value={time}
+                        className="bg-neutral-900"
+                      >
+                        {time}
+                      </option>
+                    );
+                  })}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                  <ArrowDownCircle size={16} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
+                Folga - {format(currentMonth, 'MM/yyyy')}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentMonth(
+                      (prev) =>
+                        new Date(prev.getFullYear(), prev.getMonth() - 1, 1),
+                    )
+                  }
+                  className="p-1 hover:bg-neutral-800 rounded-lg text-neutral-500"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentMonth(
+                      (prev) =>
+                        new Date(prev.getFullYear(), prev.getMonth() + 1, 1),
+                    )
+                  }
+                  className="p-1 hover:bg-neutral-800 rounded-lg text-neutral-500"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-4">
+              <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[8px] font-bold text-neutral-600"
+                  >
+                    {day}
+                  </span>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {(() => {
+                  const start = startOfMonth(currentMonth);
+                  const end = endOfMonth(currentMonth);
+                  const days = eachDayOfInterval({ start, end });
+
+                  const blanks = Array.from({ length: start.getDay() });
+
+                  return (
+                    <>
+                      {blanks.map((_, i) => (
+                        <div key={`blank-${i}`} />
+                      ))}
+                      {days.map((day) => {
+                        const dateStr = format(day, 'yyyy-MM-dd');
+                        const isOff = offDays.includes(dateStr);
+
+                        return (
+                          <button
+                            key={dateStr}
+                            type="button"
+                            onClick={() => {
+                              setOffDays((prev) =>
+                                isOff
+                                  ? prev.filter((d) => d !== dateStr)
+                                  : [...prev, dateStr],
+                              );
+                            }}
+                            className={`
+                              aspect-square rounded-xl text-xs font-bold transition-all
+                              ${
+                                isOff
+                                  ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+                                  : 'text-neutral-500 hover:bg-white/5'
+                              }
+                            `}
+                          >
+                            {day.getDate()}
+                          </button>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+            <p className="text-[10px] text-neutral-500 text-center italic">
+              Clique nas datas para marcar sua folga
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-amber-500 text-black font-bold py-4 rounded-2xl hover:bg-amber-400 transition-all active:scale-[0.98] shadow-lg shadow-amber-500/10"
+          >
+            Salvar Agenda
+          </button>
+        </form>
       </div>
     </div>
   );

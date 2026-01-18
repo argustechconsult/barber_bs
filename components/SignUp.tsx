@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useTransition } from 'react';
 import { Scissors, Eye, EyeOff } from 'lucide-react';
-import { signup } from '../actions/auth.actions';
+import { signup } from '../actions/auth/auth.actions';
 
 import { User } from '../types';
 
