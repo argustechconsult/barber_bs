@@ -49,6 +49,23 @@ export async function POST(req: Request) {
         });
     }
 
+    // 2.5 If it's a product purchase, decrement stock
+    if (transaction.productId) {
+        try {
+            await prisma.product.update({
+                where: { id: transaction.productId },
+                data: {
+                    stock: {
+                        decrement: 1
+                    }
+                }
+            });
+            console.log(`[Stock] Decremented stock for product: ${transaction.productId}`);
+        } catch (stockError) {
+            console.error('[Stock Error] Failed to decrement stock:', stockError);
+        }
+    }
+
     // 3. Send WhatsApp Notification (MOCKED for now as requested for functional test area)
     // The user wants to "enviar e armazenar reicpt_url para o whatsapp do cliente"
     if (transaction.user?.whatsapp && receipt_url) {

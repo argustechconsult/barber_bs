@@ -30,8 +30,7 @@ interface MarketplaceViewProps {
 const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] =
-    useState<ProductCategory[]>(PRODUCT_CATEGORIES);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,8 +39,22 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [priceDisplay, setPriceDisplay] = useState('');
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Currency Helpers
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  const parseCurrency = (value: string) => {
+    return Number(value.replace(/\D/g, '')) / 100;
+  };
 
   const filteredProducts = products.filter((p) => {
     const matchesCategory =
@@ -67,8 +80,18 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
     }
   };
 
+  const fetchCategories = async () => {
+    const { getCategories } =
+      await import('../actions/marketplace/marketplace.actions');
+    const res = await getCategories();
+    if (res.success) {
+      setCategories(res.categories || []);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   const handleDeleteProduct = (id: string) => {
@@ -92,6 +115,7 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
   const handleEditProduct = (product: any) => {
     setEditingProduct(product);
     setSelectedImage(product.image);
+    setPriceDisplay(formatCurrency(product.price));
     setIsAddingProduct(true);
   };
 
@@ -145,6 +169,9 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
   const handleCropComplete = (croppedImage: string) => {
     setSelectedImage(croppedImage);
     setImageToCrop(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -158,8 +185,9 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
 
     const productData = {
       name: formData.get('name') as string,
-      price: Number(formData.get('price')),
+      price: parseCurrency(priceDisplay),
       category: formData.get('category') as string,
+      stock: Number(formData.get('stock')),
       image: imageToSave,
     };
 
@@ -179,21 +207,61 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
       setIsAddingProduct(false);
       setSelectedImage(null);
       setEditingProduct(null);
+      setPriceDisplay('');
     } else {
       alert('Erro ao salvar produto');
     }
   };
 
-  const handleAddCategory = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleBuyProduct = async (product: any) => {
+    if (product.stock <= 0) {
+      alert('Produto esgotado!');
+      return;
+    }
+
+    setIsPurchasing(true);
+    try {
+      const { createMarketplaceCheckout } =
+        await import('../actions/payment/infinitepay.actions');
+      const res = await createMarketplaceCheckout({
+        productId: product.id,
+        productName: product.name,
+        price: product.price,
+        userId: user.id,
+        customer: {
+          name: user.name,
+          email: user.email || '',
+          phone: user.whatsapp || '',
+        },
+      });
+
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        alert(res.message || 'Erro ao processar compra');
+      }
+    } catch (error) {
+      console.error('Purchase Error:', error);
+      alert('Erro ao iniciar processo de pagamento');
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
+  const handleAddCategory = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const name = formData.get('catName') as string;
     if (name) {
-      setCategories([
-        ...categories,
-        { id: Math.random().toString(36).substr(2, 9), name },
-      ]);
-      setIsAddingCategory(false);
+      const { createCategory } =
+        await import('../actions/marketplace/marketplace.actions');
+      const res = await createCategory(name);
+      if (res.success) {
+        fetchCategories();
+        setIsAddingCategory(false);
+      } else {
+        alert('Erro ao criar categoria');
+      }
     }
   };
 
@@ -234,6 +302,7 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
               onClick={() => {
                 setEditingProduct(null);
                 setSelectedImage(null);
+                setPriceDisplay('');
                 setIsAddingProduct(true);
               }}
               className="bg-amber-500 hover:bg-amber-400 text-black px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl transition-all hover:scale-[1.02] active:scale-95"
@@ -368,11 +437,34 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                 </p>
               </div>
 
-              <div className="flex items-center justify-center w-full mt-2 pt-2 border-t border-neutral-800/40">
-                <p className="text-lg md:text-2xl font-display font-bold text-white">
-                  <span className="text-xs text-amber-500/70 mr-0.5">R$</span>
-                  {product.price}
-                </p>
+              <div className="flex items-center justify-between w-full mt-2 pt-2 border-t border-neutral-800/40">
+                <div className="flex flex-col items-start px-1">
+                  <p className="text-lg md:text-2xl font-display font-bold text-white">
+                    <span className="text-xs text-amber-500/70 mr-0.5">R$</span>
+                    {product.price}
+                  </p>
+                  <p
+                    className={`text-[9px] font-bold uppercase tracking-widest ${product.stock > 0 ? 'text-neutral-500' : 'text-red-500'}`}
+                  >
+                    {product.stock > 0
+                      ? `Estoque: ${product.stock}`
+                      : 'Esgotado'}
+                  </p>
+                </div>
+
+                {!isAdmin && (
+                  <button
+                    disabled={product.stock <= 0 || isPurchasing}
+                    onClick={() => handleBuyProduct(product)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95 ${
+                      product.stock > 0
+                        ? 'bg-amber-500 text-black hover:bg-amber-400'
+                        : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {isPurchasing ? 'Processando...' : 'Comprar'}
+                  </button>
+                )}
                 <button className="hidden opacity-0 cursor-default">
                   {/* Shopping cart hidden per request */}
                 </button>
@@ -433,6 +525,9 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedImage(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
                       }}
                       className="absolute top-4 right-4 p-2 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-red-500 transition-colors"
                     >
@@ -467,6 +562,22 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                   name="name"
                   defaultValue={editingProduct?.name}
                   className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-5 outline-none text-white focus:border-amber-500/40"
+                  placeholder="Nome do produto"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[9px] font-bold text-neutral-600 uppercase tracking-[0.3em] ml-2">
+                  Quantidade em Estoque
+                </label>
+                <input
+                  required
+                  name="stock"
+                  type="number"
+                  min="0"
+                  defaultValue={editingProduct?.stock || 0}
+                  className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-5 outline-none text-white focus:border-amber-500/40"
+                  placeholder="Ex: 50"
                 />
               </div>
 
@@ -478,31 +589,48 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                   <input
                     required
                     name="price"
-                    type="number"
-                    step="0.01"
-                    defaultValue={editingProduct?.price}
+                    type="text"
+                    value={priceDisplay}
+                    onChange={(e) =>
+                      setPriceDisplay(
+                        formatCurrency(parseCurrency(e.target.value)),
+                      )
+                    }
                     className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-5 outline-none text-white focus:border-amber-500/40"
+                    placeholder="R$ 0,00"
                   />
                 </div>
                 <div className="space-y-3">
                   <label className="text-[9px] font-bold text-neutral-600 uppercase tracking-[0.3em] ml-2">
                     Categoria
                   </label>
-                  <select
-                    name="category"
-                    defaultValue={editingProduct?.category}
-                    className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-5 outline-none text-white focus:border-amber-500/40 appearance-none"
-                  >
-                    {categories.map((c) => (
-                      <option
-                        key={c.id}
-                        value={c.id}
-                        className="bg-neutral-900"
-                      >
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      name="category"
+                      defaultValue={editingProduct?.category}
+                      className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-5 outline-none text-white focus:border-amber-500/40 appearance-none"
+                    >
+                      {categories.length === 0 ? (
+                        <option value="" disabled>
+                          Nenhuma categoria cadastrada
+                        </option>
+                      ) : (
+                        categories.map((c) => (
+                          <option
+                            key={c.id}
+                            value={c.id}
+                            className="bg-neutral-900"
+                          >
+                            {c.name}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    <ChevronDown
+                      size={18}
+                      className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-600 pointer-events-none"
+                    />
+                  </div>
                 </div>
               </div>
 

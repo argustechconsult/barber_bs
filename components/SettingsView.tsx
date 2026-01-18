@@ -131,6 +131,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
     setImageToCrop(null);
     setCroppingTarget(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSaveProfile = async () => {

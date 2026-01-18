@@ -147,3 +147,79 @@ export async function createInfinitePayCheckout(data: CreateInfinitePayCheckoutD
     return { success: false, message: `Erro InfinitePay: ${error.message}` };
   }
 }
+
+export async function createMarketplaceCheckout(data: {
+    productId: string;
+    productName: string;
+    price: number;
+    userId: string;
+    customer: {
+        name: string;
+        email: string;
+        phone: string;
+    };
+}) {
+    try {
+        const handle = process.env.INFINITEPAY_HANDLE;
+        if (!handle) {
+            throw new Error('INFINITEPAY_HANDLE is not configured');
+        }
+
+        // 1. Create TRANSACTION in DB first to get the ID for order_nsu
+        // Using INCOME type for marketplace sales
+        const transaction = await prisma.transaction.create({
+            data: {
+                amount: data.price,
+                type: 'INCOME',
+                status: 'PENDING',
+                userId: data.userId,
+                productId: data.productId,
+                description: `Compra: ${data.productName}`
+            }
+        });
+
+        // 2. Prepare Payload
+        let cleanPhone = data.customer.phone.replace(/\D/g, '');
+        if (!cleanPhone) cleanPhone = '11999999999';
+        if (cleanPhone.length < 10) cleanPhone = '11' + cleanPhone.padStart(9, '9');
+
+        const payload = {
+            handle: handle,
+            order_nsu: transaction.id,
+            items: [{
+                quantity: 1,
+                price: Math.round(data.price * 100),
+                description: data.productName,
+            }],
+            customer: {
+                name: data.customer.name || 'Cliente',
+                email: data.customer.email || 'cliente@exemplo.com',
+                phone_number: cleanPhone.startsWith('55') ? `+${cleanPhone}` : `+55${cleanPhone}`,
+            },
+            redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?order_nsu=${transaction.id}`,
+            webhook_url: process.env.INFINITEPAY_WEBHOOK_URL || `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/infinitepay`,
+        };
+
+        // 3. Request Checkout Link
+        const response = await fetch(INFINITEPAY_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('InfinitePay Marketplace Error:', JSON.stringify(result, null, 2));
+            throw new Error(result.message || result.error || 'Error creating checkout link');
+        }
+
+        return { success: true, url: result.url };
+
+    } catch (error: any) {
+        console.error('Marketplace Purchase Error:', error);
+        return { success: false, message: `Erro ao iniciar compra: ${error.message}` };
+    }
+}

@@ -17,11 +17,11 @@
     - PREMIUM (RECORRENTE) ⚠️
         - Crédito ⚠️
         - Débito ⚠️
-        - PIX
-- MARKETPLACE ⚠️
-    - Barbeiro ⚠️
+        - PIX ⚠️
+- MARKETPLACE ✅
+    - Barbeiro ✅
         - CRUD feito apenas pelo barbeiro administrador
-    - Cliente ⚠️
+    - Cliente ✅
         - Fluxo de compra de produtos
 - FINANCEIRO ✅
     - Barbeiro ✅

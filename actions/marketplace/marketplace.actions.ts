@@ -6,6 +6,7 @@ export async function createProduct(data: {
   name: string;
   price: number;
   category: string;
+  stock: number;
   image?: string; // Optional Base64 image
 }) {
   console.log('--- createProduct START ---');
@@ -18,6 +19,7 @@ export async function createProduct(data: {
         name: data.name,
         price: data.price,
         category: data.category,
+        stock: data.stock,
         description: '', 
         image: data.image,
       },
@@ -64,6 +66,7 @@ export async function updateProduct(
     name: string;
     price: number;
     category: string;
+    stock: number;
     image?: string;
   }
 ) {
@@ -78,6 +81,7 @@ export async function updateProduct(
         name: data.name,
         price: data.price,
         category: data.category,
+        stock: data.stock,
         image: data.image,
       },
     });
@@ -87,6 +91,42 @@ export async function updateProduct(
   } catch (error: any) {
     console.error('--- updateProduct ERROR ---', error);
     return { success: false, message: 'Failed to update product: ' + error.message };
+  }
+}
+
+export async function getCategories() {
+  try {
+    const categories = await prisma.productCategory.findMany({
+      orderBy: { name: 'asc' },
+    });
+    return { success: true, categories };
+  } catch (error) {
+    console.error('Get Categories Error:', error);
+    return { success: false, categories: [], message: 'Failed to fetch categories' };
+  }
+}
+
+export async function createCategory(name: string) {
+  try {
+    const category = await prisma.productCategory.create({
+      data: { name },
+    });
+    return { success: true, category };
+  } catch (error: any) {
+    console.error('Create Category Error:', error);
+    return { success: false, message: 'Failed to create category: ' + error.message };
+  }
+}
+
+export async function deleteCategory(id: string) {
+  try {
+    await prisma.productCategory.delete({
+      where: { id },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Delete Category Error:', error);
+    return { success: false, message: 'Failed to delete category' };
   }
 }
 
