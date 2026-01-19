@@ -7,9 +7,13 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
+  Calendar,
+  Lock,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
-import { ResetPasswordSchema } from './auth.schema';
-import { sendResetLink } from './auth.service';
+import { RecoveryIdentitySchema, RecoverPasswordSchema } from './auth.schema';
+import { validateUserIdentity, updateUserPassword } from './auth.service';
 
 interface ForgotPasswordScreenProps {
   onBackToLogin: () => void;
@@ -18,31 +22,78 @@ interface ForgotPasswordScreenProps {
 export default function ForgotPasswordScreen({
   onBackToLogin,
 }: ForgotPasswordScreenProps) {
+  const [step, setStep] = useState<'identify' | 'reset'>('identify');
   const [email, setEmail] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const formatBirthDate = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    let formatted = digits;
+    if (digits.length > 2) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    }
+    if (digits.length > 4) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+    }
+    return formatted.slice(0, 10);
+  };
+
+  const handleIdentitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsPending(true);
 
     try {
-      // Logic Validation
-      const result = ResetPasswordSchema.safeParse({ email });
+      const result = RecoveryIdentitySchema.safeParse({ email, birthDate });
       if (!result.success) {
         setError(result.error.issues[0].message);
         setIsPending(false);
         return;
       }
 
-      // Action
-      const response = await sendResetLink(email);
+      const response = await validateUserIdentity(email, birthDate);
+      if (response.success) {
+        setStep('reset');
+      } else {
+        setError(response.message || 'Dados inválidos.');
+      }
+    } catch (err) {
+      setError('Ocorreu um erro inesperado.');
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsPending(true);
+
+    try {
+      const result = RecoverPasswordSchema.safeParse({
+        email,
+        birthDate,
+        password,
+        confirmPassword,
+      });
+      if (!result.success) {
+        setError(result.error.issues[0].message);
+        setIsPending(false);
+        return;
+      }
+
+      const response = await updateUserPassword(email, birthDate, password);
       if (response.success) {
         setIsSuccess(true);
       } else {
-        setError(response.message || 'Erro ao enviar e-mail.');
+        setError(response.message || 'Erro ao atualizar senha.');
       }
     } catch (err) {
       setError('Ocorreu um erro inesperado.');
@@ -63,19 +114,18 @@ export default function ForgotPasswordScreen({
           </div>
           <div className="space-y-2">
             <h2 className="text-2xl font-display font-bold text-white">
-              Verifique seu e-mail
+              Senha Alterada!
             </h2>
             <p className="text-neutral-400 text-sm leading-relaxed">
-              Enviamos um link de recuperação para{' '}
-              <span className="text-white font-medium">{email}</span>. O link
-              expira em 1 hora.
+              Sua senha foi atualizada com sucesso. Você já pode acessar sua
+              conta.
             </p>
           </div>
           <button
             onClick={onBackToLogin}
             className="w-full bg-white text-black font-bold py-4 rounded-2xl hover:bg-neutral-200 transition-all shadow-lg active:scale-95"
           >
-            Voltar para o login
+            Ir para o Login
           </button>
         </div>
       </div>
@@ -84,7 +134,6 @@ export default function ForgotPasswordScreen({
 
   return (
     <div className="min-h-screen bg-black flex items-start md:items-center justify-center p-2 pt-12 md:p-4 relative overflow-hidden">
-      {/* Abstract Background */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/10 rounded-full -mr-64 -mt-64 blur-[120px] animate-pulse"></div>
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-600/5 rounded-full -ml-48 -mb-48 blur-[100px]"></div>
 
@@ -94,7 +143,7 @@ export default function ForgotPasswordScreen({
             <Sparkles className="text-amber-500 w-8 h-8 group-hover:scale-110 transition-transform duration-500" />
           </div>
           <h1 className="text-3xl font-display font-bold text-white tracking-tight">
-            Recuperar Senha
+            {step === 'identify' ? 'Recuperar Senha' : 'Nova Senha'}
           </h1>
           <p className="text-neutral-500 text-sm font-medium uppercase tracking-[0.2em]">
             Padrão Premium Stayler
@@ -103,40 +152,122 @@ export default function ForgotPasswordScreen({
 
         <div className="bg-neutral-900/50 backdrop-blur-xl p-6 md:p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl space-y-6">
           <button
-            onClick={onBackToLogin}
+            onClick={
+              step === 'identify' ? onBackToLogin : () => setStep('identify')
+            }
             className="flex items-center gap-2 text-neutral-500 hover:text-white transition-colors group text-xs font-bold uppercase tracking-widest"
           >
             <ArrowLeft
               size={14}
               className="group-hover:-translate-x-1 transition-transform"
             />
-            Voltar para o login
+            {step === 'identify'
+              ? 'Voltar para o login'
+              : 'Voltar para identificação'}
           </button>
 
           <p className="text-neutral-400 text-sm leading-relaxed">
-            Esqueceu sua senha? Não se preocupe. Insira seu e-mail e enviaremos
-            as instruções.
+            {step === 'identify'
+              ? 'Insira seus dados cadastrados para validar sua identidade.'
+              : 'Agora escolha uma nova senha segura para sua conta.'}
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block ml-1">
-                E-mail Cadastrado
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-500 group-focus-within:text-amber-500 transition-colors">
-                  <Mail size={18} />
+          <form
+            onSubmit={
+              step === 'identify' ? handleIdentitySubmit : handleResetSubmit
+            }
+            className="space-y-5"
+          >
+            {step === 'identify' ? (
+              <>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block ml-1">
+                    E-mail Cadastrado
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-500 group-focus-within:text-amber-500 transition-colors">
+                      <Mail size={18} />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="seu@e-mail.com"
+                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700"
+                      required
+                    />
+                  </div>
                 </div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@e-mail.com"
-                  className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700"
-                  required
-                />
-              </div>
-            </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block ml-1">
+                    Data de Nascimento
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-500 group-focus-within:text-amber-500 transition-colors">
+                      <Calendar size={18} />
+                    </div>
+                    <input
+                      type="text"
+                      value={birthDate}
+                      onChange={(e) =>
+                        setBirthDate(formatBirthDate(e.target.value))
+                      }
+                      placeholder="DD/MM/AAAA"
+                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700"
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block ml-1">
+                    Nova Senha
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-500 group-focus-within:text-amber-500 transition-colors">
+                      <Lock size={18} />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-12 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-neutral-600 hover:text-neutral-400"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block ml-1">
+                    Confirmar Senha
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-500 group-focus-within:text-amber-500 transition-colors">
+                      <Lock size={18} />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700"
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex gap-3 items-center animate-in shake duration-300">
@@ -151,7 +282,11 @@ export default function ForgotPasswordScreen({
               className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-black py-5 rounded-2xl transition-all shadow-xl shadow-amber-500/10 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
             >
               <span className="relative z-10">
-                {isPending ? 'PROCESSANDO...' : 'ENVIAR LINK AGORA'}
+                {isPending
+                  ? 'PROCESSANDO...'
+                  : step === 'identify'
+                    ? 'VALIDAR IDENTIDADE'
+                    : 'REDEFINIR SENHA AGORA'}
               </span>
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
             </button>

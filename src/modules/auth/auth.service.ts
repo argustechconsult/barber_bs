@@ -96,3 +96,54 @@ export async function resetPasswordByToken(token: string, password: string) {
     return { success: false, message: 'Erro ao redefinir senha. Tente novamente.' };
   }
 }
+
+export async function validateUserIdentity(email: string, birthDate: string) {
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+        birthDate
+      }
+    });
+
+    if (!user) {
+      return { success: false, message: 'Dados não conferem. Verifique o e-mail e a data de nascimento.' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('validateUserIdentity error:', error);
+    return { success: false, message: 'Erro ao validar identidade.' };
+  }
+}
+
+export async function updateUserPassword(email: string, birthDate: string, password: string) {
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+        birthDate
+      }
+    });
+
+    if (!user) {
+      return { success: false, message: 'Dados não conferem. Operação negada.' };
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('updateUserPassword error:', error);
+    return { success: false, message: 'Erro ao atualizar senha.' };
+  }
+}
