@@ -156,10 +156,12 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
           )}
         </div>
       )}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 md:pt-0">
+      <header className="flex flex-col items-center text-center gap-6 pt-4 md:pt-0">
         <div>
-          <h2 className="text-3xl font-display font-bold">Financeiro</h2>
-          <p className="text-neutral-500">
+          <h2 className="text-xl md:text-3xl font-display font-bold">
+            Financeiro
+          </h2>
+          <p className="text-neutral-500 text-sm">
             {isAdmin
               ? 'Gestão de caixa da barbearia'
               : 'Suas receitas e rendimentos'}
@@ -169,7 +171,7 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
         {isAdmin && (
           <button
             onClick={() => setShowAddTransaction(true)}
-            className="bg-amber-500 text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/10"
+            className="w-full md:w-auto bg-amber-500 text-black px-8 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/10"
           >
             <Plus size={20} /> Novo Lançamento
           </button>
@@ -178,18 +180,22 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
 
       {/* Stats Summary */}
       <div
-        className={`grid gap-4 ${isAdmin ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-1'}`}
+        className={`grid gap-4 ${isAdmin ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-1 md:grid-cols-1'}`}
       >
         {stats.map((s, i) => (
           <div
             key={i}
-            className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl"
+            className="bg-neutral-900 border border-neutral-800 p-4 md:p-6 rounded-3xl"
           >
-            <s.icon className={`${s.color} mb-4 w-6 h-6`} />
-            <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+            <s.icon
+              className={`${s.color} mb-3 md:mb-4 w-5 h-5 md:w-6 md:h-6`}
+            />
+            <p className="text-neutral-500 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
               {s.label}
             </p>
-            <p className="text-2xl font-display font-bold mt-1">{s.value}</p>
+            <p className="text-xl md:text-2xl font-display font-bold mt-0.5 md:mt-1">
+              {s.value}
+            </p>
           </div>
         ))}
       </div>
@@ -199,7 +205,9 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
         <div className="lg:col-span-2 space-y-6">
           <h3 className="text-xl font-bold flex items-center gap-2">
             <Receipt className="text-amber-500" />{' '}
-            {isAdmin ? 'Últimas Transações' : 'Suas Receitas'}
+            <span className="text-lg md:text-xl">
+              {isAdmin ? 'Últimas Transações' : 'Suas Receitas'}
+            </span>
           </h3>
 
           <div className="bg-neutral-900 border border-neutral-800 rounded-[2.5rem] overflow-hidden">
@@ -208,20 +216,23 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
                 displayedTransactions.map((t) => (
                   <div
                     key={t.id}
-                    className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-neutral-800 last:border-0 rounded-2xl group"
+                    className="flex items-center justify-between p-3 md:p-4 hover:bg-white/5 transition-colors border-b border-neutral-800 last:border-0 rounded-2xl group"
                   >
                     <div className="flex items-center gap-4">
                       <div
-                        className={`p-3 rounded-xl ${
+                        className={`p-2.5 md:p-3 rounded-xl ${
                           t.type === 'EXPENSE'
                             ? 'bg-red-500/10 text-red-500'
                             : 'bg-green-500/10 text-green-500'
                         }`}
                       >
                         {t.type === 'EXPENSE' ? (
-                          <ArrowDownCircle size={20} />
+                          <ArrowDownCircle
+                            size={18}
+                            className="md:w-5 md:h-5"
+                          />
                         ) : (
-                          <ArrowUpCircle size={20} />
+                          <ArrowUpCircle size={18} className="md:w-5 md:h-5" />
                         )}
                       </div>
                       <div>
@@ -234,7 +245,7 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
                     </div>
                     <div className="flex items-center gap-4">
                       <p
-                        className={`font-bold text-lg ${
+                        className={`font-bold text-base md:text-lg ${
                           t.type === 'EXPENSE'
                             ? 'text-red-500'
                             : 'text-green-500'

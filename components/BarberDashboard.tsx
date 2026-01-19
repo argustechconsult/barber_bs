@@ -189,7 +189,9 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
       )}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 md:pt-0">
         <div>
-          <h2 className="text-3xl font-display font-bold">Indicadores</h2>
+          <h2 className="text-xl md:text-3xl font-display font-bold">
+            Indicadores
+          </h2>
           <p className="text-neutral-500">
             {isAdmin
               ? 'Gestão estratégica da Barbearia'
@@ -228,29 +230,33 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
         {stats.map((stat, i) => (
           <div
             key={i}
-            className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl group hover:border-amber-500/30 transition-all"
+            className="bg-neutral-900 border border-neutral-800 p-4 md:p-6 rounded-3xl group hover:border-amber-500/30 transition-all flex flex-col items-center text-center"
           >
             <stat.icon
-              className={`${stat.color} mb-4 w-6 h-6 transition-transform group-hover:scale-110`}
+              className={`${stat.color} mb-3 md:mb-4 w-5 h-5 md:w-6 md:h-6 transition-transform group-hover:scale-110`}
             />
-            <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+            <p className="text-neutral-500 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
               {stat.label}
             </p>
-            <p className="text-2xl font-display font-bold mt-1">{stat.value}</p>
+            <p className="text-xl md:text-2xl font-display font-bold mt-0.5 md:mt-1">
+              {stat.value}
+            </p>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Growth Chart - Always visible but context differs */}
-        <div className="lg:col-span-2 bg-neutral-900 border border-neutral-800 p-8 rounded-3xl space-y-6 h-[450px]">
+        <div className="lg:col-span-2 bg-neutral-900 border border-neutral-800 p-4 md:p-8 rounded-3xl space-y-6 md:h-[450px]">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold">Crescimento Financeiro</h3>
+            <h3 className="text-lg md:text-xl font-bold">
+              Crescimento Financeiro
+            </h3>
             <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full">
               Atualizado
             </span>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-[200px] md:h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={isAdmin ? [] : statsData.chartData}>
                 <defs>

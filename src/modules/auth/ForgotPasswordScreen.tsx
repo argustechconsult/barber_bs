@@ -108,7 +108,7 @@ export default function ForgotPasswordScreen({
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/10 rounded-full -mr-64 -mt-64 blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-600/5 rounded-full -ml-48 -mb-48 blur-[100px]"></div>
 
-        <div className="w-full max-w-md bg-neutral-900/50 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl text-center space-y-6 animate-in zoom-in-95 duration-500">
+        <div className="w-full max-w-md bg-neutral-900/50 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-neutral-800 shadow-2xl text-center space-y-5 md:space-y-6 animate-in zoom-in-95 duration-500">
           <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto border border-green-500/20 shadow-lg shadow-green-500/5">
             <CheckCircle2 className="text-green-500 w-10 h-10" />
           </div>
@@ -142,7 +142,7 @@ export default function ForgotPasswordScreen({
           <div className="w-16 h-16 bg-neutral-900 rounded-2xl flex items-center justify-center mx-auto border border-neutral-800 shadow-xl mb-4 group hover:border-amber-500/50 transition-colors duration-500">
             <Sparkles className="text-amber-500 w-8 h-8 group-hover:scale-110 transition-transform duration-500" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-white tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight">
             {step === 'identify' ? 'Recuperar Senha' : 'Nova Senha'}
           </h1>
           <p className="text-neutral-500 text-sm font-medium uppercase tracking-[0.2em]">
@@ -150,7 +150,7 @@ export default function ForgotPasswordScreen({
           </p>
         </div>
 
-        <div className="bg-neutral-900/50 backdrop-blur-xl p-6 md:p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl space-y-6">
+        <div className="bg-neutral-900/50 backdrop-blur-xl p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-neutral-800 shadow-2xl space-y-5 md:space-y-6">
           <button
             onClick={
               step === 'identify' ? onBackToLogin : () => setStep('identify')
@@ -193,7 +193,7 @@ export default function ForgotPasswordScreen({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="seu@e-mail.com"
-                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700"
+                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-3.5 md:py-4 rounded-xl md:rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700 text-sm md:text-base"
                       required
                     />
                   </div>
@@ -214,7 +214,7 @@ export default function ForgotPasswordScreen({
                         setBirthDate(formatBirthDate(e.target.value))
                       }
                       placeholder="DD/MM/AAAA"
-                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700"
+                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-3.5 md:py-4 rounded-xl md:rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700 text-sm md:text-base"
                       required
                     />
                   </div>
@@ -235,7 +235,7 @@ export default function ForgotPasswordScreen({
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-12 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700"
+                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-12 py-3.5 md:py-4 rounded-xl md:rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700 text-sm md:text-base"
                       required
                     />
                     <button
@@ -261,7 +261,7 @@ export default function ForgotPasswordScreen({
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700"
+                      className="w-full bg-neutral-950/50 border border-neutral-800 text-white pl-11 pr-4 py-3.5 md:py-4 rounded-xl md:rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-neutral-700 text-sm md:text-base"
                       required
                     />
                   </div>
@@ -279,7 +279,7 @@ export default function ForgotPasswordScreen({
             <button
               type="submit"
               disabled={isPending}
-              className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-black py-5 rounded-2xl transition-all shadow-xl shadow-amber-500/10 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
+              className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-black py-4 md:py-5 rounded-xl md:rounded-2xl transition-all shadow-xl shadow-amber-500/10 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden text-sm md:text-base"
             >
               <span className="relative z-10">
                 {isPending

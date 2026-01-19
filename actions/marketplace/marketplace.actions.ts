@@ -4,6 +4,7 @@ import { prisma } from '../../lib/prisma';
 
 export async function createProduct(data: {
   name: string;
+  description: string;
   price: number;
   category: string;
   stock: number;
@@ -20,7 +21,7 @@ export async function createProduct(data: {
         price: data.price,
         category: data.category,
         stock: data.stock,
-        description: '', 
+        description: data.description, 
         image: data.image,
       },
     });
@@ -64,6 +65,7 @@ export async function updateProduct(
   id: string,
   data: {
     name: string;
+    description: string;
     price: number;
     category: string;
     stock: number;
@@ -82,6 +84,7 @@ export async function updateProduct(
         price: data.price,
         category: data.category,
         stock: data.stock,
+        description: data.description,
         image: data.image,
       },
     });

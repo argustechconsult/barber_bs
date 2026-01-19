@@ -185,6 +185,7 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
 
     const productData = {
       name: formData.get('name') as string,
+      description: formData.get('description') as string,
       price: parseCurrency(priceDisplay),
       category: formData.get('category') as string,
       stock: Number(formData.get('stock')),
@@ -291,13 +292,13 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
               Stayler Exclusive
             </span>
           </div>
-          <h2 className="text-6xl md:text-7xl font-display font-bold tracking-tighter bg-gradient-to-b from-white via-white to-neutral-600 bg-clip-text text-transparent">
+          <h2 className="text-4xl md:text-7xl font-display font-bold tracking-tighter bg-gradient-to-b from-white via-white to-neutral-600 bg-clip-text text-transparent">
             Marketplace
           </h2>
         </div>
 
         {isAdmin && (
-          <div className="flex gap-4">
+          <div className="flex gap-3 md:gap-4 w-full md:w-auto px-4 md:px-0">
             <button
               onClick={() => {
                 setEditingProduct(null);
@@ -305,16 +306,19 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                 setPriceDisplay('');
                 setIsAddingProduct(true);
               }}
-              className="bg-amber-500 hover:bg-amber-400 text-black px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl transition-all hover:scale-[1.02] active:scale-95"
+              className="flex-1 md:flex-none bg-amber-500 hover:bg-amber-400 text-black px-4 md:px-8 py-3.5 md:py-4 rounded-2xl font-bold flex items-center justify-center gap-2 md:gap-3 shadow-xl transition-all hover:scale-[1.02] active:scale-95"
             >
-              <Plus size={20} /> <span className="text-sm">Novo Produto</span>
+              <Plus size={18} />
+              <span className="text-xs md:text-sm md:hidden">produto</span>
+              <span className="text-sm hidden md:inline">Novo Produto</span>
             </button>
             <button
               onClick={() => setIsAddingCategory(true)}
-              className="bg-neutral-800 hover:bg-neutral-700 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl border border-neutral-700 transition-all hover:scale-[1.02] active:scale-95"
+              className="flex-1 md:flex-none bg-neutral-800 hover:bg-neutral-700 text-white px-4 md:px-8 py-3.5 md:py-4 rounded-2xl font-bold flex items-center justify-center gap-2 md:gap-3 shadow-xl border border-neutral-700 transition-all hover:scale-[1.02] active:scale-95"
             >
-              <FolderPlus size={20} />{' '}
-              <span className="text-sm">Nova Categoria</span>
+              <FolderPlus size={18} />{' '}
+              <span className="text-xs md:text-sm md:hidden">categoria</span>
+              <span className="text-sm hidden md:inline">Nova Categoria</span>
             </button>
           </div>
         )}
@@ -332,14 +336,14 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
             placeholder="O que você procura?"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-neutral-900/40 border border-neutral-800/60 rounded-[1.5rem] pl-16 pr-6 py-5 text-white placeholder:text-neutral-700 focus:outline-none focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500/30 transition-all backdrop-blur-md text-sm md:text-base"
+            className="w-full bg-neutral-900/40 border border-neutral-800/60 rounded-2xl pl-14 pr-6 py-4 text-white placeholder:text-neutral-700 focus:outline-none focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500/30 transition-all backdrop-blur-md text-sm md:text-base"
           />
         </div>
 
         <div className="md:col-span-5 relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={`w-full flex items-center justify-between bg-neutral-900/40 border border-neutral-800/60 rounded-[1.5rem] px-8 py-5 text-white transition-all backdrop-blur-md group hover:border-amber-500/30 ${
+            className={`w-full flex items-center justify-between bg-neutral-900/40 border border-neutral-800/60 rounded-2xl px-6 py-4 text-white transition-all backdrop-blur-md group hover:border-amber-500/30 ${
               isDropdownOpen
                 ? 'ring-1 ring-amber-500/20 border-amber-500/30'
                 : ''
@@ -427,42 +431,59 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
               />
             </div>
 
-            <div className="p-4 md:p-6 flex flex-col items-center text-center flex-1">
-              <div className="mb-2 w-full">
-                <h4 className="font-bold text-base md:text-lg text-white/90 group-hover:text-amber-500 transition-colors">
+            <div className="p-4 md:p-6 flex flex-col flex-1">
+              <div className="mb-3 w-full text-center">
+                <h4 className="font-bold text-sm md:text-lg text-white group-hover:text-amber-500 transition-colors line-clamp-1">
                   {product.name}
                 </h4>
-                <p className="text-[9px] text-neutral-500 uppercase tracking-widest font-bold mt-1">
-                  {categories.find((c) => c.id === product.category)?.name}
-                </p>
+                <div className="flex items-center justify-center gap-2 mt-1">
+                  <span className="text-[8px] md:text-[9px] text-amber-500/80 bg-amber-500/5 px-2 py-0.5 rounded-full border border-amber-500/10 uppercase tracking-widest font-bold">
+                    {categories.find((c) => c.id === product.category)?.name}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between w-full mt-2 pt-2 border-t border-neutral-800/40">
-                <div className="flex flex-col items-start px-1">
-                  <p className="text-lg md:text-2xl font-display font-bold text-white">
-                    <span className="text-xs text-amber-500/70 mr-0.5">R$</span>
-                    {product.price}
+              {product.description && (
+                <p className="text-[10px] md:text-xs text-neutral-500 text-center line-clamp-2 mb-4 italic leading-relaxed px-2">
+                  "{product.description}"
+                </p>
+              )}
+
+              <div className="mt-auto flex flex-col items-center gap-4 w-full pt-4 border-t border-neutral-800/40">
+                <div className="flex flex-col items-center">
+                  <p className="text-lg md:text-2xl font-display font-bold text-white leading-tight">
+                    <span className="text-[10px] md:text-xs text-amber-500/70 mr-0.5">
+                      R$
+                    </span>
+                    {product.price.toLocaleString('pt-BR', {
+                      minimumFractionDigits: 2,
+                    })}
                   </p>
-                  <p
-                    className={`text-[9px] font-bold uppercase tracking-widest ${product.stock > 0 ? 'text-neutral-500' : 'text-red-500'}`}
-                  >
-                    {product.stock > 0
-                      ? `Estoque: ${product.stock}`
-                      : 'Esgotado'}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div
+                      className={`w-1 h-1 rounded-full ${product.stock > 0 ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`}
+                    ></div>
+                    <p
+                      className={`text-[8px] md:text-[9px] font-bold uppercase tracking-widest ${product.stock > 0 ? 'text-neutral-500' : 'text-red-500'}`}
+                    >
+                      {product.stock > 0
+                        ? `${product.stock} unidades`
+                        : 'Esgotado'}
+                    </p>
+                  </div>
                 </div>
 
                 {!isAdmin && (
                   <button
                     disabled={product.stock <= 0 || isPurchasing}
                     onClick={() => handleBuyProduct(product)}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95 ${
+                    className={`w-full py-2.5 rounded-xl text-[10px] font-bold transition-all shadow-lg active:scale-95 ${
                       product.stock > 0
-                        ? 'bg-amber-500 text-black hover:bg-amber-400'
+                        ? 'bg-amber-500 text-black hover:bg-amber-400 shadow-amber-500/20'
                         : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
                     }`}
                   >
-                    {isPurchasing ? 'Processando...' : 'Comprar'}
+                    {isPurchasing ? 'Processando...' : 'Comprar Agora'}
                   </button>
                 )}
                 <button className="hidden opacity-0 cursor-default">
@@ -563,6 +584,20 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
                   defaultValue={editingProduct?.name}
                   className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-5 outline-none text-white focus:border-amber-500/40"
                   placeholder="Nome do produto"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[9px] font-bold text-neutral-600 uppercase tracking-[0.3em] ml-2">
+                  Descrição
+                </label>
+                <textarea
+                  required
+                  name="description"
+                  defaultValue={editingProduct?.description}
+                  rows={3}
+                  className="w-full bg-neutral-900/50 border border-neutral-800 rounded-2xl px-6 py-4 outline-none text-white focus:border-amber-500/40 resize-none text-sm"
+                  placeholder="Descreva o produto..."
                 />
               </div>
 

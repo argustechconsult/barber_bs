@@ -205,12 +205,12 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
         </div>
       )}
 
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-4 md:pt-0">
+      <header className="flex flex-col items-center text-center gap-6 pt-4 md:pt-0">
         <div>
-          <h2 className="text-3xl font-display font-bold">
+          <h2 className="text-xl md:text-3xl font-display font-bold">
             Agenda de Atendimentos
           </h2>
-          <p className="text-neutral-500">
+          <p className="text-neutral-500 text-sm">
             {isAdmin
               ? `Visualizando agenda de ${
                   barbers.find((b) => b.id === selectedBarberId)?.nome || '...'
@@ -219,7 +219,7 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-3 w-full">
           <div className="bg-neutral-900 p-1 rounded-2xl border border-neutral-800 flex">
             {(['day', 'week', 'month'] as const).map((type) => (
               <button
@@ -256,7 +256,7 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
       </header>
 
       {/* View Switcher Content */}
-      <div className="bg-neutral-900/50 border border-neutral-800 p-8 rounded-[3rem] shadow-2xl space-y-8">
+      <div className="bg-neutral-900/50 border border-neutral-800 p-4 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-2xl space-y-8">
         {viewType === 'day' ? (
           <div className="grid grid-cols-1 gap-4">
             {appointments.length > 0 ? (
@@ -268,21 +268,23 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                 return (
                   <div
                     key={ap.id}
-                    className="bg-neutral-950 border border-neutral-800 p-6 rounded-[2rem] flex flex-col sm:flex-row items-center gap-6 group hover:border-amber-500/30 transition-all"
+                    className="bg-neutral-950 border border-neutral-800 p-4 md:p-6 rounded-[2rem] flex flex-col sm:flex-row items-center gap-4 md:gap-6 group hover:border-amber-500/30 transition-all"
                   >
-                    <div className="w-20 h-20 bg-neutral-900 rounded-3xl flex flex-col items-center justify-center border border-white/5 shadow-xl">
-                      <span className="text-[10px] font-bold text-neutral-500 uppercase">
+                    <div className="w-16 h-16 md:w-20 md:h-20 bg-neutral-900 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center border border-white/5 shadow-xl">
+                      <span className="text-[8px] md:text-[10px] font-bold text-neutral-500 uppercase">
                         Horário
                       </span>
-                      <span className="text-xl font-bold text-amber-500">
+                      <span className="text-lg md:text-xl font-bold text-amber-500">
                         {time}
                       </span>
                     </div>
 
                     <div className="flex-1 text-center sm:text-left">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <h4 className="text-xl font-bold">{ap.clientName}</h4>
-                        <span className="bg-neutral-900 text-neutral-500 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest self-center">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 md:gap-2">
+                        <h4 className="text-lg md:text-xl font-bold">
+                          {ap.clientName}
+                        </h4>
+                        <span className="bg-neutral-900 text-neutral-500 text-[8px] md:text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest self-center">
                           {ap.status}
                         </span>
                       </div>
@@ -300,9 +302,13 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <button className="bg-green-500 text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-green-400 transition-all active:scale-95 shadow-lg shadow-green-500/10">
-                        <CheckCircle2 size={18} /> Concluir
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <button className="flex-1 sm:flex-none bg-green-500 text-black px-4 md:px-6 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-400 transition-all active:scale-95 shadow-lg shadow-green-500/10 text-sm">
+                        <CheckCircle2
+                          size={16}
+                          className="md:w-[18px] md:h-[18px]"
+                        />{' '}
+                        Concluir
                       </button>
                     </div>
                   </div>

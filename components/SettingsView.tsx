@@ -305,8 +305,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-500 pb-20">
       {/* ... header ... */}
       <header className="text-center pt-4">
-        <h2 className="text-4xl font-display font-bold">Configurações</h2>
-        <p className="text-neutral-500 mt-2">Personalize seu perfil</p>
+        <h2 className="text-2xl md:text-4xl font-display font-bold">
+          Configurações
+        </h2>
+        <p className="text-sm md:text-base text-neutral-500 mt-2">
+          Personalize seu perfil
+        </p>
       </header>
       {/* ... content ... */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -316,10 +320,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             !isStaff ? 'lg:col-start-5' : ''
           }`}
         >
-          <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 shadow-xl">
+          <div className="bg-neutral-900 border border-neutral-800 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-6 md:space-y-8 shadow-xl">
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="relative group">
-                <div className="w-32 h-32 rounded-full border-4 border-amber-500 overflow-hidden bg-neutral-800 flex items-center justify-center">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-amber-500 overflow-hidden bg-neutral-800 flex items-center justify-center">
                   {(user.image || user.whatsapp)?.startsWith('data:image') ||
                   (user.image || user.whatsapp)?.startsWith('http') ? (
                     <img
@@ -340,9 +344,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     setCroppingTarget({ type: 'user' });
                     fileInputRef.current?.click();
                   }}
-                  className="absolute bottom-0 right-0 bg-amber-500 p-3 rounded-full text-black shadow-xl hover:scale-110 transition-transform"
+                  className="absolute bottom-0 right-0 bg-amber-500 p-2.5 md:p-3 rounded-full text-black shadow-xl hover:scale-110 transition-transform"
                 >
-                  <Camera size={20} />
+                  <Camera size={18} className="md:w-5 md:h-5" />
                 </button>
 
                 <input
@@ -364,11 +368,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     onChange={(e) =>
                       onUpdateUser({ ...user, name: e.target.value })
                     }
-                    className="font-bold text-lg bg-neutral-800 border border-neutral-700 text-center rounded-xl p-3 focus:border-amber-500 outline-none w-full transition-all"
+                    className="font-bold text-base md:text-lg bg-neutral-800 border border-neutral-700 text-center rounded-xl p-2.5 md:p-3 focus:border-amber-500 outline-none w-full transition-all"
                     placeholder="Seu Nome"
                   />
                 </div>
-                <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 mt-4 inline-block">
+                <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 mt-3 md:mt-4 inline-block">
                   {user.role}
                 </span>
               </div>
@@ -377,13 +381,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="space-y-4">
               <button
                 onClick={handleSaveProfile}
-                className="w-full bg-amber-500 text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-amber-400 transition-all shadow-lg active:scale-[0.98]"
+                className="w-full bg-amber-500 text-black font-bold py-3.5 md:py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 hover:bg-amber-400 transition-all shadow-lg active:scale-[0.98]"
               >
                 <Save size={18} /> Salvar Alterações
               </button>
               <button
                 onClick={onLogout}
-                className="w-full bg-neutral-800 border border-neutral-700 text-red-500 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-neutral-700 transition-all active:scale-[0.98]"
+                className="w-full bg-neutral-800 border border-neutral-700 text-red-500 font-bold py-3.5 md:py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 hover:bg-neutral-700 transition-all active:scale-[0.98]"
               >
                 <LogOut size={18} /> Sair da Conta
               </button>
@@ -395,12 +399,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="lg:col-span-8 space-y-8">
           {/* Scheduling Settings for Staff - Moved to top */}
           {isStaff && (
-            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 shadow-xl animate-in fade-in slide-in-from-left-4">
+            <div className="bg-neutral-900 border border-neutral-800 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-6 md:space-y-8 shadow-xl animate-in fade-in slide-in-from-left-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="bg-amber-500/10 p-2 rounded-xl text-amber-500">
-                  <CalendarCheck size={24} />
+                  <CalendarCheck size={20} className="md:w-6 md:h-6" />
                 </div>
-                <h3 className="text-xl font-bold">Configuração de Agenda</h3>
+                <h3 className="text-lg md:text-xl font-bold">
+                  Configuração de Agenda
+                </h3>
               </div>
 
               <form
@@ -444,7 +450,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     <select
                       name="interval"
                       defaultValue={user.appointmentInterval || 10}
-                      className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 appearance-none"
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded-xl md:rounded-2xl px-4 md:px-6 py-3.5 md:py-4 outline-none focus:border-amber-500/40 appearance-none text-sm md:text-base"
                     >
                       {Array.from({ length: 10 }).map((_, i) => {
                         const val = 10 + i * 5; // 10, 15, ..., 55 (10 items: 0..9 -> 10 + 45 = 55)
@@ -470,7 +476,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       <select
                         name="start"
                         defaultValue={user.startTime || '09:00'}
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 appearance-none"
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl md:rounded-2xl px-4 md:px-6 py-3.5 md:py-4 outline-none focus:border-amber-500/40 appearance-none text-sm md:text-base"
                       >
                         {Array.from({ length: 96 }).map((_, i) => {
                           const totalMins = i * 15;
@@ -499,7 +505,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       <select
                         name="end"
                         defaultValue={user.endTime || '18:00'}
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40 appearance-none"
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl md:rounded-2xl px-4 md:px-6 py-3.5 md:py-4 outline-none focus:border-amber-500/40 appearance-none text-sm md:text-base"
                       >
                         {Array.from({ length: 96 }).map((_, i) => {
                           const totalMins = i * 15;
@@ -630,7 +636,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full bg-neutral-800 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-neutral-700 transition-all shadow-lg active:scale-[0.98]"
+                  className="w-full bg-neutral-800 text-white font-bold py-3.5 md:py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 hover:bg-neutral-700 transition-all shadow-lg active:scale-[0.98]"
                 >
                   <Save size={18} /> Salvar Agenda
                 </button>
@@ -640,10 +646,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
           {isAdmin && (
             <>
-              <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 animate-in fade-in slide-in-from-top-4">
+              <div className="bg-neutral-900 border border-neutral-800 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-6 md:space-y-8 animate-in fade-in slide-in-from-top-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    <Users className="text-amber-500" /> Equipe de Barbeiros
+                  <h3 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                    <Users className="text-amber-500 w-5 h-5 md:w-6 md:h-6" />{' '}
+                    Equipe de Barbeiros
                   </h3>
                   <button
                     onClick={() => setShowAddBarber(true)}
@@ -659,11 +666,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       key={barber.id}
                       className="p-4 bg-neutral-950 border border-neutral-800 rounded-3xl flex items-center justify-between group"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 md:gap-4">
                         <div className="relative group/photo">
                           <img
                             src={barber.foto}
-                            className="w-12 h-12 rounded-2xl object-cover"
+                            className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl object-cover"
                           />
                           <button
                             onClick={() => {
@@ -698,16 +705,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-              <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 animate-in fade-in slide-in-from-top-6">
+              <div className="bg-neutral-900 border border-neutral-800 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-6 md:space-y-8 animate-in fade-in slide-in-from-top-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    <Scissors className="text-amber-500" /> Serviços & Preços
+                  <h3 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                    <Scissors className="text-amber-500 w-5 h-5 md:w-6 md:h-6" />{' '}
+                    Serviços & Preços
                   </h3>
                   <button
                     onClick={() => setShowAddService(true)}
-                    className="p-3 bg-amber-500 text-black rounded-2xl hover:scale-110 transition-transform shadow-lg shadow-amber-500/10"
+                    className="p-2.5 md:p-3 bg-amber-500 text-black rounded-xl md:rounded-2xl hover:scale-110 transition-transform shadow-lg shadow-amber-500/10"
                   >
-                    <Plus size={20} />
+                    <Plus size={18} className="md:w-5 md:h-5" />
                   </button>
                 </div>
 
@@ -715,7 +723,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   {services.map((service) => (
                     <div
                       key={service.id}
-                      className="p-6 bg-neutral-950 border border-neutral-800 rounded-3xl space-y-4 group relative"
+                      className="p-5 md:p-6 bg-neutral-950 border border-neutral-800 rounded-[1.5rem] md:rounded-3xl space-y-4 group relative"
                     >
                       <button
                         onClick={() => handleDeleteService(service.id)}
@@ -776,16 +784,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* Plan Management Section */}
-              <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] space-y-8 animate-in fade-in slide-in-from-top-6">
+              <div className="bg-neutral-900 border border-neutral-800 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-6 md:space-y-8 animate-in fade-in slide-in-from-top-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    <Sparkles className="text-amber-500" /> Planos & Assinaturas
+                  <h3 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                    <Sparkles className="text-amber-500 w-5 h-5 md:w-6 md:h-6" />{' '}
+                    Planos & Assinaturas
                   </h3>
                   <button
                     onClick={() => setShowAddPlan(true)}
-                    className="p-3 bg-amber-500 text-black rounded-2xl hover:scale-110 transition-transform shadow-lg shadow-amber-500/10"
+                    className="p-2.5 md:p-3 bg-amber-500 text-black rounded-xl md:rounded-2xl hover:scale-110 transition-transform shadow-lg shadow-amber-500/10"
                   >
-                    <Plus size={20} />
+                    <Plus size={18} className="md:w-5 md:h-5" />
                   </button>
                 </div>
 

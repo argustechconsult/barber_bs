@@ -132,9 +132,9 @@ video referencia:https://www.youtube.com/watch?v=zJrbLAHYvaY&t=30s
 3º enviar e armazenar reicpt_url para o whatsapp do cliente
 4º armazenar o transaction_nsu do infinitepay no banco de dados para futuras consultas
 
-## MARKETPLACE ⚠️
+## MARKETPLACE ✅
  - marketplace - barbeiro ✅
- - marketplace - Cliente ⚠️
+ - marketplace - Cliente ✅
 
 ## NOVO BARBEIRO ✅
 - Barbeiro admin cria o barbeiro, gera o link de convite e envia para o o barbeiro ✅
@@ -186,4 +186,4 @@ IP:191.252.102.247
 - testar pagamentos no infinitepay com 1 real
 
 # RESET DE SENHA ✅
-# MARKETPLACE ⚠️
+# MARKETPLACE ✅

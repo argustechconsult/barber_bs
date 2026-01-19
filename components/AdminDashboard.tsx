@@ -120,12 +120,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           </h2>
         </div>
       )}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 md:pt-0">
+      <header className="flex flex-col items-center justify-center text-center gap-4 pt-4 md:pt-0">
         <div>
-          <h2 className="text-3xl font-display font-bold">
+          <h2 className="text-xl md:text-3xl font-display font-bold">
             Painel Administrativo
           </h2>
-          <p className="text-neutral-500">
+          <p className="text-neutral-500 text-sm md:text-base">
             Comando central da Barbearia Stayler
           </p>
         </div>
@@ -134,14 +134,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       {/* Primary Indicators */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Receita de Cortes - NEW */}
-        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl relative overflow-hidden group shadow-lg">
+        <div className="bg-neutral-900 border border-neutral-800 p-4 md:p-6 rounded-3xl relative overflow-hidden group shadow-lg">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <Scissors size={48} className="text-indigo-500" />
           </div>
-          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+          <p className="text-neutral-500 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
             Receita de Cortes
           </p>
-          <p className="text-2xl font-display font-bold mt-2">
+          <p className="text-xl md:text-2xl font-display font-bold mt-1 md:mt-2">
             R$ {adminStats.cutsRevenue.toFixed(2)}
           </p>
           <div className="mt-4 flex items-center gap-2 text-[10px] text-indigo-400 font-bold">
@@ -150,14 +150,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl relative overflow-hidden group shadow-lg">
+        <div className="bg-neutral-900 border border-neutral-800 p-4 md:p-6 rounded-3xl relative overflow-hidden group shadow-lg">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <ShoppingBag size={48} className="text-blue-500" />
           </div>
-          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+          <p className="text-neutral-500 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
             Vendas Marketplace
           </p>
-          <p className="text-2xl font-display font-bold mt-2">
+          <p className="text-xl md:text-2xl font-display font-bold mt-1 md:mt-2">
             R$ {adminStats.marketSales.toFixed(2)}
           </p>
           <div className="mt-4 flex items-center gap-2 text-[10px] text-blue-400 font-bold">
@@ -166,14 +166,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl relative overflow-hidden group shadow-lg">
+        <div className="bg-neutral-900 border border-neutral-800 p-4 md:p-6 rounded-3xl relative overflow-hidden group shadow-lg">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <Users2 size={48} className="text-amber-500" />
           </div>
-          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+          <p className="text-neutral-500 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
             Assinantes Ativos
           </p>
-          <p className="text-2xl font-display font-bold mt-2">
+          <p className="text-xl md:text-2xl font-display font-bold mt-1 md:mt-2">
             {adminStats.totalClients}
           </p>
           <div className="mt-4 flex items-center gap-2 text-[10px] text-amber-500 font-bold">
@@ -183,27 +183,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl relative overflow-hidden group shadow-lg">
+        <div className="bg-neutral-900 border border-neutral-800 p-4 md:p-6 rounded-3xl relative overflow-hidden group shadow-lg">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <AlertCircle size={48} className="text-red-500" />
           </div>
-          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+          <p className="text-neutral-500 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
             Inadimplentes
           </p>
-          <p className="text-2xl font-display font-bold mt-2">{debtCount}</p>
+          <p className="text-xl md:text-2xl font-display font-bold mt-1 md:mt-2">
+            {debtCount}
+          </p>
           <div className="mt-4 text-[10px] text-red-500 font-bold">
             <span>Ação necessária urgente</span>
           </div>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-3xl relative overflow-hidden group shadow-lg">
+        <div className="bg-neutral-900 border border-neutral-800 p-4 md:p-6 rounded-3xl relative overflow-hidden group shadow-lg">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
             <UserX size={48} className="text-neutral-500" />
           </div>
-          <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">
+          <p className="text-neutral-500 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
             Churn (60 dias)
           </p>
-          <p className="text-2xl font-display font-bold mt-2">{churnCount}</p>
+          <p className="text-xl md:text-2xl font-display font-bold mt-1 md:mt-2">
+            {churnCount}
+          </p>
           <div className="mt-4 text-[10px] text-neutral-400 font-bold">
             <span>Sem renovação há 2 meses</span>
           </div>
@@ -212,9 +216,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Marketplace Performance Chart */}
-        <div className="lg:col-span-2 bg-neutral-900 border border-neutral-800 p-8 rounded-3xl shadow-xl">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-bold">Evolução de Faturamento</h3>
+        <div className="lg:col-span-2 bg-neutral-900 border border-neutral-800 p-4 md:p-8 rounded-3xl shadow-xl">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg md:text-xl font-bold">
+              Evolução de Faturamento
+            </h3>
             <div className="flex bg-neutral-800 p-1 rounded-xl">
               <button className="px-3 py-1 text-[9px] font-bold uppercase bg-amber-500 text-black rounded-lg">
                 Mês
@@ -224,7 +230,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               </button>
             </div>
           </div>
-          <div className="h-[300px]">
+          <div className="h-[200px] md:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueData}>
                 <defs>

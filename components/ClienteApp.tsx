@@ -445,7 +445,9 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
           <CalendarCheck className="text-black w-12 h-12" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-3xl font-display font-bold">Tudo Pronto!</h2>
+          <h2 className="text-2xl md:text-3xl font-display font-bold">
+            Tudo Pronto!
+          </h2>
           <p className="text-neutral-400">
             Agendamento para {selectedDateObj?.dayName},{' '}
             {selectedDateObj?.dayNum} de {selectedDateObj?.month} às{' '}
@@ -518,7 +520,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
           </div>
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-display font-bold text-white tracking-tight">
+          <h2 className="text-lg md:text-xl font-display font-bold text-white tracking-tight">
             {user.name}
           </h2>
           <span className="inline-block bg-amber-500/10 text-amber-500 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest mt-1 border border-amber-500/20">
@@ -531,7 +533,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
         {step === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
             <div className="text-center space-y-2">
-              <h4 className="text-2xl font-display font-bold text-amber-500">
+              <h4 className="text-xl md:text-2xl font-display font-bold text-amber-500">
                 Escolha um profissional
               </h4>
               <div className="h-1 w-12 bg-amber-500/30 mx-auto rounded-full"></div>
@@ -545,17 +547,12 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     setSelectedBarber(b);
                     setStep(2);
                   }}
-                  className="bg-neutral-900
-    py-2 px-2
+                  className="
     md:py-2 md:px-2
-    rounded-2xl md:rounded-[2.5rem]
-    border border-neutral-800
-    hover:border-amber-500 hover:scale-[1.02]
     transition-all
-    group relative overflow-hidden
+    group relative
     flex flex-col items-center text-center
-    space-y-2 md:space-y-4
-    shadow-xl"
+    space-y-2 md:space-y-4"
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150"></div>
                   <div className="relative">
@@ -576,7 +573,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     </div>
                   </div>
                   <div className="relative z-10">
-                    <h5 className="font-bold text-lg group-hover:text-amber-500 transition-colors">
+                    <h5 className="font-bold text-base md:text-lg group-hover:text-amber-500 transition-colors">
                       {b.nome}
                     </h5>
                     <p className="text-neutral-500 text-[10px] mt-1 uppercase tracking-widest font-bold">
@@ -592,23 +589,22 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             {user.plan === UserPlan.START && showPremiumBanner && (
               <div
                 onClick={() => setShowMaintenanceModal(true)}
-                className="fixed bottom-20 left-0 right-0 md:left-64 mx-auto w-fit max-w-[90%] md:max-w-md bg-gradient-to-r from-amber-600 to-amber-400 p-4 rounded-[2rem] shadow-2xl shadow-amber-500/20 flex items-center justify-between gap-4 group cursor-pointer hover:scale-[1.02] transition-transform z-40"
+                className="fixed bottom-20 left-0 right-0 md:left-64 mx-auto w-fit max-w-[90%] md:max-w-md bg-gradient-to-r from-amber-600 to-amber-400 p-2.5 px-4 rounded-[1.5rem] shadow-2xl shadow-amber-500/20 flex items-center justify-between gap-3 group cursor-pointer hover:scale-[1.02] transition-transform z-40"
               >
-                <div className="flex items-center gap-3">
-                  <div className="bg-black/20 p-2 rounded-xl">
-                    <Sparkles className="text-black w-5 h-5" />
+                <div className="flex items-center gap-2.5">
+                  <div className="bg-black/20 p-1.5 rounded-lg">
+                    <Sparkles className="text-black w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-black font-bold text-sm">
+                    <p className="text-black font-bold text-xs leading-none">
                       Seja Premium!
                     </p>
-                    <p className="text-black/80 text-[10px] font-medium uppercase tracking-widest">
-                      Cortes ilimitados por apenas R$ 150
+                    <p className="text-black/80 text-[8px] md:text-[9px] font-bold uppercase tracking-wider mt-0.5">
+                      Cortes ilimitados por R$ 150
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <ChevronRight className="text-black" />
+                <div className="flex items-center gap-1.5 border-l border-black/10 pl-3">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -620,7 +616,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                     }}
                     className="bg-black/10 p-1 rounded-full hover:bg-black/20 transition-colors"
                   >
-                    <X size={16} className="text-black" />
+                    <X size={14} className="text-black" />
                   </button>
                 </div>
               </div>
@@ -671,7 +667,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                 <ArrowLeft size={14} /> Trocar Barbeiro
               </button>
               <div className="text-center space-y-2">
-                <h4 className="text-2xl font-display font-bold text-amber-500">
+                <h4 className="text-xl md:text-2xl font-display font-bold text-amber-500">
                   Selecione os Serviços
                 </h4>
                 <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">
@@ -697,20 +693,20 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                   >
                     <div className="flex items-center gap-4">
                       <div
-                        className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-colors ${
+                        className={`w-5 h-5 md:w-6 md:h-6 rounded-lg border flex items-center justify-center transition-colors ${
                           isSelected
                             ? 'bg-amber-500 border-amber-500'
                             : 'border-neutral-700'
                         }`}
                       >
                         {isSelected && (
-                          <Check size={14} className="text-black font-bold" />
+                          <Check size={12} className="text-black font-bold" />
                         )}
                       </div>
-                      <p className="font-bold text-lg">{s.name}</p>
+                      <p className="font-bold text-base md:text-lg">{s.name}</p>
                     </div>
                     <p
-                      className={`font-bold text-xl transition-colors ${
+                      className={`font-bold text-lg md:text-xl transition-colors ${
                         isSelected ? 'text-amber-500' : 'text-white'
                       }`}
                     >
@@ -749,7 +745,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
               >
                 <ArrowLeft size={14} /> Editar Serviços
               </button>
-              <h4 className="text-2xl font-display font-bold text-amber-500 text-center">
+              <h4 className="text-xl md:text-2xl font-display font-bold text-amber-500 text-center">
                 Escolha o Horário
               </h4>
             </div>
@@ -776,7 +772,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                           setSelectedDateStr(date.fullDate);
                           setSelectedTime('');
                         }}
-                        className={`snap-center flex-shrink-0 w-16 py-3 rounded-2xl flex flex-col items-center border transition-all ${
+                        className={`snap-center flex-shrink-0 w-14 md:w-16 py-2 md:py-3 rounded-2xl flex flex-col items-center border transition-all ${
                           isDisabled
                             ? 'opacity-10 grayscale cursor-not-allowed border-transparent'
                             : isSelected
@@ -784,11 +780,13 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                               : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'
                         }`}
                       >
-                        <span className="text-[9px] uppercase font-bold opacity-60">
+                        <span className="text-[8px] md:text-[9px] uppercase font-bold opacity-60">
                           {date.dayName}
                         </span>
-                        <span className="text-lg font-bold">{date.dayNum}</span>
-                        <span className="text-[9px] uppercase font-bold opacity-60">
+                        <span className="text-base md:text-lg font-bold">
+                          {date.dayNum}
+                        </span>
+                        <span className="text-[8px] md:text-[9px] uppercase font-bold opacity-60">
                           {date.month}
                         </span>
                       </button>
@@ -907,7 +905,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                           key={time}
                           disabled={occupied}
                           onClick={() => setSelectedTime(time)}
-                          className={`py-4 rounded-2xl border text-sm font-bold transition-all ${
+                          className={`py-3 md:py-4 rounded-2xl border text-xs md:text-sm font-bold transition-all ${
                             occupied
                               ? 'bg-neutral-800 border-neutral-700 text-neutral-700 line-through cursor-not-allowed'
                               : selectedTime === time
@@ -915,7 +913,7 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
                                 : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'
                           }`}
                         >
-                          {occupied ? 'Indisponível' : time}
+                          {occupied ? 'Indisp.' : time}
                         </button>
                       );
                     });

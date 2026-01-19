@@ -64,7 +64,7 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
           </p>
         </div>
 
-        <div className="bg-neutral-900/50 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-neutral-800 shadow-2xl">
+        <div className="bg-neutral-900/50 backdrop-blur-xl p-5 md:p-8 rounded-3xl border border-neutral-800 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
             <div>
               <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
@@ -174,7 +174,7 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 transform transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-2.5 md:py-3 rounded-xl shadow-lg shadow-amber-500/20 transform transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPending ? 'Criando Conta...' : 'Criar Conta'}
             </button>

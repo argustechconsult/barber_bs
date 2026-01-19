@@ -57,7 +57,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
           </p>
         </div>
 
-        <div className="bg-neutral-900/50 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-neutral-800 shadow-2xl">
+        <div className="bg-neutral-900/50 backdrop-blur-xl p-5 md:p-8 rounded-3xl border border-neutral-800 shadow-2xl">
           <div className="flex bg-neutral-800 p-1 rounded-xl mb-6 md:mb-8">
             <button
               onClick={() => setIsBarberView(false)}
@@ -139,7 +139,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 transform transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-2.5 md:py-3 rounded-xl shadow-lg shadow-amber-500/20 transform transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPending ? 'Entrando...' : 'Entrar na Barbearia'}
             </button>
