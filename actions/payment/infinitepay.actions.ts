@@ -24,9 +24,12 @@ interface CreateInfinitePayCheckoutData {
 
 export async function createInfinitePayCheckout(data: CreateInfinitePayCheckoutData) {
   try {
-    const handle = process.env.INFINITEPAY_HANDLE;
+    const handle = process.env.INFINITEPAY_HANDLE || process.env.INFINITY_HANDLE;
+    console.log('[InfinitePay] Attempting checkout with handle:', handle ? 'CONFIGURED' : 'NOT CONFIGURED');
+    
     if (!handle) {
-      throw new Error('INFINITEPAY_HANDLE is not configured');
+      console.error('[InfinitePay Error] Configuration missing: INFINITEPAY_HANDLE is not set in .env');
+      throw new Error('Configuração INFINITEPAY_HANDLE não encontrada no servidor. Verifique o arquivo .env');
     }
 
     // 1. Fetch official services from DB to ensure data accuracy
@@ -160,9 +163,12 @@ export async function createMarketplaceCheckout(data: {
     };
 }) {
     try {
-        const handle = process.env.INFINITEPAY_HANDLE;
+        const handle = process.env.INFINITEPAY_HANDLE || process.env.INFINITY_HANDLE;
+        console.log('[InfinitePay Marketplace] Attempting checkout with handle:', handle ? 'CONFIGURED' : 'NOT CONFIGURED');
+
         if (!handle) {
-            throw new Error('INFINITEPAY_HANDLE is not configured');
+            console.error('[InfinitePay Error] Configuration missing: INFINITEPAY_HANDLE is not set in .env');
+            throw new Error('Configuração INFINITEPAY_HANDLE não encontrada no servidor. Verifique o arquivo .env');
         }
 
         // 1. Create TRANSACTION in DB first to get the ID for order_nsu

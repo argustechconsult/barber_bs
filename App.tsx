@@ -54,6 +54,11 @@ const App: React.FC = () => {
               setUser(merged);
               localStorage.setItem('stayler_user', JSON.stringify(merged));
             }
+          } else {
+            console.warn(
+              'Current user session is stale (user not found in DB). Logging out...',
+            );
+            handleLogout();
           }
         } catch (error) {
           console.error('Failed to revalidate user', error);

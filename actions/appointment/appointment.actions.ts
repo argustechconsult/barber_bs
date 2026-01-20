@@ -21,10 +21,15 @@ export async function createAppointment(data: CreateAppointmentData) {
     // Check for PREMIUM plan restrictions
     const client = await prisma.user.findUnique({
         where: { id: clientId },
-        select: { plan: true, subscriptionStatus: true }
+        select: { id: true, plan: true, subscriptionStatus: true }
     });
 
-    if (client?.plan === 'PREMIUM' && client.subscriptionStatus !== 'ACTIVE') {
+    if (!client) {
+        console.error(`[Prisma Error Prevention] Client not found: ${clientId}`);
+        return { success: false, message: 'Usuário não encontrado. Por favor, faça logout e login novamente.' };
+    }
+
+    if (client.plan === 'PREMIUM' && client.subscriptionStatus !== 'ACTIVE') {
          return { success: false, message: 'Assinatura Premium inativa. Regularize seu pagamento.' };
     }
 
