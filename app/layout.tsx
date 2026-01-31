@@ -28,6 +28,19 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
+        <meta name="application-name" content="Barbearia Stayler" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Stayler" />
+        <meta
+          name="description"
+          content="Barbearia Premium Management System"
+        />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#0a0a0a" />
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         <script src="https://cdn.tailwindcss.com"></script>
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap"

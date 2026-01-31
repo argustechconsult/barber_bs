@@ -113,21 +113,72 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleCropComplete = async (croppedImage: string) => {
-    if (croppingTarget?.type === 'user') {
-      onUpdateUser({
-        ...user,
-        image: croppedImage,
+    try {
+      // 1. Identify old image to delete later
+      let oldImageUrl: string | undefined;
+
+      if (croppingTarget?.type === 'user') {
+        oldImageUrl = user.image;
+      } else if (croppingTarget?.type === 'barber' && croppingTarget.id) {
+        const barber = barbers.find((b) => b.id === croppingTarget.id);
+        oldImageUrl = barber?.foto;
+      }
+
+      // Convert base64 to blob/file
+      const res = await fetch(croppedImage);
+      const blob = await res.blob();
+      const file = new File([blob], 'profile-image.jpg', {
+        type: 'image/jpeg',
       });
-    } else if (croppingTarget?.type === 'barber' && croppingTarget.id) {
-      setBarbers((prev) =>
-        prev.map((b) =>
-          b.id === croppingTarget.id ? { ...b, foto: croppedImage } : b,
-        ),
-      );
-      const { updateBarberSettings } =
-        await import('../actions/users/barber.actions');
-      await updateBarberSettings(croppingTarget.id, { image: croppedImage });
-    }
+
+      // 2. Upload to Vercel Blob
+      const response = await fetch(`/api/upload?filename=${file.name}`, {
+        method: 'POST',
+        body: file,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const newBlob = await response.json();
+      const imageUrl = newBlob.url;
+
+      // 3. Delete old image if it exists and is a blob URL
+      if (
+        oldImageUrl &&
+        oldImageUrl.includes('public.blob.vercel-storage.com')
+      ) {
+        try {
+          await fetch(`/api/upload?url=${oldImageUrl}`, {
+            method: 'DELETE',
+          });
+        } catch (delError) {
+          console.error('Failed to delete old image:', delError);
+          // Non-blocking error
+        }
+      }
+
+      // 4. Update State & DB
+      if (croppingTarget?.type === 'user') {
+        onUpdateUser({
+          ...user,
+          image: imageUrl,
+        });
+      } else if (croppingTarget?.type === 'barber' && croppingTarget.id) {
+        setBarbers((prev) =>
+          prev.map((b) =>
+            b.id === croppingTarget.id ? { ...b, foto: imageUrl } : b,
+          ),
+        );
+        const { updateBarberSettings } =
+          await import('../actions/users/barber.actions');
+        await updateBarberSettings(croppingTarget.id, { image: imageUrl });
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Erro ao fazer upload da imagem. Tente novamente.');
+    } // ... rest of function
 
     setImageToCrop(null);
     setCroppingTarget(null);

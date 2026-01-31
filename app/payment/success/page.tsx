@@ -45,7 +45,7 @@ export default function PaymentSuccessPage() {
 
         <div className="pt-8">
           <Link
-            href="/"
+            href="/?success=true"
             className="group flex items-center justify-center gap-3 bg-amber-500 hover:bg-amber-400 text-black font-black py-4 px-8 rounded-full transition-all hover:scale-105 active:scale-95"
           >
             <span>VOLTAR PARA O INÍCIO</span>

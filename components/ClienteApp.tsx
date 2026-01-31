@@ -508,9 +508,10 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
       <header className="flex flex-col items-center space-y-4 pt-4">
         <div className="w-24 h-24 rounded-full border-4 border-amber-500/30 p-1">
           <div className="w-full h-full rounded-full overflow-hidden bg-neutral-800 flex items-center justify-center border-2 border-amber-500">
-            {user.whatsapp && user.whatsapp.startsWith('data:image') ? (
+            {user.image ||
+            (user.whatsapp && user.whatsapp.startsWith('data:image')) ? (
               <img
-                src={user.whatsapp}
+                src={user.image || user.whatsapp}
                 alt={user.name}
                 className="w-full h-full object-cover"
               />

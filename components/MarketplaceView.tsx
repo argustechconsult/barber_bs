@@ -166,8 +166,32 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ user }) => {
     }
   };
 
-  const handleCropComplete = (croppedImage: string) => {
-    setSelectedImage(croppedImage);
+  const handleCropComplete = async (croppedImage: string) => {
+    try {
+      // Convert base64 to blob/file
+      const res = await fetch(croppedImage);
+      const blob = await res.blob();
+      const file = new File([blob], 'product-image.jpg', {
+        type: 'image/jpeg',
+      });
+
+      // Upload to Vercel Blob
+      const response = await fetch(`/api/upload?filename=${file.name}`, {
+        method: 'POST',
+        body: file,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const newBlob = await response.json();
+      setSelectedImage(newBlob.url);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Erro ao fazer upload da imagem. Tente novamente.');
+    }
+
     setImageToCrop(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';

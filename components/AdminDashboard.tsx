@@ -106,20 +106,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-16">
       {/* Barber Profile Header */}
-      {user.barbeiroId && (
-        <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
-          <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
-            <img
-              src={user.image || '/default.jpeg'}
-              alt={user.name}
-              className="w-full h-full rounded-full object-cover"
-            />
-          </div>
-          <h2 className="text-2xl font-display font-bold text-white">
-            {user.name}
-          </h2>
+      <div className="flex flex-col items-center justify-center pt-4 pb-4 space-y-3">
+        <div className="w-32 h-32 rounded-full border-4 border-amber-500 p-1">
+          <img
+            src={user.image || '/default.jpeg'}
+            alt={user.name}
+            className="w-full h-full rounded-full object-cover"
+          />
         </div>
-      )}
+        <h2 className="text-2xl font-display font-bold text-white">
+          {user.name}
+        </h2>
+      </div>
       <header className="flex flex-col items-center justify-center text-center gap-4 pt-4 md:pt-0">
         <div>
           <h2 className="text-xl md:text-3xl font-display font-bold">
@@ -416,8 +414,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 >
                   <td className="p-6">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center border border-white/5">
-                        <UserIcon size={20} className="text-neutral-500" />
+                      <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center border border-white/5 overflow-hidden">
+                        {client.image ||
+                        (client.whatsapp &&
+                          client.whatsapp.startsWith('data:image')) ? (
+                          <img
+                            src={client.image || client.whatsapp}
+                            alt={client.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <UserIcon size={20} className="text-neutral-500" />
+                        )}
                       </div>
                       <span className="font-bold">{client.name}</span>
                     </div>
