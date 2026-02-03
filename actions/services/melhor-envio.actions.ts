@@ -44,8 +44,8 @@ export const calculateShipping = async ({
   const token = process.env.MELHOR_ENVIO_TOKEN;
   const email = process.env.MELHOR_ENVIO_EMAIL;
   
-  // Use sandbox URL by default, or change to production if env var set (optional)
-  const apiUrl = 'https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate';
+  // Use URL from env, with a fallback just in case
+  const apiUrl = process.env.URL_MELHOR_ENVIO || 'https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate';
 
   if (!fromCep || !token || !email) {
     // throw new Error('Missing Melhor Envio environment variables (FROM_CEP, TOKEN, EMAIL)');

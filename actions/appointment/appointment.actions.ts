@@ -16,9 +16,6 @@ export async function createAppointment(data: CreateAppointmentData) {
     const { clientId, barberId, date, serviceIds } = data;
     const appointmentDate = new Date(date);
 
-    // Simple conflict check: check if barber has an appointment at roughly the same time (assuming 1h slots for simplicity for now)
-    // ideally strict range check
-    // Check for PREMIUM plan restrictions
     const client = await prisma.user.findUnique({
         where: { id: clientId },
         select: { id: true, plan: true, subscriptionStatus: true }
@@ -42,9 +39,7 @@ export async function createAppointment(data: CreateAppointmentData) {
     });
 
     if (existing) {
-        // Allow retry if it's the same user and status is PENDING (e.g. failed payment retry)
         if (existing.clientId === clientId && existing.status === 'PENDING') {
-             // Update services just in case they changed selection
              const updated = await prisma.appointment.update({
                  where: { id: existing.id },
                  data: { serviceIds: serviceIds.join(',') }
@@ -73,9 +68,7 @@ export async function createAppointment(data: CreateAppointmentData) {
 }
 
 export async function getAppointmentsByBarber(barberId: string, dateStr: string) {
-    // Return times that are occupied
     try {
-        // Enforce UTC day range
         const start = new Date(`${dateStr}T00:00:00.000Z`);
         const end = new Date(`${dateStr}T23:59:59.999Z`);
 
@@ -90,26 +83,14 @@ export async function getAppointmentsByBarber(barberId: string, dateStr: string)
             }
         });
 
-        // We need to return specific times "HH:mm"
         const occupiedTimes = appointments.map(app => {
             const d = new Date(app.date);
-            // Since we stored it as ISO (UTC), we should probably extract UTC hours if we want consistency
-            // Assuming simplified slot logic where input is naive. 
-            // If createAppointment used 'T13:00:00', Prisma stored it.
-            // When we read back '2026-01-02T13:00:00.000Z' (as seen in list-appointments)
-            // d.getUTCHours() will be 13. d.getHours() will be 10 (GMT-3).
-            
-            // To be consistent with how we created it (assuming user selected 13:00 in UI):
-            // We want to return '13:00'.
-            // So we should use getUTCHours() if we treat the stored date as "UTC representation of the slot".
-            
             const hours = d.getUTCHours().toString().padStart(2, '0');
             const minutes = d.getUTCMinutes().toString().padStart(2, '0');
             return `${hours}:${minutes}`;
         });
         
         return { success: true, occupiedTimes };
-
     } catch (error) {
         console.error('Get Appointments Error:', error);
         return { success: false, occupiedTimes: [] };
@@ -120,14 +101,14 @@ export async function getMyAppointments(userId: string) {
     try {
         const appointments = await prisma.appointment.findMany({
             where: { clientId: userId },
-            include: { barber: true }, // Include barber name
+            include: { barber: true },
             orderBy: { date: 'desc' }
         });
 
         const formatted = appointments.map(app => ({
             id: app.id,
             clientId: app.clientId,
-            clientName: app.barber.name, // Actually this should be barbers name for client view
+            clientName: app.barber.name,
             barberId: app.barberId,
             serviceIds: app.serviceIds, 
             date: app.date.toISOString(),
