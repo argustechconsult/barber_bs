@@ -25,6 +25,13 @@ import {
   User as UserIcon,
   Scissors,
   TrendingUp,
+  X,
+  Calendar,
+  DollarSign,
+  ExternalLink,
+  ChevronRight,
+  Receipt,
+  ArrowUpCircle,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -44,6 +51,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   });
   const [clients, setClients] = useState<any[]>([]);
   const [bestSeller, setBestSeller] = useState<any>({ name: 'Carregando...' });
+  const [selectedClient, setSelectedClient] = useState<any | null>(null);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
 
   React.useEffect(() => {
     // 1. Fetch Admin Stats
@@ -76,6 +85,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       },
     );
   }, []);
+
+  const handleShowDetails = async (clientId: string) => {
+    setIsDetailsLoading(true);
+    const { getClientFullDetails } =
+      await import('../actions/users/user.actions');
+    const res = await getClientFullDetails(clientId);
+    if (res.success) {
+      setSelectedClient(res.client);
+    }
+    setIsDetailsLoading(false);
+  };
 
   // Use fetched stats or defaults
   const revenueData = adminStats.chartData || [];
@@ -488,8 +508,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                     </span>
                   </td>
                   <td className="p-6 text-right">
-                    <button className="text-[10px] font-bold uppercase tracking-widest text-amber-500 hover:underline">
-                      Detalhes
+                    <button
+                      onClick={() => handleShowDetails(client.id)}
+                      className="text-[10px] font-bold uppercase tracking-widest text-amber-500 hover:underline disabled:opacity-50"
+                      disabled={isDetailsLoading}
+                    >
+                      {isDetailsLoading ? '...' : 'Detalhes'}
                     </button>
                   </td>
                 </tr>
@@ -511,6 +535,176 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           </table>
         </div>
       </div>
+
+      {/* Client Details Modal */}
+      {selectedClient && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-[2.5rem] max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl scale-in-center">
+            {/* Modal Header */}
+            <div className="p-8 border-b border-neutral-800 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                  <UserIcon className="text-amber-500" size={32} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold">{selectedClient.name}</h3>
+                  <p className="text-neutral-500 text-sm">
+                    {selectedClient.email || 'Sem e-mail'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedClient(null)}
+                className="p-3 bg-neutral-800 rounded-2xl hover:bg-neutral-700 transition-colors text-neutral-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+              {/* Info Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-neutral-950 p-6 rounded-3xl border border-neutral-800">
+                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">
+                    Plano Atual
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
+                        selectedClient.plan === 'PREMIUM'
+                          ? 'border-amber-500 text-amber-500 bg-amber-500/10'
+                          : 'border-neutral-700 text-neutral-400 bg-neutral-800'
+                      }`}
+                    >
+                      {selectedClient.plan}
+                    </span>
+                  </div>
+                </div>
+                <div className="bg-neutral-950 p-6 rounded-3xl border border-neutral-800">
+                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">
+                    WhatsApp
+                  </p>
+                  <p className="font-bold text-white flex items-center gap-2">
+                    <Phone size={14} className="text-amber-500" />
+                    {selectedClient.whatsapp || 'N/A'}
+                  </p>
+                </div>
+                <div className="bg-neutral-950 p-6 rounded-3xl border border-neutral-800">
+                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">
+                    ID Assinatura
+                  </p>
+                  <p className="font-mono text-[10px] text-neutral-400 break-all">
+                    {selectedClient.asaasSubscriptionId || 'Nenhum'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Appointments History */}
+                <div className="space-y-4">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Calendar size={20} className="text-amber-500" />
+                    Últimos Agendamentos
+                  </h4>
+                  <div className="space-y-3">
+                    {selectedClient.appointments.length > 0 ? (
+                      selectedClient.appointments.map((ap: any) => (
+                        <div
+                          key={ap.id}
+                          className="bg-neutral-950/50 p-4 rounded-2xl border border-neutral-800 flex items-center justify-between"
+                        >
+                          <div>
+                            <p className="text-sm font-bold">
+                              {new Date(ap.date).toLocaleDateString('pt-BR')} às{' '}
+                              {new Date(ap.date).toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                            <p className="text-xs text-neutral-500">
+                              Barbeiro: {ap.barberName}
+                            </p>
+                          </div>
+                          <span
+                            className={`text-[9px] font-bold uppercase ${ap.status === 'CONFIRMED' ? 'text-green-500' : 'text-neutral-500'}`}
+                          >
+                            {ap.status}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-neutral-600 text-xs italic">
+                        Nenhum agendamento encontrado.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Transactions History */}
+                <div className="space-y-4">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Receipt size={20} className="text-amber-500" />
+                    Últimas Transações
+                  </h4>
+                  <div className="space-y-3">
+                    {selectedClient.transactions.length > 0 ? (
+                      selectedClient.transactions.map((t: any) => (
+                        <div
+                          key={t.id}
+                          className="bg-neutral-950/50 p-4 rounded-2xl border border-neutral-800 flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`p-2 rounded-lg ${t.status === 'PAID' ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}
+                            >
+                              <DollarSign size={14} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold">
+                                R$ {t.amount.toFixed(2)}
+                              </p>
+                              <p className="text-[10px] text-neutral-500">
+                                {t.description || t.type}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[9px] text-neutral-500">
+                              {new Date(t.createdAt).toLocaleDateString(
+                                'pt-BR',
+                              )}
+                            </p>
+                            <span
+                              className={`text-[9px] font-bold uppercase ${t.status === 'PAID' ? 'text-green-500' : 'text-amber-500'}`}
+                            >
+                              {t.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-neutral-600 text-xs italic">
+                        Nenhuma transação encontrada.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-neutral-800 bg-neutral-950/50 flex justify-end">
+              <button
+                onClick={() => setSelectedClient(null)}
+                className="px-8 py-3 bg-neutral-800 text-white font-bold rounded-2xl hover:bg-neutral-700 transition-all"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

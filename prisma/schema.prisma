@@ -36,6 +36,21 @@ model User {
   // stripeCustomerId     String?   @unique
   // stripeSubscriptionId String?   @unique
   subscriptionStatus  String? // ACTIVE, INACTIVE, PAST_DUE, CANCELLED
+  asaasCustomerId     String?   @unique
+  asaasSubscriptionId String?   @unique
+  lastRenewal         DateTime?
+  nextRenewal         DateTime?
+
+  // Customer info for Asaas
+  cpfCnpj           String?
+  phone             String?
+  postalCode        String?
+  address           String?
+  addressNumber     String?
+  addressComplement String?
+  province          String?
+  city              String?
+
   createdAt           DateTime  @default(now())
   appointmentInterval Int?      @default(10)
   startTime           String?   @default("09:00")
@@ -125,6 +140,9 @@ model Transaction {
   infinitePayTransactionNSU String? @unique
   infinitePaySlug           String? @unique
   infinitePayReceiptUrl     String?
+
+  asaasPaymentId String? @unique
+  billingType    String? // PIX, CREDIT_CARD, etc
 
   userId String
   user   User   @relation(fields: [userId], references: [id])

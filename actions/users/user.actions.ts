@@ -71,10 +71,13 @@ export async function getClients() {
     });
 
     return clients.map((c) => {
-        let status = 'DEBT'; 
-        if (c.subscriptionStatus === 'ACTIVE') status = 'PAID';
-        if (c.subscriptionStatus === 'PAST_DUE') status = 'DEBT';
-        if (c.subscriptionStatus === 'CANCELLED') status = 'CHURN';
+        let status = 'PAID'; // Default to PAID
+        if (c.plan === 'PREMIUM') {
+            if (c.subscriptionStatus === 'ACTIVE') status = 'PAID';
+            else if (c.subscriptionStatus === 'PAST_DUE' || !c.subscriptionStatus) status = 'DEBT';
+            else if (c.subscriptionStatus === 'CANCELLED') status = 'CHURN';
+            else status = 'DEBT'; // Any other non-active premium status is debt
+        }
         
         const lastRenewal = c.updatedAt.toLocaleDateString('pt-BR');
 
@@ -94,5 +97,53 @@ export async function getClients() {
   } catch (error) {
     console.error('Error fetching clients:', error);
     return [];
+  }
+}
+
+export async function getClientFullDetails(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        clientAppointments: {
+          orderBy: { date: 'desc' },
+          take: 10,
+          include: {
+              barber: true
+          }
+        },
+        transactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
+    });
+
+    if (!user) return { success: false, message: 'Usuário não encontrado' };
+
+    return {
+      success: true,
+      client: {
+          ...user,
+          appointments: user.clientAppointments.map(a => ({
+              id: a.id,
+              date: a.date.toISOString(),
+              barberName: a.barber.name,
+              status: a.status
+          })),
+          transactions: user.transactions.map(t => ({
+              id: t.id,
+              amount: t.amount,
+              type: t.type,
+              status: t.status,
+              createdAt: t.createdAt.toISOString(),
+              billingType: t.billingType,
+              description: t.description
+          }))
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching client details:', error);
+    return { success: false, message: 'Erro ao buscar detalhes' };
   }
 }

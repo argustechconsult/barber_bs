@@ -21,6 +21,21 @@ export interface User {
   barbeiroId?: string;
   isActive: boolean;
   subscriptionStatus?: string;
+  asaasCustomerId?: string;
+  asaasSubscriptionId?: string;
+  lastRenewal?: string;
+  nextRenewal?: string;
+
+  // Asaas customer info
+  cpfCnpj?: string;
+  phone?: string;
+  postalCode?: string;
+  address?: string;
+  addressNumber?: string;
+  addressComplement?: string;
+  province?: string;
+  city?: string;
+
   appointmentInterval?: number;
   startTime?: string;
   endTime?: string;
@@ -28,7 +43,6 @@ export interface User {
   workEndDate?: string;
   offDays?: string[];
   image?: string;
-  lastRenewal?: string;
 }
 
 export interface Barbeiro {
@@ -86,4 +100,23 @@ export interface Lead {
   status: 'NEW' | 'CONTACTED' | 'CONVERTED';
   convertedBy?: string; // barbeiroId
   createdAt: string;
+}
+
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  width?: number;
+  height?: number;
+  length?: number;
+  weight?: number;
+}
+
+export interface AddressData {
+    cep: string;
+    state: string;
+    city: string;
+    neighborhood: string;
+    street: string;
 }

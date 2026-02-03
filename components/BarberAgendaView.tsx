@@ -5,7 +5,15 @@ import {
   getBarbers,
   updateBarberSettings,
 } from '../actions/users/barber.actions';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  startOfWeek,
+  endOfWeek,
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -16,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowDownCircle,
+  Scissors,
 } from 'lucide-react';
 
 interface BarberAgendaViewProps {
@@ -25,7 +34,7 @@ interface BarberAgendaViewProps {
 const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
   const [viewType, setViewType] = useState<'day' | 'week' | 'month'>('day');
   const [selectedBarberId, setSelectedBarberId] = useState<string>(
-    user.role === UserRole.BARBEIRO ? user.id : user.barbeiroId || '',
+    user.role === UserRole.BARBEIRO ? user.id : user.barbeiroId || 'ALL',
   );
   const isAdmin = user.role === UserRole.ADMIN;
 
@@ -40,6 +49,7 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
   const [endTime, setEndTime] = useState<string>('18:00');
   const [offDays, setOffDays] = useState<string[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [viewMonth, setViewMonth] = useState(new Date());
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Fetch initial data
@@ -105,9 +115,10 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
         setAppointments(
           res.appointments.map((a) => ({
             id: a.id,
-            clientName: a.client.name,
+            clientName: (a as any).client.name,
             date: a.date,
             barbeiroId: a.barberId,
+            barberName: (a as any).barber?.nome || '...',
             status: a.status,
           })),
         );
@@ -212,9 +223,9 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
           </h2>
           <p className="text-neutral-500 text-sm">
             {isAdmin
-              ? `Visualizando agenda de ${
-                  barbers.find((b) => b.id === selectedBarberId)?.nome || '...'
-                }`
+              ? selectedBarberId === 'ALL'
+                ? 'Visualizando agenda de TODOS os barbeiros'
+                : `Visualizando agenda de ${barbers.find((b) => b.id === selectedBarberId)?.nome || '...'}`
               : 'Seu fluxo diário de trabalho'}
           </p>
         </div>
@@ -244,6 +255,9 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                 onChange={(e) => setSelectedBarberId(e.target.value)}
                 className="bg-transparent border-none text-sm font-bold text-amber-500 focus:ring-0 cursor-pointer"
               >
+                <option value="ALL" className="bg-neutral-900">
+                  Todos os Barbeiros
+                </option>
                 {barbers.map((b) => (
                   <option key={b.id} value={b.id} className="bg-neutral-900">
                     {b.nome}
@@ -296,8 +310,13 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <UserIcon size={14} />
-                          <span className="text-xs">Serviço: Agendado</span>
+                          <Scissors size={14} className="text-amber-500/50" />
+                          <span className="text-xs">
+                            Barbeiro:{' '}
+                            <span className="text-white font-medium">
+                              {(ap as any).barberName}
+                            </span>
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -328,33 +347,119 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
           </div>
         ) : viewType === 'week' ? (
           <div className="grid grid-cols-7 gap-2 overflow-x-auto pb-4 scrollbar-hide">
-            {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((day) => (
-              <div
-                key={day}
-                className="min-w-[120px] bg-neutral-950 p-4 rounded-3xl border border-neutral-800 space-y-4"
-              >
-                <p className="text-center font-bold text-xs uppercase text-neutral-500 border-b border-neutral-800 pb-2">
-                  {day}
-                </p>
-                <div className="space-y-2 text-center text-[10px] text-neutral-600 font-medium italic">
-                  Visualização semanal em breve
+            {(() => {
+              const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+              const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+              const weekDays = eachDayOfInterval({
+                start: weekStart,
+                end: weekEnd,
+              });
+
+              return weekDays.map((date) => (
+                <div
+                  key={date.toISOString()}
+                  className="min-w-[120px] bg-neutral-950 p-4 rounded-3xl border border-neutral-800 space-y-2"
+                >
+                  <p className="text-center font-bold text-[10px] uppercase text-amber-500/70">
+                    {format(date, 'eee', { locale: ptBR })}
+                  </p>
+                  <p className="text-center font-bold text-xs text-white pb-2 border-b border-neutral-800">
+                    {format(date, 'dd/MM/yyyy')}
+                  </p>
+                  <div className="pt-2 text-center text-[10px] text-neutral-600 font-medium italic">
+                    Visualização semanal em breve
+                  </div>
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         ) : (
-          <div className="grid grid-cols-7 gap-2">
-            {Array.from({ length: 31 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square bg-neutral-950 border border-neutral-800 rounded-2xl flex flex-col items-center justify-center relative hover:border-amber-500/40 transition-colors cursor-pointer group"
-              >
-                <span className="text-xs text-neutral-600 font-bold">
-                  {i + 1}
-                </span>
-                <div className="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity"></div>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between px-4">
+              <h3 className="text-lg font-bold capitalize text-amber-500">
+                {format(viewMonth, 'MMMM yyyy', { locale: ptBR })}
+              </h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    setViewMonth(
+                      (prev) =>
+                        new Date(prev.getFullYear(), prev.getMonth() - 1, 1),
+                    )
+                  }
+                  className="p-2 bg-neutral-800 rounded-xl hover:bg-neutral-700 transition-colors"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={() => setViewMonth(new Date())}
+                  className="px-4 py-2 bg-neutral-800 rounded-xl hover:bg-neutral-700 transition-colors text-[10px] font-bold uppercase"
+                >
+                  Hoje
+                </button>
+                <button
+                  onClick={() =>
+                    setViewMonth(
+                      (prev) =>
+                        new Date(prev.getFullYear(), prev.getMonth() + 1, 1),
+                    )
+                  }
+                  className="p-2 bg-neutral-800 rounded-xl hover:bg-neutral-700 transition-colors"
+                >
+                  <ChevronRight size={20} />
+                </button>
               </div>
-            ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                <div
+                  key={day}
+                  className="text-center py-2 text-[10px] font-bold text-neutral-600 uppercase"
+                >
+                  {day}
+                </div>
+              ))}
+              {(() => {
+                const start = startOfMonth(viewMonth);
+                const end = endOfMonth(viewMonth);
+                const days = eachDayOfInterval({ start, end });
+                const blanks = Array.from({ length: start.getDay() });
+
+                return (
+                  <>
+                    {blanks.map((_, i) => (
+                      <div key={`blank-${i}`} className="aspect-square" />
+                    ))}
+                    {days.map((date) => {
+                      const isToday =
+                        format(date, 'yyyy-MM-dd') ===
+                        format(new Date(), 'yyyy-MM-dd');
+                      return (
+                        <div
+                          key={date.toISOString()}
+                          className={`
+                            aspect-square border border-neutral-800 rounded-2xl flex flex-col items-center justify-center relative hover:border-amber-500/40 transition-colors cursor-pointer group
+                            ${isToday ? 'bg-amber-500/10 border-amber-500/30' : 'bg-neutral-950'}
+                          `}
+                        >
+                          <span
+                            className={`text-xs font-bold ${isToday ? 'text-amber-500' : 'text-neutral-600'}`}
+                          >
+                            {date.getDate()}
+                          </span>
+                          <div className="absolute inset-x-0 bottom-2 flex justify-center gap-0.5">
+                            {/* Indicator dot if has appointments - simplistic for now */}
+                            {/* <div className="w-1 h-1 bg-amber-500 rounded-full"></div> */}
+                          </div>
+                          <div className="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity"></div>
+                        </div>
+                      );
+                    })}
+                  </>
+                );
+              })()}
+            </div>
           </div>
         )}
       </div>

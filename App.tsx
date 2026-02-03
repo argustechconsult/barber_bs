@@ -25,6 +25,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<string>('main');
   const [isSigningUp, setIsSigningUp] = useState(false);
+  const [startWithPlanModal, setStartWithPlanModal] = useState(false);
 
   useEffect(() => {
     const initUser = async () => {
@@ -190,7 +191,10 @@ const App: React.FC = () => {
                   ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
                   : 'text-neutral-500 hover:text-white'
               }`}
-              onClick={() => setCurrentView('main')}
+              onClick={() => {
+                setCurrentView('main');
+                setStartWithPlanModal(false);
+              }}
             >
               {isStaff ? <LayoutDashboard size={22} /> : <Calendar size={22} />}
               <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">
@@ -205,7 +209,10 @@ const App: React.FC = () => {
                     ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
                     : 'text-neutral-500 hover:text-white'
                 }`}
-                onClick={() => setCurrentView('agenda')}
+                onClick={() => {
+                  setCurrentView('agenda');
+                  setStartWithPlanModal(false);
+                }}
               >
                 <Calendar size={22} />
                 <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">
@@ -221,7 +228,10 @@ const App: React.FC = () => {
                     ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
                     : 'text-neutral-500 hover:text-white'
                 }`}
-                onClick={() => setCurrentView('marketplace')}
+                onClick={() => {
+                  setCurrentView('marketplace');
+                  setStartWithPlanModal(false);
+                }}
               >
                 <ShoppingBag size={22} />
                 <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">
@@ -236,7 +246,10 @@ const App: React.FC = () => {
                   ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
                   : 'text-neutral-500 hover:text-white'
               }`}
-              onClick={() => setCurrentView('financial')}
+              onClick={() => {
+                setCurrentView('financial');
+                setStartWithPlanModal(false);
+              }}
             >
               <DollarSign size={22} />
               <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">
@@ -250,7 +263,10 @@ const App: React.FC = () => {
                   ? 'text-amber-500 bg-amber-500/5 md:bg-amber-500/10'
                   : 'text-neutral-500 hover:text-white'
               }`}
-              onClick={() => setCurrentView('settings')}
+              onClick={() => {
+                setCurrentView('settings');
+                setStartWithPlanModal(false);
+              }}
             >
               <Settings size={22} />
               <span className="text-[9px] md:text-sm font-bold md:font-medium uppercase md:capitalize tracking-wider md:tracking-normal">
@@ -283,7 +299,10 @@ const App: React.FC = () => {
 
           {currentView === 'financial' &&
             (user.role === UserRole.CLIENTE ? (
-              <FinancialView user={user} />
+              <FinancialView
+                user={user}
+                initialShowModal={startWithPlanModal}
+              />
             ) : (
               <BarberFinancialView user={user} />
             ))}
@@ -299,7 +318,15 @@ const App: React.FC = () => {
 
           {currentView === 'main' && (
             <>
-              {user.role === UserRole.CLIENTE && <ClienteApp user={user} />}
+              {user.role === UserRole.CLIENTE && (
+                <ClienteApp
+                  user={user}
+                  onUpgradeClick={() => {
+                    setStartWithPlanModal(true);
+                    setCurrentView('financial');
+                  }}
+                />
+              )}
               {user.role === UserRole.BARBEIRO && (
                 <BarberDashboard user={user} />
               )}

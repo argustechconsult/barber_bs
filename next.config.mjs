@@ -8,7 +8,11 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    typescript: {
+  env: {
+    ASAAS_API_KEY: '$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmY4MTQzY2Q3LTExNDgtNGIwYi1iOTA5LTgzZmZhZDZlM2FkZjo6JGFhY2hfOWU3Y2E4NzktNmJlMS00YjgwLTgwYmEtNmM4NDYyMTkyMmMw',
+    ASAAS_BASE_URL: 'https://api-sandbox.asaas.com/v3',
+  },
+  typescript: {
     ignoreBuildErrors: true,
   },
   experimental: {

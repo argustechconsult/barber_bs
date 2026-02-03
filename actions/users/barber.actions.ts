@@ -146,7 +146,7 @@ export async function getAdminStats() {
       },
       where: {
         status: 'PAID',
-        type: 'SUBSCRIPTION',
+        productId: { not: null },
       },
     });
     const marketSales = marketRevenueResult._sum.amount || 0;
@@ -214,7 +214,7 @@ export async function getFinancialStats(barberId?: string) {
       _sum: { amount: true },
       where: {
         ...where,
-        type: { in: ['INCOME', 'APPOINTMENT'] as any },
+        type: { in: ['INCOME', 'APPOINTMENT', 'SUBSCRIPTION'] as any },
       },
     });
 
@@ -230,7 +230,7 @@ export async function getFinancialStats(barberId?: string) {
       _sum: { amount: true },
       where: {
         ...where,
-        type: 'SUBSCRIPTION', // Assuming market sales are linked to plan/product in some way or just filter by desc
+        productId: { not: null },
       },
     });
 

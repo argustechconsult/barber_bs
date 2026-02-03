@@ -16,6 +16,7 @@ import {
 
 interface ClienteAppProps {
   user: User;
+  onUpgradeClick?: () => void;
 }
 
 // Simple in-memory global to persist bookings during session for testing "occupied" logic
@@ -32,7 +33,7 @@ import { getPlans } from '../actions/services/plan.actions';
 import { getServices } from '../actions/services/service.actions';
 // const SESSION_APPOINTMENTS: { clientId: string; date: string }[] = [];
 
-const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
+const ClienteApp: React.FC<ClienteAppProps> = ({ user, onUpgradeClick }) => {
   const [step, setStep] = useState(1);
   const [selectedBarber, setSelectedBarber] = useState<Barbeiro | null>(null);
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
@@ -589,7 +590,11 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user }) => {
             {/* Premium Upgrade Banner for Start Plan */}
             {user.plan === UserPlan.START && showPremiumBanner && (
               <div
-                onClick={() => setShowMaintenanceModal(true)}
+                onClick={() =>
+                  onUpgradeClick
+                    ? onUpgradeClick()
+                    : setShowMaintenanceModal(true)
+                }
                 className="fixed bottom-20 left-0 right-0 md:left-64 mx-auto w-fit max-w-[90%] md:max-w-md bg-gradient-to-r from-amber-600 to-amber-400 p-2.5 px-4 rounded-[1.5rem] shadow-2xl shadow-amber-500/20 flex items-center justify-between gap-3 group cursor-pointer hover:scale-[1.02] transition-transform z-40"
               >
                 <div className="flex items-center gap-2.5">

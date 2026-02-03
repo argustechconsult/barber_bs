@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   X,
   Calendar,
+  RefreshCw,
 } from 'lucide-react';
 
 interface BarberFinancialViewProps {
@@ -20,7 +21,7 @@ interface Transaction {
   id: string;
   description: string;
   amount: number;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'INCOME' | 'EXPENSE' | 'SUBSCRIPTION' | 'APPOINTMENT';
   date: string;
 }
 
@@ -34,6 +35,7 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
     totalIncome: 0,
     totalExpense: 0,
     netProfit: 0,
+    marketSales: 0,
   });
 
   const fetchStats = () => {
@@ -46,13 +48,14 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
               id: t.id,
               description: t.description || 'Sem descrição',
               amount: t.amount,
-              type: t.type as 'INCOME' | 'EXPENSE',
+              type: t.type as any,
               date: t.date,
             })),
             totalIncome: res.stats.totalIncome,
             totalExpense: res.stats.totalExpense,
             netProfit: res.stats.netProfit,
-          });
+            marketSales: res.stats.marketSales,
+          } as any);
         }
       });
     });
@@ -88,7 +91,7 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
           },
           {
             label: 'Vendas Market',
-            value: 'R$ 0.00',
+            value: `R$ ${(financialStats as any).marketSales?.toFixed(2) || '0.00'}`,
             icon: ShoppingBag,
             color: 'text-blue-500',
           },
@@ -168,14 +171,23 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
           </p>
         </div>
 
-        {isAdmin && (
+        <div className="flex gap-2 w-full md:w-auto">
+          {isAdmin && (
+            <button
+              onClick={() => setShowAddTransaction(true)}
+              className="flex-1 md:flex-none bg-amber-500 text-black px-8 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/10"
+            >
+              <Plus size={20} /> Novo Lançamento
+            </button>
+          )}
           <button
-            onClick={() => setShowAddTransaction(true)}
-            className="w-full md:w-auto bg-amber-500 text-black px-8 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/10"
+            onClick={() => fetchStats()}
+            className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl hover:bg-neutral-800 transition-all text-neutral-400 hover:text-white"
+            title="Atualizar dados"
           >
-            <Plus size={20} /> Novo Lançamento
+            <RefreshCw size={20} />
           </button>
-        )}
+        </div>
       </header>
 
       {/* Stats Summary */}
@@ -286,15 +298,19 @@ const BarberFinancialView: React.FC<BarberFinancialViewProps> = ({ user }) => {
                 <div className="space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-500">Lucro Bruto Market</span>
-                    <span className="font-bold text-green-500">R$ 0.00</span>
+                    <span className="font-bold text-green-500">
+                      R${' '}
+                      {(financialStats as any).marketSales?.toFixed(2) ||
+                        '0.00'}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-500">Taxa de Margem</span>
-                    <span className="font-bold">0%</span>
+                    <span className="font-bold">20%</span>
                   </div>
                   <div className="h-[1px] bg-neutral-800 my-2"></div>
                   <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest text-center italic">
-                    Marketplace desativado
+                    Marketplace Ativo
                   </p>
                 </div>
               </div>

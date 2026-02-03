@@ -142,24 +142,26 @@ export async function getMyAppointments(userId: string) {
 
 export async function getBarberSchedule(barberId: string, dateStr: string) {
     try {
-        // Enforce UTC day range to avoid local timezone shifts
-        // dateStr is 'YYYY-MM-DD'
         const start = new Date(`${dateStr}T00:00:00.000Z`);
         const end = new Date(`${dateStr}T23:59:59.999Z`);
 
-        const appointments = await prisma.appointment.findMany({
-            where: {
-                barberId,
-                date: {
-                    gte: start,
-                    lte: end
-                },
-                // Only show confirmed or completed appointments in the agenda view.
-                // PENDING appointments (waiting for payment) block the slot but don't show here.
-                status: { in: ['CONFIRMED', 'COMPLETED'] }
+        const where: any = {
+            date: {
+                gte: start,
+                lte: end
             },
+            status: { in: ['CONFIRMED', 'COMPLETED'] }
+        };
+
+        if (barberId && barberId !== 'ALL') {
+            where.barberId = barberId;
+        }
+
+        const appointments = await prisma.appointment.findMany({
+            where,
             include: {
-                client: true // Include client details (name, etc)
+                client: true,
+                barber: true
             },
             orderBy: { date: 'asc' }
         });

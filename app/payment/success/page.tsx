@@ -3,7 +3,14 @@
 import Link from 'next/link';
 import { CheckCircle2, Calendar, Scissors, ArrowRight } from 'lucide-react';
 
+import { useSearchParams } from 'next/navigation';
+
 export default function PaymentSuccessPage() {
+  const searchParams = useSearchParams();
+  const type = searchParams.get('type');
+
+  const isSubscription = type === 'subscription';
+
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 text-center">
@@ -19,10 +26,12 @@ export default function PaymentSuccessPage() {
 
         <div className="space-y-3">
           <h1 className="text-4xl font-display font-black tracking-tight bg-gradient-to-b from-white to-neutral-400 bg-clip-text text-transparent">
-            Pagamento Confirmado!
+            {isSubscription ? 'Assinatura Ativa!' : 'Pagamento Confirmado!'}
           </h1>
           <p className="text-neutral-400 text-lg">
-            Seu agendamento foi garantido com sucesso.
+            {isSubscription
+              ? 'Sua assinatura Premium foi processada com sucesso.'
+              : 'Seu agendamento foi garantido com sucesso.'}
           </p>
         </div>
 
@@ -30,16 +39,20 @@ export default function PaymentSuccessPage() {
           <div className="bg-neutral-900/50 p-4 rounded-3xl border border-white/5 space-y-2">
             <Calendar size={24} className="text-amber-500 mx-auto" />
             <p className="text-xs text-neutral-500 uppercase font-black tracking-widest">
-              Reserva
+              {isSubscription ? 'Plano' : 'Reserva'}
             </p>
-            <p className="font-bold">Confirmada</p>
+            <p className="font-bold">
+              {isSubscription ? 'Premium' : 'Confirmada'}
+            </p>
           </div>
           <div className="bg-neutral-900/50 p-4 rounded-3xl border border-white/5 space-y-2">
             <Scissors size={24} className="text-amber-500 mx-auto" />
             <p className="text-xs text-neutral-500 uppercase font-black tracking-widest">
-              Serviço
+              {isSubscription ? 'Status' : 'Serviço'}
             </p>
-            <p className="font-bold">Garantido</p>
+            <p className="font-bold">
+              {isSubscription ? 'Ativo' : 'Garantido'}
+            </p>
           </div>
         </div>
 
