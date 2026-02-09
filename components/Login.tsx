@@ -87,7 +87,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignUpClick }) => {
                 name="email"
                 autoComplete="username"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value.toLowerCase())}
                 placeholder={isBarberView ? 'Seu usuário' : 'Seu usuário'}
                 className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-2.5 md:py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
                 required

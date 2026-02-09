@@ -1,24 +1,71 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle2, Calendar, Scissors, ArrowRight } from 'lucide-react';
+import {
+  CheckCircle2,
+  Calendar,
+  Scissors,
+  ArrowRight,
+  ShoppingBag,
+} from 'lucide-react';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { getTransaction } from '../../../actions/marketplace/marketplace.actions';
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get('type');
+  const orderNsu = searchParams.get('order_nsu');
 
   const isSubscription = type === 'subscription';
-  const amount = searchParams.get('amount');
+  const isMarketplace = type === 'marketplace';
+
+  const amountParam = searchParams.get('amount');
   const expirationDate = searchParams.get('expirationDate');
+
+  const [transaction, setTransaction] = useState<any>(null);
+
+  useEffect(() => {
+    if (isMarketplace && orderNsu) {
+      getTransaction(orderNsu).then((res) => {
+        if (res.success) {
+          setTransaction(res.transaction);
+        }
+      });
+    }
+  }, [isMarketplace, orderNsu]);
 
   const formattedDate = expirationDate
     ? format(parseISO(expirationDate), "dd 'de' MMMM, yyyy", { locale: ptBR })
     : null;
+
+  const getTitle = () => {
+    if (isSubscription) return 'Assinatura Ativa!';
+    if (isMarketplace) return 'Pedido Confirmado!';
+    return 'Pagamento Confirmado!';
+  };
+
+  const getSubtitle = () => {
+    if (isSubscription)
+      return 'Sua assinatura Premium foi processada com sucesso.';
+    if (isMarketplace) return 'Sua compra foi realizada com sucesso.';
+    return 'Seu agendamento foi garantido com sucesso.';
+  };
+
+  const getAmount = () => {
+    if (isMarketplace && transaction) return transaction.amount;
+    return amountParam;
+  };
+
+  const getDescription = () => {
+    if (isMarketplace && transaction) {
+      return transaction.description?.replace('Compra: ', '') || 'Produto';
+    }
+    return 'Garantido';
+  };
 
   return (
     <div className="max-w-md w-full space-y-8 text-center">
@@ -34,43 +81,59 @@ function PaymentSuccessContent() {
 
       <div className="space-y-3">
         <h1 className="text-4xl font-display font-black tracking-tight bg-gradient-to-b from-white to-neutral-400 bg-clip-text text-transparent">
-          {isSubscription ? 'Assinatura Ativa!' : 'Pagamento Confirmado!'}
+          {getTitle()}
         </h1>
-        <p className="text-neutral-400 text-lg">
-          {isSubscription
-            ? 'Sua assinatura Premium foi processada com sucesso.'
-            : 'Seu agendamento foi garantido com sucesso.'}
-        </p>
+        <p className="text-neutral-400 text-lg">{getSubtitle()}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-neutral-900/50 p-4 rounded-3xl border border-white/5 space-y-2">
-          <Calendar size={24} className="text-amber-500 mx-auto" />
+          {isMarketplace ? (
+            <ShoppingBag size={24} className="text-amber-500 mx-auto" />
+          ) : (
+            <Calendar size={24} className="text-amber-500 mx-auto" />
+          )}
           <p className="text-xs text-neutral-500 uppercase font-black tracking-widest">
-            {isSubscription ? 'Plano' : 'Reserva'}
+            {isSubscription ? 'Plano' : isMarketplace ? 'Produto' : 'Reserva'}
           </p>
-          <p className="font-bold">
-            {isSubscription ? 'Premium' : 'Confirmada'}
+          <p className="font-bold truncate">
+            {isSubscription
+              ? 'Premium'
+              : isMarketplace
+                ? transaction
+                  ? transaction.description?.replace('Compra: ', '')
+                  : '...'
+                : 'Confirmada'}
           </p>
         </div>
         <div className="bg-neutral-900/50 p-4 rounded-3xl border border-white/5 space-y-2">
           <Scissors size={24} className="text-amber-500 mx-auto" />
           <p className="text-xs text-neutral-500 uppercase font-black tracking-widest">
-            {isSubscription ? 'Próxima Renovação' : 'Serviço'}
+            {isSubscription
+              ? 'Próxima Renovação'
+              : isMarketplace
+                ? 'Valor'
+                : 'Serviço'}
           </p>
           <p className="font-bold">
-            {isSubscription ? formattedDate || 'Mensal' : 'Garantido'}
+            {isSubscription
+              ? formattedDate || 'Mensal'
+              : isMarketplace
+                ? transaction
+                  ? `R$ ${transaction.amount.toFixed(2)}`
+                  : '...'
+                : 'Garantido'}
           </p>
         </div>
       </div>
 
-      {isSubscription && amount && (
+      {isSubscription && amountParam && (
         <div className="bg-amber-500/10 p-6 rounded-3xl border border-amber-500/20 text-center animate-in fade-in zoom-in duration-700">
           <p className="text-xs text-amber-500 uppercase font-black tracking-widest mb-1">
             Valor da Mensalidade
           </p>
           <p className="text-3xl font-display font-black text-white">
-            R$ {amount}
+            R$ {amountParam}
           </p>
         </div>
       )}

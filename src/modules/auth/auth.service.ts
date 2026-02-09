@@ -6,8 +6,9 @@ import bcrypt from 'bcrypt';
 
 const EMAILJS_REST_API = 'https://api.emailjs.com/api/v1.0/email/send';
 
-export async function sendResetLink(email: string) {
+export async function sendResetLink(emailRaw: string) {
   try {
+    const email = emailRaw.toLowerCase();
     const user = await prisma.user.findUnique({
       where: { email }
     });
@@ -97,8 +98,9 @@ export async function resetPasswordByToken(token: string, password: string) {
   }
 }
 
-export async function validateUserIdentity(email: string, birthDate: string) {
+export async function validateUserIdentity(emailRaw: string, birthDate: string) {
   try {
+    const email = emailRaw.toLowerCase();
     const user = await prisma.user.findFirst({
       where: {
         email,
@@ -117,8 +119,9 @@ export async function validateUserIdentity(email: string, birthDate: string) {
   }
 }
 
-export async function updateUserPassword(email: string, birthDate: string, password: string) {
+export async function updateUserPassword(emailRaw: string, birthDate: string, password: string) {
   try {
+    const email = emailRaw.toLowerCase();
     const user = await prisma.user.findFirst({
       where: {
         email,

@@ -133,3 +133,14 @@ export async function deleteCategory(id: string) {
   }
 }
 
+export async function getTransaction(id: string) {
+  try {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+    });
+    return { success: true, transaction };
+  } catch (error) {
+    console.error('Get Transaction Error:', error);
+    return { success: false, message: 'Failed to fetch transaction' };
+  }
+}

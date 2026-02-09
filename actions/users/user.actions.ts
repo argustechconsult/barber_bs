@@ -19,7 +19,7 @@ export async function getBarbers() {
     return barbers.map(b => ({
         id: b.id,
         nome: b.name,
-        foto: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', // Default placeholder
+        foto: b.image || '/default.jpeg',
         bio: 'Barbeiro Profissional',
         intervaloAtendimento: 60,
         horariosTrabalho: { inicio: '09:00', fim: '19:00' },

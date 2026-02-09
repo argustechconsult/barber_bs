@@ -202,7 +202,7 @@ export async function createMarketplaceCheckout(data: {
                 email: data.customer.email || 'cliente@exemplo.com',
                 phone_number: cleanPhone.startsWith('55') ? `+${cleanPhone}` : `+55${cleanPhone}`,
             },
-            redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?order_nsu=${transaction.id}`,
+            redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?order_nsu=${transaction.id}&type=marketplace`,
             webhook_url: process.env.INFINITEPAY_WEBHOOK_URL || `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/infinitepay`,
         };
 

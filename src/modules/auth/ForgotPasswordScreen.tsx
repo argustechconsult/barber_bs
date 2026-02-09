@@ -58,7 +58,10 @@ export default function ForgotPasswordScreen({
         return;
       }
 
-      const response = await validateUserIdentity(email, birthDate);
+      const response = await validateUserIdentity(
+        email.toLowerCase(),
+        birthDate,
+      );
       if (response.success) {
         setStep('reset');
       } else {
@@ -89,7 +92,11 @@ export default function ForgotPasswordScreen({
         return;
       }
 
-      const response = await updateUserPassword(email, birthDate, password);
+      const response = await updateUserPassword(
+        email.toLowerCase(),
+        birthDate,
+        password,
+      );
       if (response.success) {
         setIsSuccess(true);
       } else {

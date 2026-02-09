@@ -50,7 +50,8 @@ export async function login(prevState: AuthState | null, formData: FormData): Pr
             isActive: user.isActive,
             whatsapp: user.whatsapp || undefined,
             barbeiroId: user.barbeiroId || undefined,
-            birthDate: user.birthDate || undefined
+            birthDate: user.birthDate || undefined,
+            image: user.image || undefined
         };
 
         return { success: true, user: mappedUser };
@@ -153,7 +154,8 @@ export async function checkSession() {
             isActive: user.isActive,
             whatsapp: user.whatsapp || undefined,
             barbeiroId: user.barbeiroId || undefined,
-            birthDate: user.birthDate || undefined
+            birthDate: user.birthDate || undefined,
+            image: user.image || undefined
         };
         return { isAuth: true, user: mappedUser };
     }

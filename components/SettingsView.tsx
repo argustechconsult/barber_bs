@@ -1034,6 +1034,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     required
                     className="w-full bg-neutral-900 border border-neutral-800 rounded-2xl px-6 py-4 outline-none focus:border-amber-500/40"
                     placeholder="lucas@barbearia.com"
+                    onChange={(e) => {
+                      const input = e.target as HTMLInputElement;
+                      input.value = input.value.toLowerCase();
+                    }}
                   />
                 </div>
                 <button
