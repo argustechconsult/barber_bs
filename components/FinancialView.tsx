@@ -12,6 +12,8 @@ import {
   X,
   AlertCircle,
   Copy,
+  Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { format, addMonths, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -26,6 +28,8 @@ interface FinancialViewProps {
   user: User;
   initialShowModal?: boolean;
 }
+
+import { generateInvoicePDF } from '../lib/invoice-generator';
 
 const FinancialView: React.FC<FinancialViewProps> = ({
   user,
@@ -44,6 +48,11 @@ const FinancialView: React.FC<FinancialViewProps> = ({
   const [loading, setLoading] = useState(false);
   const [pixData, setPixData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [confirmingMessage, setConfirmingMessage] = useState(
+    'Autenticando dados...',
+  );
 
   // Form State
   const [formData, setFormData] = useState({
@@ -148,6 +157,7 @@ const FinancialView: React.FC<FinancialViewProps> = ({
     const cleanCep = cep.replace(/\D/g, '');
     if (cleanCep.length !== 8) return;
 
+    setCepLoading(true);
     // We can call server action
     try {
       const { getAddressByCep } =
@@ -164,12 +174,28 @@ const FinancialView: React.FC<FinancialViewProps> = ({
       }
     } catch (e) {
       console.error('CEP lookup error', e);
+    } finally {
+      setCepLoading(false);
     }
   };
 
   const handleCreateSubscription = async () => {
     setLoading(true);
+    setIsConfirming(true);
+    setConfirmingMessage('Autenticando dados...');
     setError(null);
+
+    // Dynamic messages
+    const messageInterval = setInterval(() => {
+      setConfirmingMessage((prev) => {
+        if (prev === 'Autenticando dados...')
+          return 'Validando com a operadora...';
+        if (prev === 'Validando com a operadora...')
+          return 'Finalizando assinatura...';
+        return prev;
+      });
+    }, 2500);
+
     try {
       const result = await createAsaasSubscription({
         userId: user.id,
@@ -180,16 +206,27 @@ const FinancialView: React.FC<FinancialViewProps> = ({
       });
 
       if (result.success) {
+        setConfirmingMessage('Configurando seu acesso Premium...');
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        clearInterval(messageInterval);
+
         if (billingType === 'PIX' && result.pix) {
           setPixData(result.pix);
           setCheckoutStep('pix');
+          setIsConfirming(false);
         } else {
-          router.push('/payment/success?type=subscription');
+          router.push(
+            `/payment/success?type=subscription&amount=${result.amount}&expirationDate=${result.expirationDate}`,
+          );
         }
       } else {
+        clearInterval(messageInterval);
+        setIsConfirming(false);
         setError(result.message || 'Erro ao criar assinatura');
       }
     } catch (err: any) {
+      clearInterval(messageInterval);
+      setIsConfirming(false);
       setError(err.message || 'Erro inesperado');
     } finally {
       setLoading(false);
@@ -222,7 +259,9 @@ const FinancialView: React.FC<FinancialViewProps> = ({
   };
 
   const lastRenewalDate = user.lastRenewal
-    ? parseISO(user.lastRenewal)
+    ? typeof user.lastRenewal === 'string'
+      ? parseISO(user.lastRenewal)
+      : new Date(user.lastRenewal)
     : new Date();
   const nextRenewalDate = addMonths(lastRenewalDate, 1);
 
@@ -249,7 +288,7 @@ const FinancialView: React.FC<FinancialViewProps> = ({
                 Plano Atual
               </p>
               <h3 className="text-3xl font-display font-bold">
-                {isPremium ? 'Premium Mensalista' : 'Start'}
+                {isPremium ? 'Plano VIP' : 'Start'}
               </h3>
             </div>
             <div className="flex gap-2">
@@ -317,24 +356,47 @@ const FinancialView: React.FC<FinancialViewProps> = ({
                         className="flex items-center justify-between p-4 bg-neutral-800/50 border border-neutral-800 rounded-2xl"
                       >
                         <div className="flex items-center gap-3">
-                          <ReceiptText className="text-neutral-400" size={18} />
+                          <div className="bg-amber-500/10 p-2 rounded-xl">
+                            <ReceiptText className="text-amber-500" size={20} />
+                          </div>
                           <div>
-                            <p className="text-sm font-bold">
-                              {invoice.description || 'Mensalidade'}
+                            <p className="text-sm font-bold text-white">
+                              {invoice.description ||
+                                'Assinatura Plano VIP - Inicial'}
                             </p>
-                            <p className="text-[10px] text-neutral-500">
+                            <p className="text-[10px] text-neutral-500 font-medium">
                               Pago em{' '}
                               {invoice.date
                                 ? format(parseISO(invoice.date), 'dd/MM/yyyy')
-                                : 'N/A'}
+                                : '08/02/2026'}
                             </p>
                           </div>
                         </div>
                         <button
-                          onClick={() => alert('Baixando fatura...')}
-                          className="p-2 bg-amber-500 text-black rounded-xl hover:scale-105 transition-transform"
+                          onClick={() => {
+                            generateInvoicePDF({
+                              clientName: user.name,
+                              clientEmail: user.email || 'Não informado',
+                              clientPhone:
+                                user.phone || user.whatsapp || 'Não informado',
+                              planName:
+                                invoice.description ||
+                                'Assinatura Plano VIP - Inicial',
+                              amount: invoice.amount || 150.0,
+                              paymentDate: invoice.date
+                                ? format(parseISO(invoice.date), 'dd/MM/yyyy')
+                                : '08/02/2026',
+                              invoiceNumber: invoice.id
+                                .split('-')[0]
+                                .toUpperCase(),
+                            });
+                          }}
+                          className="group relative flex items-center gap-2 px-4 py-2 bg-amber-500 text-black rounded-xl font-bold hover:bg-amber-400 transition-all active:scale-95 shadow-lg shadow-amber-500/20"
                         >
                           <Download size={16} />
+                          <span className="text-[10px] uppercase tracking-wider">
+                            Baixar PDF
+                          </span>
                         </button>
                       </div>
                     ))
@@ -493,12 +555,13 @@ const FinancialView: React.FC<FinancialViewProps> = ({
                       Endereço
                     </label>
                     <input
-                      className="w-full bg-black/40 border border-neutral-800 rounded-2xl px-5 py-3.5 outline-none focus:border-amber-500"
-                      value={formData.address}
+                      className={`w-full bg-black/40 border border-neutral-800 rounded-2xl px-5 py-3.5 outline-none focus:border-amber-500 ${cepLoading ? 'animate-pulse' : ''}`}
+                      value={cepLoading ? 'Buscando...' : formData.address}
                       onChange={(e) =>
                         setFormData({ ...formData, address: e.target.value })
                       }
                       placeholder="Rua, Av..."
+                      readOnly={cepLoading}
                     />
                   </div>
                 </div>
@@ -524,12 +587,13 @@ const FinancialView: React.FC<FinancialViewProps> = ({
                       Cidade
                     </label>
                     <input
-                      className="w-full bg-black/40 border border-neutral-800 rounded-2xl px-5 py-3.5 outline-none focus:border-amber-500"
-                      value={formData.city}
+                      className={`w-full bg-black/40 border border-neutral-800 rounded-2xl px-5 py-3.5 outline-none focus:border-amber-500 ${cepLoading ? 'animate-pulse' : ''}`}
+                      value={cepLoading ? 'Buscando...' : formData.city}
                       onChange={(e) =>
                         setFormData({ ...formData, city: e.target.value })
                       }
                       placeholder="São Paulo"
+                      readOnly={cepLoading}
                     />
                   </div>
                 </div>
@@ -726,6 +790,46 @@ const FinancialView: React.FC<FinancialViewProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Confirming Subscription Overlay */}
+      {isConfirming && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
+          <div className="bg-neutral-900 border border-white/10 p-10 rounded-[3rem] max-w-sm w-full text-center space-y-8 shadow-[0_0_100px_rgba(245,158,11,0.15)] animate-in zoom-in-95 duration-500 relative overflow-hidden">
+            {/* Amber Glow Effects */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 blur-[100px]"></div>
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/10 blur-[100px]"></div>
+
+            <div className="relative">
+              <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(245,158,11,0.3)] border-4 border-black animate-pulse">
+                <Loader2 className="text-black w-12 h-12 animate-spin-slow" />
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-2xl font-display font-black tracking-tight text-white uppercase italic">
+                  Confirmando Assinatura
+                </h3>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-ping"></div>
+                    <p className="text-amber-500 font-bold text-xs uppercase tracking-[0.2em]">
+                      Processando sua solicitação
+                    </p>
+                  </div>
+                  <p className="text-neutral-400 text-sm font-medium animate-pulse h-5 transition-all">
+                    {confirmingMessage}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.3em]">
+                Stayler © All Rights Reserved
+              </p>
+            </div>
           </div>
         </div>
       )}

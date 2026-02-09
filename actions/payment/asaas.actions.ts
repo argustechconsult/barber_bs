@@ -112,36 +112,46 @@ export async function createAsaasSubscription(data: CreateSubscriptionData) {
 
     const subscription = await asaas.createSubscription(subscriptionData);
 
-    // 3. Update User with subscription ID
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        asaasSubscriptionId: subscription.id,
-        subscriptionStatus: 'PENDING', // Will be confirmed by webhook
-        plan: plan.name.toUpperCase().includes('PREMIUM') ? UserPlan.PREMIUM : UserPlan.START,
-      }
-    });
+    // 3. Update User with subscription ID and Plan
+    const nextRenewalDate = new Date();
+    nextRenewalDate.setMonth(nextRenewalDate.getMonth() + 1);
+    const nextRenewalStr = nextRenewalDate.toISOString().split('T')[0];
 
     // 4. If PIX (or Hybrid Boleto fallback), get the QR Code of the first payment
     const payments = await asaas.getSubscriptionPayments(subscription.id);
     const firstPayment = payments.data[0];
 
+    const isPaid = firstPayment?.status === 'RECEIVED' || firstPayment?.status === 'CONFIRMED';
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        asaasSubscriptionId: subscription.id,
+        subscriptionStatus: isPaid ? 'ACTIVE' : 'PENDING',
+        plan: UserPlan.PREMIUM,
+        lastRenewal: new Date(),
+        nextRenewal: nextRenewalDate,
+      }
+    });
+
     if (firstPayment) {
-        // Upsert initial PENDING transaction record
+        // Upsert initial transaction record
         await prisma.transaction.upsert({
             where: { asaasPaymentId: firstPayment.id },
             update: {
-                status: firstPayment.status === 'RECEIVED' || firstPayment.status === 'CONFIRMED' ? 'PAID' : 'PENDING',
+                status: isPaid ? 'PAID' : 'PENDING',
                 billingType: firstPayment.billingType,
+                expiration_date: nextRenewalDate, // Service is valid until next renewal
             },
             create: {
                 asaasPaymentId: firstPayment.id,
                 amount: firstPayment.value,
                 type: 'SUBSCRIPTION',
-                status: firstPayment.status === 'RECEIVED' || firstPayment.status === 'CONFIRMED' ? 'PAID' : 'PENDING',
+                status: isPaid ? 'PAID' : 'PENDING',
                 userId: user.id,
                 billingType: firstPayment.billingType,
                 description: `Assinatura Plano ${plan.name} - Inicial`,
+                expiration_date: nextRenewalDate, // Service is valid until next renewal
             },
         });
 
@@ -150,9 +160,18 @@ export async function createAsaasSubscription(data: CreateSubscriptionData) {
             return { 
                 success: true, 
                 subscriptionId: subscription.id,
-                pix: qrCodeData 
+                pix: qrCodeData,
+                amount: firstPayment.value,
+                expirationDate: nextRenewalStr, // Show next renewal date on success page
             };
         }
+
+        return { 
+            success: true, 
+            subscriptionId: subscription.id,
+            amount: firstPayment.value,
+            expirationDate: nextRenewalStr, // Show next renewal date on success page
+        };
     }
 
     return { success: true, subscriptionId: subscription.id };
@@ -208,6 +227,7 @@ export async function syncUserAsaasStatus(userId: string) {
                     billingType: payment.billingType,
                     description: `Renovação Assinatura Asaas - ${payment.billingType}`,
                     createdAt: payment.dateCreated ? new Date(payment.dateCreated) : new Date(),
+                    expiration_date: payment.dueDate ? new Date(payment.dueDate) : null,
                 }
             });
         }

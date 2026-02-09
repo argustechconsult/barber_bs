@@ -65,8 +65,8 @@ export interface Service {
   id: string;
   name: string;
   price: number;
-  duration: number; // minutes
 }
+
 
 export interface Product {
   id: string;

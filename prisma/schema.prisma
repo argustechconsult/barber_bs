@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
   output   = "../lib/generated/client"
@@ -8,6 +5,118 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id                  String        @id @default(uuid())
+  name                String
+  email               String?       @unique
+  whatsapp            String?       @unique
+  birthDate           String?
+  password            String?
+  role                UserRole      @default(CLIENTE)
+  plan                UserPlan?     @default(PREMIUM)
+  barbeiroId          String?
+  isActive            Boolean       @default(true)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  subscriptionStatus  String?
+  address             String?
+  addressComplement   String?
+  addressNumber       String?
+  appointmentInterval Int?          @default(10)
+  asaasCustomerId     String?       @unique
+  asaasSubscriptionId String?       @unique
+  city                String?
+  cpfCnpj             String?
+  endTime             String?       @default("18:00")
+  image               String?
+  inviteToken         String?       @unique
+  lastRenewal         DateTime?
+  nextRenewal         DateTime?
+  offDays             String[]      @default([])
+  phone               String?
+  postalCode          String?
+  province            String?
+  resetToken          String?       @unique
+  resetTokenExpiry    DateTime?
+  startTime           String?       @default("09:00")
+  workEndDate         String?
+  workStartDate       String?
+  barberAppointments  Appointment[] @relation("BarberAppointments")
+  clientAppointments  Appointment[] @relation("ClientAppointments")
+  transactions        Transaction[]
+}
+
+model Appointment {
+  id          String       @id @default(uuid())
+  date        DateTime
+  clientId    String
+  barberId    String
+  serviceIds  String
+  status      String       @default("PENDING")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  barber      User         @relation("BarberAppointments", fields: [barberId], references: [id])
+  client      User         @relation("ClientAppointments", fields: [clientId], references: [id])
+  transaction Transaction?
+}
+
+model Service {
+  id        String   @id @default(uuid())
+  name      String
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  category    String
+  price       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  image       String?
+  stock       Int      @default(0)
+}
+
+model ProductCategory {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id                        String            @id @default(uuid())
+  amount                    Float
+  status                    TransactionStatus @default(PENDING)
+  type                      TransactionType
+  userId                    String
+  appointmentId             String?           @unique
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @updatedAt
+  asaasPaymentId            String?           @unique
+  billingType               String?
+  description               String?
+  infinitePayOrderNSU       String?           @unique
+  infinitePayReceiptUrl     String?
+  infinitePaySlug           String?           @unique
+  infinitePayTransactionNSU String?           @unique
+  productId                 String?
+  expiration_date           DateTime?
+  appointment               Appointment?      @relation(fields: [appointmentId], references: [id])
+  user                      User              @relation(fields: [userId], references: [id])
+}
+
+model Plan {
+  id        String   @id @default(uuid())
+  name      String
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum UserRole {
@@ -19,99 +128,6 @@ enum UserRole {
 enum UserPlan {
   START
   PREMIUM
-}
-
-model User {
-  id                  String    @id @default(uuid())
-  name                String
-  email               String?   @unique
-  inviteToken         String?   @unique // Token for INVITE flow
-  whatsapp            String?   @unique
-  birthDate           String?
-  password            String?
-  role                UserRole  @default(CLIENTE)
-  plan                UserPlan? @default(START)
-  barbeiroId          String?
-  isActive            Boolean   @default(true)
-  // stripeCustomerId     String?   @unique
-  // stripeSubscriptionId String?   @unique
-  subscriptionStatus  String? // ACTIVE, INACTIVE, PAST_DUE, CANCELLED
-  asaasCustomerId     String?   @unique
-  asaasSubscriptionId String?   @unique
-  lastRenewal         DateTime?
-  nextRenewal         DateTime?
-
-  // Customer info for Asaas
-  cpfCnpj           String?
-  phone             String?
-  postalCode        String?
-  address           String?
-  addressNumber     String?
-  addressComplement String?
-  province          String?
-  city              String?
-
-  createdAt           DateTime  @default(now())
-  appointmentInterval Int?      @default(10)
-  startTime           String?   @default("09:00")
-  endTime             String?   @default("18:00")
-  workStartDate       String? // Optional start date for schedule (YYYY-MM-DD)
-  workEndDate         String? // Optional end date for schedule (YYYY-MM-DD)
-  offDays             String[]  @default([])
-  resetToken          String?   @unique
-  resetTokenExpiry    DateTime?
-  image               String? // User/Barber profile photo (Base64 or URL)
-  updatedAt           DateTime  @updatedAt
-
-  clientAppointments Appointment[] @relation("ClientAppointments")
-  barberAppointments Appointment[] @relation("BarberAppointments")
-  transactions       Transaction[]
-}
-
-model Appointment {
-  id          String       @id @default(uuid())
-  date        DateTime
-  clientId    String
-  client      User         @relation("ClientAppointments", fields: [clientId], references: [id])
-  barberId    String
-  barber      User         @relation("BarberAppointments", fields: [barberId], references: [id])
-  serviceIds  String
-  status      String       @default("PENDING") // PENDING, CONFIRMED, CANCELLED, COMPLETED
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  transaction Transaction?
-}
-
-model Service {
-  id        String   @id @default(uuid())
-  name      String
-  price     Float
-  duration  Int      @default(30)
-  // stripeProductId String?
-  // stripePriceId   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  category    String
-  price       Float
-  stock       Int      @default(0)
-  image       String? // Base64 storage
-  // stripeProductId String?
-  // stripePriceId   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model ProductCategory {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 enum TransactionType {
@@ -126,42 +142,4 @@ enum TransactionStatus {
   PAID
   FAILED
   REFUNDED
-}
-
-model Transaction {
-  id          String            @id @default(uuid())
-  description String? // Added for manual entries
-  amount      Float
-  status      TransactionStatus @default(PENDING)
-  type        TransactionType
-  // stripeSessionId String?           @unique
-
-  infinitePayOrderNSU       String? @unique
-  infinitePayTransactionNSU String? @unique
-  infinitePaySlug           String? @unique
-  infinitePayReceiptUrl     String?
-
-  asaasPaymentId String? @unique
-  billingType    String? // PIX, CREDIT_CARD, etc
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  appointmentId String?      @unique
-  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
-
-  productId String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Plan {
-  id              String   @id @default(uuid())
-  name            String
-  price           Float
-  stripeProductId String?
-  stripePriceId   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
 }

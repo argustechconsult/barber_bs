@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
           update: {
             status: transactionStatus,
             billingType: payment.billingType,
+            expiration_date: payment.dueDate ? new Date(payment.dueDate) : undefined,
           },
           create: {
             asaasPaymentId,
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
             description: asaasSubscriptionId 
                 ? `Assinatura Asaas - ${event}` 
                 : `Pagamento Avulso Asaas - ${event}`,
+            expiration_date: payment.dueDate ? new Date(payment.dueDate) : undefined,
           },
         });
 

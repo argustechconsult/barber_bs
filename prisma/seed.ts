@@ -11,6 +11,40 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // Clean Vercel Blobs if token exists
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      const { list, del } = await import('@vercel/blob');
+      console.log('Cleaning Vercel Blobs...');
+      const { blobs } = await list();
+      if (blobs.length > 0) {
+        await Promise.all(blobs.map((blob) => del(blob.url)));
+        console.log(`Deleted ${blobs.length} blobs.`);
+      } else {
+        console.log('No blobs found to delete.');
+      }
+    } catch (error) {
+      console.error('Error cleaning blobs:', error);
+    }
+  } else {
+    console.log('BLOB_READ_WRITE_TOKEN not found, skipping blob cleanup.');
+  }
+
+  console.log('Truncating tables...');
+  const tablenames = await prisma.$queryRaw<
+    Array<{ tablename: string }>
+  >`SELECT tablename FROM pg_tables WHERE schemaname='public'`;
+
+  const tables = tablenames
+    .map(({ tablename }) => tablename)
+    .filter((name) => name !== '_prisma_migrations')
+    .map((name) => `"${name}"`)
+    .join(', ');
+
+  if (tables.length > 0) {
+    await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
+  }
+  console.log('Tables truncated.');
   const passwordAdmin = await bcrypt.hash('123456', 10);
   const passwordStart = await bcrypt.hash('123456', 10);
   const passwordPremium = await bcrypt.hash('123456', 10);
@@ -73,10 +107,10 @@ async function main() {
   // Services
   await prisma.service.createMany({
     data: [
-      { name: 'Corte de Cabelo', price: 1000, duration: 45 },
-      { name: 'Barba Completa', price: 1000, duration: 30 },
-      { name: 'Corte + Barba', price: 1000, duration: 60 },
-      { name: 'Acabamento/Pezinho', price: 1000, duration: 15 },
+      { name: 'Corte de Cabelo', price: 1000 },
+      { name: 'Barba Completa', price: 1000 },
+      { name: 'Corte + Barba', price: 1000 },
+      { name: 'Acabamento/Pezinho', price: 1000 },
     ],
     skipDuplicates: true,
   });

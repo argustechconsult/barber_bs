@@ -54,6 +54,8 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user, onUpgradeClick }) => {
   );
   const [showPremiumBanner, setShowPremiumBanner] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [showSubscriptionSuccess, setShowSubscriptionSuccess] = useState(false);
+  const [showPastDueBlock, setShowPastDueBlock] = useState(false);
 
   // Initialize showPremiumBanner from sessionStorage
   React.useEffect(() => {
@@ -123,6 +125,12 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user, onUpgradeClick }) => {
             console.error('Failed to parse pending booking', e);
           }
         }
+      }
+
+      if (params.get('subscription_success') === 'true') {
+        setShowSubscriptionSuccess(true);
+        // Clean URL to avoid message repeating on refresh
+        window.history.replaceState({}, '', window.location.pathname);
       }
     }
   }, []);
@@ -271,7 +279,20 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user, onUpgradeClick }) => {
 
   const confirmBooking = async () => {
     if (selectedBarber && selectedTime) {
-      const dateTimeStr = `${selectedDateStr}T${selectedTime}:00`;
+      // Immediate Payment Guard for Overdue Subscriptions
+      if (
+        user.plan === UserPlan.PREMIUM &&
+        user.subscriptionStatus === 'PAST_DUE'
+      ) {
+        setShowPastDueBlock(true);
+        return;
+      }
+
+      // Create a local Date object from the selected date and time
+      const [year, month, day] = selectedDateStr.split('-').map(Number);
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      const localDate = new Date(year, month - 1, day, hours, minutes);
+      const dateTimeStr = localDate.toISOString();
 
       // 1. Create Appointment
       const result = await createAppointment({
@@ -392,7 +413,51 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user, onUpgradeClick }) => {
     setPaymentMethod(null);
     setIsSuccess(false);
     setShowPremiumRestriction(false);
+    setShowPastDueBlock(false);
   };
+
+  if (showPastDueBlock) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2.5rem] max-w-sm w-full text-center space-y-6 shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-red-400"></div>
+
+          <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+            <Banknote className="text-red-500 w-10 h-10" />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-2xl font-display font-bold text-white">
+              Ops, pagamento pendente!
+            </h3>
+            <p className="text-neutral-400 text-sm leading-relaxed">
+              Identificamos uma pendência em sua assinatura{' '}
+              <span className="text-amber-500 font-bold">Premium</span>. Para
+              continuar agendando, por favor regularize seu pagamento.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                if (onUpgradeClick) onUpgradeClick();
+                setShowPastDueBlock(false);
+              }}
+              className="w-full bg-amber-500 text-black font-bold py-4 rounded-2xl hover:bg-amber-400 transition-colors shadow-lg active:scale-95 flex items-center justify-center gap-2"
+            >
+              Regularizar Agora <ChevronRight size={18} strokeWidth={3} />
+            </button>
+            <button
+              onClick={resetFlow}
+              className="w-full text-neutral-500 text-xs font-bold uppercase tracking-widest hover:text-white transition-colors"
+            >
+              Voltar para Início
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showPremiumRestriction) {
     return (
@@ -506,6 +571,25 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user, onUpgradeClick }) => {
 
   return (
     <div className="max-w-md mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {showSubscriptionSuccess && (
+        <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-3xl text-green-500 flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <div className="bg-green-500 rounded-full p-1 text-black">
+            <Check size={16} strokeWidth={4} />
+          </div>
+          <div>
+            <p className="font-bold text-sm">Assinatura Ativa!</p>
+            <p className="text-[10px] opacity-80 uppercase tracking-widest font-bold">
+              Seu plano Premium já está disponível.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowSubscriptionSuccess(false)}
+            className="ml-auto opacity-50 hover:opacity-100"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
       <header className="flex flex-col items-center space-y-4 pt-4">
         <div className="w-24 h-24 rounded-full border-4 border-amber-500/30 p-1">
           <div className="w-full h-full rounded-full overflow-hidden bg-neutral-800 flex items-center justify-center border-2 border-amber-500">
@@ -851,11 +935,15 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user, onUpgradeClick }) => {
                     end.setHours(endHr, endMin, 0, 0);
 
                     while (current < end) {
-                      const timeStr = current.toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false,
-                      });
+                      const hours = current
+                        .getHours()
+                        .toString()
+                        .padStart(2, '0');
+                      const minutes = current
+                        .getMinutes()
+                        .toString()
+                        .padStart(2, '0');
+                      const timeStr = `${hours}:${minutes}`;
                       slots.push(timeStr);
                       current.setMinutes(current.getMinutes() + interval);
                     }
@@ -871,11 +959,15 @@ const ClienteApp: React.FC<ClienteAppProps> = ({ user, onUpgradeClick }) => {
                     end.setHours(endHr, 0, 0, 0);
 
                     while (current < end) {
-                      const timeStr = current.toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false,
-                      });
+                      const hours = current
+                        .getHours()
+                        .toString()
+                        .padStart(2, '0');
+                      const minutes = current
+                        .getMinutes()
+                        .toString()
+                        .padStart(2, '0');
+                      const timeStr = `${hours}:${minutes}`;
                       slots.push(timeStr);
                       current.setMinutes(current.getMinutes() + interval);
                     }

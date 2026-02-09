@@ -35,6 +35,14 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
     'monthly' | 'quarterly' | 'semiannual' | 'annual'
   >('monthly');
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'DEBT' | 'CHURN'>(
+    'ALL',
+  );
+  const [planFilter, setPlanFilter] = useState<'ALL' | 'START' | 'PREMIUM'>(
+    'ALL',
+  );
+
   const isAdmin = user.role === UserRole.ADMIN;
   // const clients = MOCK_USERS.filter((u) => u.role === UserRole.CLIENTE); // REMOVED
   const [clients, setClients] = useState<any[]>([]); // Real clients
@@ -73,6 +81,12 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
           if (res.success && res.stats) {
             setStatsData(res.stats);
           }
+        });
+      });
+      // Barbers also need clients list for the modal
+      import('../actions/users/user.actions').then(({ getClients }) => {
+        getClients().then((fetchedClients) => {
+          setClients(fetchedClients);
         });
       });
     } else if (user.role === UserRole.ADMIN) {
@@ -167,6 +181,12 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
           value: statsData.averagePerDay,
           icon: Clock,
           color: 'text-purple-500',
+        },
+        {
+          label: 'Meus Clientes',
+          value: clients.length.toString(),
+          icon: Users,
+          color: 'text-amber-500',
         },
       ];
 
@@ -379,7 +399,7 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
               onClick={() => setShowSubscribers(true)}
               className="w-full bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-amber-500 transition-colors shadow-lg active:scale-95"
             >
-              <Eye size={16} /> Ver Lista Detalhada
+              <Eye size={16} /> Gestão de Clientes
             </button>
           </div>
 
@@ -406,67 +426,207 @@ const BarberDashboard: React.FC<BarberDashboardProps> = ({ user }) => {
         </div>
       )}
 
-      {/* Subscriber List Modal - Admin ONLY */}
-      {showSubscribers && isAdmin && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-          <div className="bg-neutral-950 border border-neutral-800 w-full max-w-2xl rounded-[2.5rem] p-8 space-y-8 animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[80vh]">
-            <div className="flex items-center justify-between">
+      {/* Subscriber List Modal - Admin & Barbers */}
+      {showSubscribers && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[100] flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-800 w-full max-w-5xl rounded-[2.5rem] p-6 md:p-10 space-y-8 animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh] shadow-[0_0_100px_rgba(245,158,11,0.05)]">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
-                <h3 className="text-2xl font-display font-bold">
-                  Lista de Assinantes
+                <h3 className="text-3xl font-display font-black tracking-tighter text-white">
+                  GESTÃO DE CLIENTES
                 </h3>
-                <p className="text-neutral-500 text-sm">
-                  {clients.length} clientes ativos no sistema
+                <p className="text-neutral-500 text-sm font-medium">
+                  Monitoramento e fidelização da base ativa
                 </p>
               </div>
-              <button
-                onClick={() => setShowSubscribers(false)}
-                className="p-3 bg-neutral-900 border border-neutral-800 rounded-2xl text-neutral-500 hover:text-white transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-3">
+                <div className="bg-neutral-800 p-1 rounded-2xl flex gap-1">
+                  {(['ALL', 'DEBT', 'CHURN'] as const).map((s) => {
+                    const count = clients.filter(
+                      (c) => s === 'ALL' || c.status === s,
+                    ).length;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => setStatusFilter(s)}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                          statusFilter === s
+                            ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+                            : 'text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        {s === 'ALL'
+                          ? 'Todos'
+                          : s === 'DEBT'
+                            ? 'Inadimplentes'
+                            : 'Churn'}
+                        <span
+                          className={`px-2 py-0.5 rounded-lg text-[8px] ${
+                            statusFilter === s
+                              ? 'bg-black/20'
+                              : 'bg-neutral-700 text-neutral-500'
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => setShowSubscribers(false)}
+                  className="p-3 bg-neutral-800 border border-neutral-700/50 rounded-2xl text-neutral-400 hover:text-white transition-all hover:scale-105"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
-            <div className="overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-              {clients.map((client) => (
-                <div
-                  key={client.id}
-                  className="p-4 bg-neutral-900/50 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-amber-500/20 transition-all"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center border border-white/5 overflow-hidden">
-                      {client.image ||
-                      (client.whatsapp &&
-                        client.whatsapp.startsWith('data:image')) ? (
-                        <img
-                          src={client.image || client.whatsapp}
-                          alt={client.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <UserIcon size={24} className="text-neutral-600" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-bold">{client.name}</p>
-                      <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">
-                        {client.whatsapp || 'Sem contato'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border ${
-                        client.plan === UserPlan.PREMIUM
-                          ? 'bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/10'
-                          : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative group">
+                <Scissors
+                  className="absolute left-5 top-1/2 -translate-y-1/2 text-neutral-500 group-focus-within:text-amber-500 transition-colors"
+                  size={18}
+                />
+                <input
+                  type="text"
+                  placeholder="Buscar cliente por nome ou whatsapp..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-black/40 border border-neutral-800 rounded-2xl pl-12 pr-6 py-4 outline-none focus:border-amber-500/40 transition-all font-medium text-sm"
+                />
+              </div>
+              <div className="flex bg-neutral-800 p-1 rounded-2xl gap-1">
+                {(['ALL', 'START', 'PREMIUM'] as const).map((p) => {
+                  const count = clients.filter(
+                    (c) => p === 'ALL' || c.plan === p,
+                  ).length;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPlanFilter(p)}
+                      className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                        planFilter === p
+                          ? 'bg-neutral-700 text-amber-500 border border-amber-500/20'
+                          : 'text-neutral-500 hover:text-white'
                       }`}
                     >
-                      {client.plan}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                      {p === 'ALL' ? 'Todos Planos' : p}
+                      <span
+                        className={`px-2 py-0.5 rounded-lg text-[8px] ${
+                          planFilter === p
+                            ? 'bg-amber-500/20 text-amber-500'
+                            : 'bg-neutral-700 text-neutral-500'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+                <table className="w-full text-left border-collapse">
+                  <thead className="sticky top-0 bg-neutral-900 z-10">
+                    <tr className="text-[10px] uppercase font-black text-neutral-500 tracking-[0.2em] border-b border-neutral-800">
+                      <th className="py-4 px-4 font-black">Cliente</th>
+                      <th className="py-4 px-4 font-black">Contato</th>
+                      <th className="py-4 px-4 font-black">Plano</th>
+                      <th className="py-4 px-4 font-black">Status</th>
+                      <th className="py-4 px-4 font-black">Última Renovação</th>
+                      <th className="py-4 px-4 font-black text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-800/50">
+                    {clients
+                      .filter((c) => {
+                        const matchesSearch =
+                          c.name
+                            .toLowerCase()
+                            .includes(searchTerm.toLowerCase()) ||
+                          (c.whatsapp && c.whatsapp.includes(searchTerm));
+                        const matchesStatus =
+                          statusFilter === 'ALL' || c.status === statusFilter;
+                        const matchesPlan =
+                          planFilter === 'ALL' || c.plan === planFilter;
+                        return matchesSearch && matchesStatus && matchesPlan;
+                      })
+                      .map((client) => (
+                        <tr
+                          key={client.id}
+                          className="group hover:bg-white/[0.02] transition-colors"
+                        >
+                          <td className="py-5 px-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-neutral-800 border border-white/5 flex items-center justify-center overflow-hidden shrink-0">
+                                {client.image ? (
+                                  <img
+                                    src={client.image}
+                                    alt={client.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <UserIcon
+                                    size={20}
+                                    className="text-neutral-600"
+                                  />
+                                )}
+                              </div>
+                              <span className="font-bold text-sm text-neutral-200">
+                                {client.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-5 px-4 text-xs font-medium text-neutral-500">
+                            {client.whatsapp || 'N/A'}
+                          </td>
+                          <td className="py-5 px-4">
+                            <span
+                              className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
+                                client.plan === 'PREMIUM'
+                                  ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                  : 'bg-neutral-800 text-neutral-500 border-neutral-700'
+                              }`}
+                            >
+                              {client.plan}
+                            </span>
+                          </td>
+                          <td className="py-5 px-4">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  client.status === 'PAID'
+                                    ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+                                    : client.status === 'DEBT'
+                                      ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'
+                                      : 'bg-neutral-600'
+                                }`}
+                              />
+                              <span className="text-[10px] font-bold uppercase tracking-tight">
+                                {client.status === 'PAID'
+                                  ? 'Em dia'
+                                  : client.status === 'DEBT'
+                                    ? 'Inadimplente'
+                                    : 'Churn'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-5 px-4 text-xs font-medium text-neutral-400">
+                            {client.lastRenewal || 'N/A'}
+                          </td>
+                          <td className="py-5 px-4 text-right">
+                            <button className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl transition-all border border-white/5 hover:border-white/10 text-neutral-400 hover:text-white">
+                              Detalhes
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

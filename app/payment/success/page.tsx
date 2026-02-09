@@ -5,12 +5,20 @@ import { CheckCircle2, Calendar, Scissors, ArrowRight } from 'lucide-react';
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get('type');
 
   const isSubscription = type === 'subscription';
+  const amount = searchParams.get('amount');
+  const expirationDate = searchParams.get('expirationDate');
+
+  const formattedDate = expirationDate
+    ? format(parseISO(expirationDate), "dd 'de' MMMM, yyyy", { locale: ptBR })
+    : null;
 
   return (
     <div className="max-w-md w-full space-y-8 text-center">
@@ -48,15 +56,30 @@ function PaymentSuccessContent() {
         <div className="bg-neutral-900/50 p-4 rounded-3xl border border-white/5 space-y-2">
           <Scissors size={24} className="text-amber-500 mx-auto" />
           <p className="text-xs text-neutral-500 uppercase font-black tracking-widest">
-            {isSubscription ? 'Status' : 'Serviço'}
+            {isSubscription ? 'Próxima Renovação' : 'Serviço'}
           </p>
-          <p className="font-bold">{isSubscription ? 'Ativo' : 'Garantido'}</p>
+          <p className="font-bold">
+            {isSubscription ? formattedDate || 'Mensal' : 'Garantido'}
+          </p>
         </div>
       </div>
 
+      {isSubscription && amount && (
+        <div className="bg-amber-500/10 p-6 rounded-3xl border border-amber-500/20 text-center animate-in fade-in zoom-in duration-700">
+          <p className="text-xs text-amber-500 uppercase font-black tracking-widest mb-1">
+            Valor da Mensalidade
+          </p>
+          <p className="text-3xl font-display font-black text-white">
+            R$ {amount}
+          </p>
+        </div>
+      )}
+
       <div className="pt-8">
         <Link
-          href="/?success=true"
+          href={
+            isSubscription ? '/?subscription_success=true' : '/?success=true'
+          }
           className="group flex items-center justify-center gap-3 bg-amber-500 hover:bg-amber-400 text-black font-black py-4 px-8 rounded-full transition-all hover:scale-105 active:scale-95"
         >
           <span>VOLTAR PARA O INÍCIO</span>

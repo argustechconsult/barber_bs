@@ -48,6 +48,7 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
   const [startTime, setStartTime] = useState<string>('09:00');
   const [endTime, setEndTime] = useState<string>('18:00');
   const [offDays, setOffDays] = useState<string[]>([]);
+  const [selectedDateDay, setSelectedDateDay] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMonth, setViewMonth] = useState(new Date());
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -108,9 +109,31 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
         return;
       }
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      let res;
+      if (viewType === 'day') {
+        const dateStr = selectedDateDay.toISOString().split('T')[0];
+        res = await getBarberSchedule(barberId, dateStr);
+      } else if (viewType === 'week') {
+        const weekStart = startOfWeek(selectedDateDay, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(selectedDateDay, { weekStartsOn: 1 });
+        res = await getBarberSchedule(
+          barberId,
+          undefined,
+          format(weekStart, 'yyyy-MM-dd'),
+          format(weekEnd, 'yyyy-MM-dd'),
+        );
+      } else {
+        // month
+        const monthStart = startOfMonth(viewMonth);
+        const monthEnd = endOfMonth(viewMonth);
+        res = await getBarberSchedule(
+          barberId,
+          undefined,
+          format(monthStart, 'yyyy-MM-dd'),
+          format(monthEnd, 'yyyy-MM-dd'),
+        );
+      }
 
-      const res = await getBarberSchedule(barberId, todayStr);
       if (res.success && res.appointments) {
         setAppointments(
           res.appointments.map((a) => ({
@@ -118,7 +141,7 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
             clientName: (a as any).client.name,
             date: a.date,
             barbeiroId: a.barberId,
-            barberName: (a as any).barber?.nome || '...',
+            barberName: a.barber?.name || '...',
             status: a.status,
           })),
         );
@@ -128,7 +151,14 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
       setLoading(false);
     }
     fetchApps();
-  }, [selectedBarberId, user.barbeiroId, isAdmin, viewType]);
+  }, [
+    selectedBarberId,
+    user.barbeiroId,
+    isAdmin,
+    viewType,
+    selectedDateDay,
+    viewMonth,
+  ]);
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,6 +297,39 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
             </div>
           )}
         </div>
+
+        {viewType === 'day' && (
+          <div className="flex items-center gap-4 bg-neutral-900 px-6 py-3 rounded-2xl border border-neutral-800 shadow-lg">
+            <button
+              onClick={() => {
+                const d = new Date(selectedDateDay);
+                d.setDate(d.getDate() - 1);
+                setSelectedDateDay(d);
+              }}
+              className="p-2 hover:bg-white/5 rounded-xl text-amber-500 transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="flex flex-col items-center min-w-[140px]">
+              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                {format(selectedDateDay, 'eeee', { locale: ptBR })}
+              </span>
+              <span className="text-sm font-bold text-white">
+                {format(selectedDateDay, "dd 'de' MMMM", { locale: ptBR })}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                const d = new Date(selectedDateDay);
+                d.setDate(d.getDate() + 1);
+                setSelectedDateDay(d);
+              }}
+              className="p-2 hover:bg-white/5 rounded-xl text-amber-500 transition-colors"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        )}
       </header>
 
       {/* View Switcher Content */}
@@ -275,10 +338,8 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
           <div className="grid grid-cols-1 gap-4">
             {appointments.length > 0 ? (
               appointments.map((ap) => {
-                const time = new Date(ap.date).toLocaleTimeString('pt-BR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
+                const d = new Date(ap.date);
+                const time = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
                 return (
                   <div
                     key={ap.id}
@@ -340,7 +401,7 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                   className="text-neutral-800 mx-auto mb-4"
                 />
                 <p className="text-neutral-500 font-medium">
-                  Sem agendamentos para hoje.
+                  Sem agendamentos para esta data.
                 </p>
               </div>
             )}
@@ -348,29 +409,78 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
         ) : viewType === 'week' ? (
           <div className="grid grid-cols-7 gap-2 overflow-x-auto pb-4 scrollbar-hide">
             {(() => {
-              const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-              const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+              const weekStart = startOfWeek(selectedDateDay, {
+                weekStartsOn: 1,
+              });
+              const weekEnd = endOfWeek(selectedDateDay, { weekStartsOn: 1 });
               const weekDays = eachDayOfInterval({
                 start: weekStart,
                 end: weekEnd,
               });
 
-              return weekDays.map((date) => (
-                <div
-                  key={date.toISOString()}
-                  className="min-w-[120px] bg-neutral-950 p-4 rounded-3xl border border-neutral-800 space-y-2"
-                >
-                  <p className="text-center font-bold text-[10px] uppercase text-amber-500/70">
-                    {format(date, 'eee', { locale: ptBR })}
-                  </p>
-                  <p className="text-center font-bold text-xs text-white pb-2 border-b border-neutral-800">
-                    {format(date, 'dd/MM/yyyy')}
-                  </p>
-                  <div className="pt-2 text-center text-[10px] text-neutral-600 font-medium italic">
-                    Visualização semanal em breve
+              return weekDays.map((date) => {
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const dayApps = appointments.filter(
+                  (ap) => format(new Date(ap.date), 'yyyy-MM-dd') === dateStr,
+                );
+
+                return (
+                  <div
+                    key={date.toISOString()}
+                    className="min-w-[150px] bg-neutral-950 p-4 rounded-3xl border border-neutral-800 space-y-3 flex flex-col"
+                  >
+                    <div className="text-center space-y-1">
+                      <p className="font-bold text-[10px] uppercase text-amber-500/70">
+                        {format(date, 'eee', { locale: ptBR })}
+                      </p>
+                      <p className="font-bold text-xs text-white pb-2 border-b border-neutral-800">
+                        {format(date, 'dd/MM')}
+                      </p>
+                    </div>
+
+                    <div className="flex-1 space-y-2">
+                      {dayApps.length > 0 ? (
+                        dayApps.map((ap) => {
+                          const d = new Date(ap.date);
+                          const time = format(d, 'HH:mm');
+                          return (
+                            <div
+                              key={ap.id}
+                              className="bg-neutral-900/50 p-2 rounded-xl border border-neutral-800/50"
+                            >
+                              <div className="flex justify-between items-start gap-1">
+                                <span className="text-amber-500 font-bold text-[10px]">
+                                  {time}
+                                </span>
+                                <span className="text-[7px] text-neutral-500 font-bold uppercase truncate">
+                                  {ap.status}
+                                </span>
+                              </div>
+                              <p className="text-[10px] font-medium text-white line-clamp-1">
+                                {ap.clientName}
+                              </p>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-center py-4 text-[9px] text-neutral-600 italic">
+                          Vazio
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setSelectedDateDay(date);
+                        setViewType('day');
+                      }}
+                      className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white rounded-xl text-[8px] font-bold uppercase transition-colors mt-auto"
+                    >
+                      Ver Detalhes
+                    </button>
                   </div>
-                </div>
-              ));
+                );
+              });
             })()}
           </div>
         ) : (
@@ -432,12 +542,21 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                       <div key={`blank-${i}`} className="aspect-square" />
                     ))}
                     {days.map((date) => {
+                      const dateStr = format(date, 'yyyy-MM-dd');
                       const isToday =
-                        format(date, 'yyyy-MM-dd') ===
-                        format(new Date(), 'yyyy-MM-dd');
+                        dateStr === format(new Date(), 'yyyy-MM-dd');
+                      const hasApps = appointments.some(
+                        (ap) =>
+                          format(new Date(ap.date), 'yyyy-MM-dd') === dateStr,
+                      );
+
                       return (
                         <div
                           key={date.toISOString()}
+                          onClick={() => {
+                            setSelectedDateDay(date);
+                            setViewType('day');
+                          }}
                           className={`
                             aspect-square border border-neutral-800 rounded-2xl flex flex-col items-center justify-center relative hover:border-amber-500/40 transition-colors cursor-pointer group
                             ${isToday ? 'bg-amber-500/10 border-amber-500/30' : 'bg-neutral-950'}
@@ -449,8 +568,9 @@ const BarberAgendaView: React.FC<BarberAgendaViewProps> = ({ user }) => {
                             {date.getDate()}
                           </span>
                           <div className="absolute inset-x-0 bottom-2 flex justify-center gap-0.5">
-                            {/* Indicator dot if has appointments - simplistic for now */}
-                            {/* <div className="w-1 h-1 bg-amber-500 rounded-full"></div> */}
+                            {hasApps && (
+                              <div className="w-1.5 h-1.5 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50 animate-pulse"></div>
+                            )}
                           </div>
                           <div className="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity"></div>
                         </div>

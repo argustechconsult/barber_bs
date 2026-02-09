@@ -28,7 +28,8 @@ export async function getBarberStats(barberId: string) {
         where: {
             status: 'PAID',
             OR: [
-                { appointment: { barberId } },
+                { type: 'APPOINTMENT', appointment: { barberId }, user: { plan: 'START' } },
+                { type: 'SUBSCRIPTION', user: { barbeiroId: barberId } },
                 { userId: barberId, type: 'INCOME' }
             ]
         }
@@ -46,9 +47,17 @@ export async function getBarberStats(barberId: string) {
     });
     const averagePerDay = (recentAppointments / 30).toFixed(1);
 
-    // 4. Receita Cortes (Service Revenue)
-    // Currently same as total revenue as we only have appointments
-    const cutsRevenue = totalRevenue;
+    // 4. Receita Cortes (Service Revenue - Only START clients)
+    const cutsRevenueResult = await prisma.transaction.aggregate({
+        _sum: { amount: true },
+        where: {
+            status: 'PAID',
+            type: 'APPOINTMENT',
+            appointment: { barberId },
+            user: { plan: 'START' }
+        }
+    });
+    const cutsRevenue = cutsRevenueResult._sum.amount || 0;
 
     // 5. Goal Achievement (Mock logic or define a goal)
     // Let's assume a static goal for now or calculate based on something
@@ -95,7 +104,8 @@ async function getMonthlyRevenue(barberId?: string) {
 
         if (barberId) {
             where.OR = [
-                { appointment: { barberId } },
+                { type: 'APPOINTMENT', appointment: { barberId }, user: { plan: 'START' } },
+                { type: 'SUBSCRIPTION', user: { barbeiroId: barberId } },
                 { userId: barberId, type: 'INCOME' }
             ];
         }
@@ -197,8 +207,9 @@ export async function getFinancialStats(barberId?: string) {
 
     if (barberId) {
       where.OR = [
-        { appointment: { barberId: barberId } },
-        { userId: barberId }
+        { type: 'APPOINTMENT', appointment: { barberId: barberId }, user: { plan: 'START' } },
+        { type: 'SUBSCRIPTION', user: { barbeiroId: barberId } },
+        { userId: barberId, type: { in: ['INCOME', 'EXPENSE'] } }
       ];
     }
 

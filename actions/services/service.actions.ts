@@ -21,7 +21,6 @@ export async function createService(data: { name: string; price: number }) {
             data: {
                 name: data.name,
                 price: data.price,
-                duration: 30, // Default duration
             }
         });
         revalidatePath('/settings');

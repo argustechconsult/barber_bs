@@ -71,12 +71,15 @@ export async function getClients() {
     });
 
     return clients.map((c) => {
-        let status = 'PAID'; // Default to PAID
-        if (c.plan === 'PREMIUM') {
+        let status = 'PAID'; 
+        const twoMonthsInMs = 60 * 24 * 60 * 60 * 1000;
+        const isChurn = Date.now() - new Date(c.updatedAt).getTime() > twoMonthsInMs;
+
+        if (isChurn) {
+            status = 'CHURN';
+        } else if (c.plan === 'PREMIUM') {
             if (c.subscriptionStatus === 'ACTIVE') status = 'PAID';
-            else if (c.subscriptionStatus === 'PAST_DUE' || !c.subscriptionStatus) status = 'DEBT';
-            else if (c.subscriptionStatus === 'CANCELLED') status = 'CHURN';
-            else status = 'DEBT'; // Any other non-active premium status is debt
+            else status = 'DEBT';
         }
         
         const lastRenewal = c.updatedAt.toLocaleDateString('pt-BR');

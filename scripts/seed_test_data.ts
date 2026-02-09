@@ -22,7 +22,7 @@ async function main() {
   let service = await prisma.service.findFirst();
   if (!service) {
       service = await prisma.service.create({
-          data: { name: 'Corte Moderno', price: 50.0, duration: 30 }
+          data: { name: 'Corte Moderno', price: 50.0 }
       });
   }
 
