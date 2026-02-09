@@ -32,6 +32,7 @@ import {
   ArrowDownCircle,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import {
   format,
@@ -74,6 +75,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   } | null>(null);
   const [offDays, setOffDays] = useState<string[]>(user.offDays || []);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [isUploading, setIsUploading] = useState(false);
 
   // Fetch Services, Plans & Barbers
   React.useEffect(() => {
@@ -131,14 +133,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         type: 'image/jpeg',
       });
 
-      // 2. Upload to Vercel Blob
+      setIsUploading(true);
       const response = await fetch(`/api/upload?filename=${file.name}`, {
         method: 'POST',
         body: file,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to upload image');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload image');
       }
 
       const newBlob = await response.json();
@@ -155,16 +158,27 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           });
         } catch (delError) {
           console.error('Failed to delete old image:', delError);
-          // Non-blocking error
         }
       }
 
-      // 4. Update State & DB
+      // 4. Update State & DB Automatically
       if (croppingTarget?.type === 'user') {
-        onUpdateUser({
-          ...user,
+        const { updateUser } = await import('../actions/users/user.actions');
+        const dbResult = await updateUser(user.id, {
+          name: user.name,
           image: imageUrl,
         });
+
+        if (dbResult.success) {
+          onUpdateUser({
+            ...user,
+            image: imageUrl,
+          });
+          setShowSuccessModal(true);
+          setTimeout(() => setShowSuccessModal(false), 2000);
+        } else {
+          throw new Error('Upload concluído, mas falha ao salvar no perfil.');
+        }
       } else if (croppingTarget?.type === 'barber' && croppingTarget.id) {
         setBarbers((prev) =>
           prev.map((b) =>
@@ -173,12 +187,26 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         );
         const { updateBarberSettings } =
           await import('../actions/users/barber.actions');
-        await updateBarberSettings(croppingTarget.id, { image: imageUrl });
+        const dbResult = await updateBarberSettings(croppingTarget.id, {
+          image: imageUrl,
+        });
+
+        if (dbResult.success) {
+          setShowSuccessModal(true);
+          setTimeout(() => setShowSuccessModal(false), 2000);
+        }
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Erro ao fazer upload da imagem. Tente novamente.');
-    } // ... rest of function
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Erro ao fazer upload da imagem. Tente novamente.',
+      );
+    } finally {
+      setIsUploading(false);
+    }
+    // ... rest of function
 
     setImageToCrop(null);
     setCroppingTarget(null);
@@ -374,7 +402,18 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="bg-neutral-900 border border-neutral-800 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-6 md:space-y-8 shadow-xl">
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="relative group">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-amber-500 overflow-hidden bg-neutral-800 flex items-center justify-center">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-amber-500 overflow-hidden bg-neutral-800 flex items-center justify-center relative">
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/60 z-10 flex flex-col items-center justify-center">
+                      <Loader2
+                        className="animate-spin text-amber-500 mb-2"
+                        size={24}
+                      />
+                      <span className="text-[8px] font-black uppercase tracking-widest text-white">
+                        Salvando...
+                      </span>
+                    </div>
+                  )}
                   {(user.image || user.whatsapp)?.startsWith('data:image') ||
                   (user.image || user.whatsapp)?.startsWith('http') ? (
                     <img

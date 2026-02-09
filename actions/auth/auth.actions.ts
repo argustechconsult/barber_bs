@@ -12,12 +12,14 @@ export interface AuthState {
 }
 
 export async function login(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
-  const loginInput = formData.get('email') as string;
+  const loginInputRaw = formData.get('email') as string;
   const password = formData.get('password') as string;
 
-  if (!loginInput || !password) {
+  if (!loginInputRaw || !password) {
     return { success: false, message: 'Login e senha são obrigatórios.' };
   }
+
+  const loginInput = loginInputRaw.includes('@') ? loginInputRaw.toLowerCase() : loginInputRaw;
 
   try {
     // Try to find the user by email or whatsapp
@@ -63,7 +65,8 @@ export async function login(prevState: AuthState | null, formData: FormData): Pr
 
 export async function signup(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
   const name = formData.get('name') as string;
-  const email = formData.get('email') as string;
+  const emailRaw = formData.get('email') as string;
+  const email = emailRaw ? emailRaw.toLowerCase() : '';
   const password = formData.get('password') as string;
   const whatsappRaw = formData.get('whatsapp') as string;
   const birthDate = formData.get('birthDate') as string;
@@ -158,8 +161,9 @@ export async function checkSession() {
   return { isAuth: false, user: null };
 }
 
-export async function createBarberInvite(name: string, email: string) {
+export async function createBarberInvite(name: string, emailRaw: string) {
   try {
+    const email = emailRaw.toLowerCase();
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return { success: false, message: 'Email já cadastrado.' };

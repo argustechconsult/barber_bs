@@ -27,7 +27,7 @@ const SignUp: React.FC<SignUpProps> = ({ onRegister, onBackToLogin }) => {
     startTransition(async () => {
       const formData = new FormData();
       formData.append('name', name);
-      formData.append('email', email);
+      formData.append('email', email.toLowerCase());
       formData.append('password', password);
       formData.append('whatsapp', whatsapp);
       formData.append('birthDate', birthDate);
