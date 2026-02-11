@@ -11,6 +11,7 @@ import FinancialView from './components/FinancialView';
 import BarberFinancialView from './components/BarberFinancialView';
 import BarberAgendaView from './components/BarberAgendaView';
 import MarketplaceView from './components/MarketplaceView';
+import { logout, checkSession } from './actions/auth/auth.actions';
 import {
   LogOut,
   Calendar,
@@ -29,43 +30,37 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initUser = async () => {
-      const savedUser = localStorage.getItem('stayler_user');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setUser(parsed);
+      setLoading(true);
+      try {
+        // 1. Check server session first (single source of truth for auth)
+        const sessionResult = await checkSession();
 
-        // Background revalidation
-        try {
-          const { getUser } = await import('./actions/users/user.actions');
-          const freshUser = await getUser(parsed.id);
-
-          if (freshUser) {
-            // Check for differences to avoid unnecessary re-renders loop if we were strict,
-            // but setting it is safe.
-            const merged = {
-              ...parsed, // keep local props if any
-              ...freshUser, // overwrite with db
-              role: freshUser.role as UserRole,
-              plan: freshUser.plan as UserPlan,
-            };
-
-            // Stringify comparison to detect any change
-            if (JSON.stringify(merged) !== JSON.stringify(parsed)) {
-              console.log('User updated from server (all fields):', merged);
-              setUser(merged);
-              localStorage.setItem('stayler_user', JSON.stringify(merged));
-            }
-          } else {
-            console.warn(
-              'Current user session is stale (user not found in DB). Logging out...',
-            );
-            handleLogout();
-          }
-        } catch (error) {
-          console.error('Failed to revalidate user', error);
+        if (sessionResult.isAuth && sessionResult.user) {
+          console.log('Session verified on server:', sessionResult.user);
+          setUser(sessionResult.user);
+          localStorage.setItem(
+            'stayler_user',
+            JSON.stringify(sessionResult.user),
+          );
+          setLoading(false);
+          return;
         }
+
+        // 2. If no server session, check local storage as fallback/hint
+        const savedUser = localStorage.getItem('stayler_user');
+        if (savedUser) {
+          // If we have local user but no server session, the session expired.
+          console.warn(
+            'Local user found but no active server session. Clearing...',
+          );
+          localStorage.removeItem('stayler_user');
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Failed to initialize session:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     initUser();
   }, []);
@@ -129,7 +124,12 @@ const App: React.FC = () => {
     localStorage.setItem('stayler_user', JSON.stringify(loggedInUser));
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     setUser(null);
     setCurrentView('main');
     localStorage.removeItem('stayler_user');
